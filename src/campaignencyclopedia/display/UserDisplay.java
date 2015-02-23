@@ -4,7 +4,7 @@ import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.Entity;
 
 /**
- *
+ * An interface which defines t he contract of a UserDisplay.
  * @author adam
  */
 public interface UserDisplay extends EntityDisplay {
