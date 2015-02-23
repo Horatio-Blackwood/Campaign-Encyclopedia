@@ -7,4 +7,4 @@
 
 # Non-repo Application Directories
 /campaigns/*
-/current_release/*
+/current_release/tmp/*
