@@ -3,7 +3,7 @@
 # Netbeans Files #
 /build/*
 /dist/*
-./nbproject/private/*
+/nbproject/private/*
 
 # Non-repo Application Directories
 /campaigns/*
