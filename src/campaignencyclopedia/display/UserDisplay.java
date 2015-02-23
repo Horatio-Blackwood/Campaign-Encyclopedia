@@ -1,0 +1,26 @@
+package campaignencyclopedia.display;
+
+import campaignencyclopedia.data.Campaign;
+import campaignencyclopedia.data.Entity;
+
+/**
+ *
+ * @author adam
+ */
+public interface UserDisplay extends EntityDisplay {
+    
+    /**
+     * Removes the supplied Entity .
+     * @param entity the Entity to remove.
+     */
+    public void removeEntity(Entity entity);
+    
+    /** Clears all data from the display.  NOTE:  This method does NOT clear out the data in the CampaignDataManager. */
+    public void clearAllData();
+    
+    /** 
+     * Sets the supplied campaign on this display.
+     * @param campaign the data to set.
+     */
+    public void displayCampaign(Campaign campaign);
+}

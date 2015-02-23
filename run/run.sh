@@ -1,0 +1,1 @@
+start javaw -cp ./lib/* campaignencyclopedia.CampaignEncyclopedia
