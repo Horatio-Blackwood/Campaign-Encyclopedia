@@ -1,1 +1,1 @@
-start javaw -cp ./lib/* campaignencyclopedia.CampaignEncyclopedia
+java -cp ":./lib/*" campaignencyclopedia.CampaignEncyclopedia
