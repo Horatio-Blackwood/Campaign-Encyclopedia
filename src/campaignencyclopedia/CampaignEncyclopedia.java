@@ -2,7 +2,6 @@ package campaignencyclopedia;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.display.swing.MainDisplay;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.UIManager;
@@ -26,15 +25,15 @@ public class CampaignEncyclopedia {
      * Main method.
      * @param args the command line arguments (ignored)
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         swingMain(args);
     }
 
     /**
      * Runs the application using the Swing GUI toolkit.
-     * @param args command line arguments (ignored)
+     * @param args command line arguments (ignored for swing main).
      */
-    private static void swingMain(String[] args) throws IOException {
+    private static void swingMain(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException ex) {

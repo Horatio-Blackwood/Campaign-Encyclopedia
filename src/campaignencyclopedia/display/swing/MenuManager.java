@@ -31,10 +31,16 @@ public class MenuManager {
     /** An action for opening a saved campaign. */
     private final NewCampaignAction m_newAction;
 
+    /** An action for exporting the campaign to PDF with secrets. */
     private final ExportCampaignToPdfAction m_pdfWithSecretsAction;
+
+    /** An action for exporting the campaign to PDF without secrets. */
     private final ExportCampaignToPdfAction m_pdfWithoutSecretsAction;
+
+    /** An action for exporting the campaign file without secrets. */
     private final SaveCampaignAction m_exportWithoutSecretsAction;
 
+    /** An action for showing the timeline of the campaign. */
     private final ShowTimelineAction m_showTimelineAction;
 
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
@@ -46,6 +52,12 @@ public class MenuManager {
     /** A user display. */
     private final UserDisplay m_display;
 
+    /**
+     * Creates a new instance of MenuManager.
+     * @param parent a parent component for centering dialogs launched by actions in this application.
+     * @param display a UserDisplay to make changes on when actions result in changes to the UI.
+     * @param cdm a data manager to update when actions on the data occur.
+     */
     public MenuManager(Frame parent, UserDisplay display, CampaignDataManager cdm) {
         m_frame = parent;
         m_cdm = cdm;
@@ -86,6 +98,10 @@ public class MenuManager {
         return campaignMenu;
     }
 
+    /**
+     * Returns the Export menu.
+     * @return the Export menu for the application.
+     */
     public JMenu getExportMenu() {
         JMenu export = new JMenu("Export");
 
@@ -100,10 +116,15 @@ public class MenuManager {
         return export;
     }
 
+    /**
+     * Returns the Data menu.
+     * @return the Data menu for the application.
+     */
     public JMenu getDataMenu() {
         JMenu dataMenu = new JMenu("Data");
 
         JMenuItem showTimeline = new JMenuItem(m_showTimelineAction);
+        showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
         dataMenu.add(showTimeline);
 

@@ -9,7 +9,7 @@ import toolbox.file.persistence.json.JsonException;
 import toolbox.file.persistence.json.JsonObject;
 
 /**
- *
+ * The JSON translator for Entity objects.
  * @author adam
  */
 public class EntityTranslator {
@@ -21,20 +21,13 @@ public class EntityTranslator {
     private static final String PUBLIC_DATA = "public-data";
     private static final String IS_SECRET = "is-secret";
 
-    public static String toJson(Entity entity, boolean includeSecrets) throws JsonException {
-        JsonObject json = new JsonObject();
-        if (includeSecrets) {
-            json.put(SECRET_DATA, EntityDataTranslator.toJson(entity.getSecretData()));
-        }
-        json.put(PUBLIC_DATA, EntityDataTranslator.toJson(entity.getPublicData()));
-        json.put(ID, entity.getId().toString());
-        json.put(TYPE, entity.getType().name());
-        json.put(NAME, entity.getName());
-        json.put(IS_SECRET, entity.isSecret());
-
-        return json.toString(4);
-    }
-
+    /**
+     * Returns the JSON object that represents the supplied Entity object.
+     * @param entity the Entity to translate.
+     * @param includeSecrets true if secrets should be included, false otherwise.
+     * @return the JSON Object that represents the supplied Entity object.
+     * @throws JsonException if an error occurs during translation.
+     */
     public static JsonObject toJsonObject(Entity entity, boolean includeSecrets) throws JsonException {
         JsonObject json = new JsonObject();
         if (includeSecrets) {
@@ -49,6 +42,12 @@ public class EntityTranslator {
         return json;
     }
 
+    /**
+     * Returns the Entity represented by the JSON String supplied.
+     * @param jsonString the JSON String to translate.
+     * @return the Entity that is represented by the supplied JSON String.
+     * @throws JsonException if an error occurs during translation.
+     */
     public static Entity fromJson(String jsonString) throws JsonException {
         JsonObject json = new JsonObject(jsonString);
 
@@ -64,12 +63,12 @@ public class EntityTranslator {
 
         EntityData pd = null;
         if (json.has(PUBLIC_DATA)) {
-            pd = EntityDataTranslator.fromJson(json.getString(PUBLIC_DATA));
+            pd = EntityDataTranslator.fromJson(json.getJsonObject(PUBLIC_DATA).toString());
         }
 
         EntityData sd = new EntityDataBuilder().build();
         if (json.has(SECRET_DATA)) {
-            sd = EntityDataTranslator.fromJson(json.getString(SECRET_DATA));
+            sd = EntityDataTranslator.fromJson(json.getJsonObject(SECRET_DATA).toString());
         }
 
         boolean isSecret = false;

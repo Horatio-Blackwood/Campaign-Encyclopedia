@@ -112,14 +112,13 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number*/
-    public  static final String VERSION = "v1.0 RC";
+    public  static final String VERSION = "v1.0 RC2";
 
     /** The date this version was released. */
-    public static final String RELEASE_DATE = "??.??.2015";
+    public static final String RELEASE_DATE = "03.02.2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
-
 
     /**
      * Creates a new Main Display instance.
@@ -236,6 +235,10 @@ public class MainDisplay implements EditListener, UserDisplay {
         displayEntity(toShow);
     }
 
+    /**
+     * Displays the supplied Entity.
+     * @param entity the Entity to display.
+     */
     private void displayEntity(Entity entity) {
         if (!isCurrentDataSaved()){
             if (isSaveDesired()) {
@@ -310,6 +313,11 @@ public class MainDisplay implements EditListener, UserDisplay {
         return true;
     }
 
+    /**
+     * Prompts the user to determine if they would like to save any changes that have been made
+     * and returns the user's choice (true if they desire to save, false otherwise).
+     * @return true if save is desired, false otherwise.
+     */
     private boolean isSaveDesired() {
         int response = JOptionPane.showConfirmDialog(m_frame,
                                                      "The displayed data has changed, do\n" +
@@ -323,6 +331,10 @@ public class MainDisplay implements EditListener, UserDisplay {
         }
     }
 
+    /**
+     * Creates the Entity display.
+     * @return a JPanel which contains an Entity display.
+     */
     private JPanel createEntityDisplay() {
         // Init Components
         JPanel panel = new JPanel(new GridBagLayout());
@@ -438,6 +450,10 @@ public class MainDisplay implements EditListener, UserDisplay {
         return panel;
     }
 
+    /**
+     * Creates and returns the EntityList.
+     * @return the Entity List component.
+     */
     private Component createEntityList() {
         m_entityModel = new SortedListModel<>();
         m_entityModel.addAllElements(m_cdm.getAllEntities());
