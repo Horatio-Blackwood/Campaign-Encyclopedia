@@ -75,6 +75,7 @@ public class RelationshipConfigurationEditorDialogContent implements DialogConte
                 String relationship = m_addTextField.getText().trim();
                 if (!relationship.isEmpty()) {
                     m_model.addElement(relationship);
+                    m_addTextField.setText("");
                 }
             }
         });
