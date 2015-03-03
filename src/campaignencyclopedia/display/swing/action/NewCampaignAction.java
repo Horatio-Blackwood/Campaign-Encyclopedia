@@ -16,11 +16,11 @@ import toolbox.display.dialog.OkCancelCommitManager;
  * @author adam
  */
 public class NewCampaignAction extends AbstractAction {
-    
+
     private final UserDisplay m_display;
     private final CampaignDataManager m_cdm;
     private final Frame m_frame;
-    
+
     /**
      * Creates a NewCampaignAction.
      * @param frame the top level application window, used to center dialogs.
@@ -37,16 +37,16 @@ public class NewCampaignAction extends AbstractAction {
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent ae) {
-        
         final NewCampaignDialogContent content = new NewCampaignDialogContent();
         Runnable commit = new Runnable() {
             @Override
             public void run() {
                 Campaign campaign = content.getCampaign();
+                m_cdm.setFileName(null);
                 DisplayCampaignHelper.displayCampaign(m_display, m_cdm, campaign);
             }
         };
-        
+
         DialogCommitManager dcm = new OkCancelCommitManager(commit);
         DialogFactory.buildDialog(m_frame, "New Campaign", true, content, dcm);
     }
