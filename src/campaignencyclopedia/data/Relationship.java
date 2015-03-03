@@ -12,17 +12,17 @@ import java.util.UUID;
  */
 public class Relationship implements Comparable<Relationship> {
 
-    private final RelationshipType m_type;
+    private final String m_relationship;
     private final UUID m_id;
 
 
     /**
      * Constructor.
      * @param relation the UUID of the Entity that is the relation.
-     * @param type the type of this Relationship.
+     * @param relatinship the type of this Relationship.
      */
-    public Relationship(UUID relation, RelationshipType type) {
-        m_type = type;
+    public Relationship(UUID relation, String relatinship) {
+        m_relationship = relatinship;
         m_id = relation;
     }
 
@@ -30,8 +30,8 @@ public class Relationship implements Comparable<Relationship> {
      * Returns the type of this Relationship.
      * @return the type of this Relationship.
      */
-    public RelationshipType getType() {
-        return m_type;
+    public String getRelationship() {
+        return m_relationship;
     }
 
     /**
@@ -46,7 +46,7 @@ public class Relationship implements Comparable<Relationship> {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 67 * hash + Objects.hashCode(this.m_type);
+        hash = 67 * hash + Objects.hashCode(this.m_relationship);
         hash = 67 * hash + Objects.hashCode(this.m_id);
         return hash;
     }
@@ -61,7 +61,7 @@ public class Relationship implements Comparable<Relationship> {
             return false;
         }
         final Relationship other = (Relationship) obj;
-        if (this.m_type != other.m_type) {
+        if (this.m_relationship != other.m_relationship) {
             return false;
         }
         if (!Objects.equals(this.m_id, other.m_id)) {
@@ -73,11 +73,12 @@ public class Relationship implements Comparable<Relationship> {
     /** {@inheritDoc} */
     @Override
     public int compareTo(Relationship t) {
-        return getType().getDisplayString().compareTo(t.getType().getDisplayString());
+        return m_relationship.compareTo(m_relationship);
     }
-    
+
+    /** {@inheritDoc} */
     @Override
     public String toString() {
-        return m_type.getDisplayString() + m_id.toString();
+        return m_relationship + " " + m_id.toString();
     }
 }

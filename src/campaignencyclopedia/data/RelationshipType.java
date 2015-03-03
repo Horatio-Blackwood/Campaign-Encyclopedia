@@ -1,5 +1,8 @@
 package campaignencyclopedia.data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The types of Relationships that Entities can have with one another.
  * @author adam
@@ -95,5 +98,13 @@ public enum RelationshipType implements Displayable {
     @Override
     public String getDisplayString() {
         return m_displayString;
+    }
+
+    public static List<String> getStringList() {
+        List<String> stringList = new ArrayList<>();
+        for (RelationshipType rt : values()) {
+            stringList.add(rt.getDisplayString());
+        }
+        return stringList;
     }
 }

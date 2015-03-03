@@ -8,3 +8,4 @@
 # Non-repo Application Directories
 /campaigns/*
 /current_release/tmp/*
+/config/*

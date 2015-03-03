@@ -19,36 +19,36 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  * @author adam
  */
 public class RelationshipCellRenderer implements ListCellRenderer<Relationship> {
-    
+
     private final DataAccessor m_accessor;
-    
+
     /**
      * Creates a new RelationshipCellRenderer.
-     * @param accessor the accessor used to get details about the related Entity in order to display valid info to the 
+     * @param accessor the accessor used to get details about the related Entity in order to display valid info to the
      * user.
      */
     public RelationshipCellRenderer(DataAccessor accessor) {
         m_accessor = accessor;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public Component getListCellRendererComponent(JList<? extends Relationship> jlist, final Relationship e, int i, boolean isSelected, boolean hasFocus) {
-        JLabel relationshipLabel = new JLabel(e.getType().getDisplayString());
+        JLabel relationshipLabel = new JLabel(e.getRelationship());
         JLabel relatedEntityLabel = new JLabel(m_accessor.getEntity(e.getIdOfRelation()).getName());
 
         relationshipLabel.setOpaque(false);
         relatedEntityLabel.setOpaque(false);
-        
+
         relationshipLabel.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
         relatedEntityLabel.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
 
         Color deselectedBackground = relationshipLabel.getBackground();
         Color deselectedTextColor = relationshipLabel.getForeground();
-        
+
         relatedEntityLabel.setForeground(Color.BLUE);
-        relatedEntityLabel.setFont(relatedEntityLabel.getFont().deriveFont(Font.BOLD));        
-        
+        relatedEntityLabel.setFont(relatedEntityLabel.getFont().deriveFont(Font.BOLD));
+
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -78,8 +78,8 @@ public class RelationshipCellRenderer implements ListCellRenderer<Relationship> 
             panel.setForeground(deselectedTextColor);
         }
 
-        
+
         return panel;
     }
-    
+
 }

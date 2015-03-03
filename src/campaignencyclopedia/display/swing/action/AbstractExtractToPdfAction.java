@@ -15,7 +15,7 @@ import plainpdf.Pdf;
 import plainpdf.PdfFont;
 
 /**
- *
+ * An action to extract data to PDF.
  * @author adam
  */
 public abstract class AbstractExtractToPdfAction extends AbstractAction {
@@ -73,7 +73,7 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
                 if (linkedTo.isSecret() && !m_includeSecrets) {
                     // Don't export secret data in this case.
                 } else {
-                    pdf.renderLine(rel.getType().getDisplayString() + " " + linkedTo.getName());
+                    pdf.renderLine(rel.getRelationship() + " " + linkedTo.getName());
                 }
 
             }

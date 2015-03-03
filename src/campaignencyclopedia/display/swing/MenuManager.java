@@ -3,6 +3,7 @@ package campaignencyclopedia.display.swing;
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.display.UserDisplay;
+import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;
 import campaignencyclopedia.display.swing.action.DeleteEntityAction;
 import campaignencyclopedia.display.swing.action.ExportCampaignToPdfAction;
 import campaignencyclopedia.display.swing.action.ExportEntityToPdf;
@@ -43,6 +44,9 @@ public class MenuManager {
     /** An action for showing the timeline of the campaign. */
     private final ShowTimelineAction m_showTimelineAction;
 
+    /** An action for configuring the relationships of the campaign. */
+    private final ConfigureRelationshipsAction m_configureRelationships;
+
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
     private final Frame m_frame;
 
@@ -72,6 +76,7 @@ public class MenuManager {
         m_exportWithoutSecretsAction = new SaveCampaignAction(m_frame, m_cdm, "Export Campaign w/o Secrets", false);
 
         m_showTimelineAction = new ShowTimelineAction(m_frame, m_display, cdm);
+        m_configureRelationships = new ConfigureRelationshipsAction(m_frame);
     }
 
 
@@ -126,7 +131,10 @@ public class MenuManager {
         JMenuItem showTimeline = new JMenuItem(m_showTimelineAction);
         showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
+        JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
+
         dataMenu.add(showTimeline);
+        dataMenu.add(configureRelationships);
 
         return dataMenu;
     }

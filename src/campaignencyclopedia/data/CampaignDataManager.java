@@ -95,18 +95,42 @@ public class CampaignDataManager implements DataAccessor {
         m_entities.clear();
         m_timelineData.clear();
         m_campaignName = campaign.getName();
+
+        // Set to collect all of the previously saved relationships.
+        Set<String> relationships = new HashSet<>();
         for (Entity e : campaign.getEntities()) {
             m_entities.put(e.getId(), e);
+
+            // Collect all of the previously saved relationships and add them to our Set above.
+            for (Relationship r : e.getPublicData().getRelationships()) {
+                relationships.add(r.getRelationship());
+            }
+            for (Relationship r : e.getSecretData().getRelationships()) {
+                relationships.add(r.getRelationship());
+            }
         }
+
+        // Ensure that all of the relationships previously saved are in the local
+        // relationships file, and indeed the Relationship Data Manager as well.
+        RelationshipDataManager.addRelationships(new ArrayList<>(relationships));
+
         for (TimelineEntry tle : campaign.getTimelineEntries()) {
             m_timelineData.put(tle.getId(), tle);
         }
     }
 
+    /**
+     * Returns the save file name.
+     * @return the save file name.
+     */
     public String getSaveFileName() {
         return m_filename;
     }
 
+    /**
+     * Sets the save file name.
+     * @param filename the file name of the campaign.
+     */
     public void setFileName(String filename) {
         if (filename != null && !filename.endsWith(".campaign")) {
             filename += ".campaign";
@@ -114,6 +138,10 @@ public class CampaignDataManager implements DataAccessor {
         m_filename = filename;
     }
 
+    /**
+     * Returns the timeline data.
+     * @return the timeline data.
+     */
     @Override
     public Set<TimelineEntry> getTimelineData() {
         return new HashSet<>(m_timelineData.values());

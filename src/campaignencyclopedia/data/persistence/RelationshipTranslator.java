@@ -1,7 +1,6 @@
 package campaignencyclopedia.data.persistence;
 
 import campaignencyclopedia.data.Relationship;
-import campaignencyclopedia.data.RelationshipType;
 import java.util.UUID;
 import toolbox.file.persistence.json.JsonObject;
 
@@ -25,7 +24,7 @@ public class RelationshipTranslator {
     public static JsonObject toJson(Relationship rel) {
         JsonObject json = new JsonObject();
         json.put(ID, rel.getIdOfRelation().toString());
-        json.put(RELATIONSHIP_TYPE, rel.getType().name());
+        json.put(RELATIONSHIP_TYPE, rel.getRelationship());
 
         return json;
     }
@@ -38,7 +37,7 @@ public class RelationshipTranslator {
     public static Relationship fromJson(String jsonString) {
         JsonObject json = new JsonObject(jsonString);
         UUID id = UUID.fromString(json.getString(ID));
-        RelationshipType relType = RelationshipType.valueOf(json.getString(RELATIONSHIP_TYPE));
+        String relType = json.getString(RELATIONSHIP_TYPE);
 
         return new Relationship(id, relType);
     }
