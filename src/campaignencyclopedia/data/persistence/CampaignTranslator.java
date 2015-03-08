@@ -1,9 +1,13 @@
 package campaignencyclopedia.data.persistence;
 
 import campaignencyclopedia.data.Campaign;
+import campaignencyclopedia.data.CampaignCalendar;
 import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import toolbox.file.persistence.json.JsonArray;
@@ -16,9 +20,14 @@ import toolbox.file.persistence.json.JsonObject;
  */
 public class CampaignTranslator {
 
+    /** The JSON tag for the name of the campaign. */
     private static final String NAME = "campaign-name";
+    /** The JSON tag for the Entities in the campaign. */
     private static final String ENTITIES = "entities";
+    /** The JSON tag for the timeline data. */
     private static final String TIMELINE_ENTRIES = "timeline-entries";
+    /** The JSON tag for the Campaign Calendar. */
+    private static final String CAMPAIGN_CALENDAR = "calendar";
 
 
     public static String toJson(Campaign campaign, boolean includeSecrets) throws JsonException {
@@ -50,6 +59,14 @@ public class CampaignTranslator {
         }
         json.put(TIMELINE_ENTRIES, timelineEntries);
 
+        Set<JsonObject> calendarMonths = new HashSet<>();
+        for (Month month : campaign.getCalendar().getMonths()) {
+            if (!month.equals(Month.UNSPECIFIED)) {
+                calendarMonths.add(MonthTranslator.toJson(month));
+            }
+        }
+        json.put(CAMPAIGN_CALENDAR, calendarMonths);
+
         return json.toString(4);
     }
 
@@ -75,6 +92,16 @@ public class CampaignTranslator {
             }
         }
 
-        return new Campaign(name, entitySet, timelineData);
+        CampaignCalendar cal = new CampaignCalendar();
+        if (json.has(CAMPAIGN_CALENDAR)) {
+            JsonArray months = json.getJsonArray(CAMPAIGN_CALENDAR);
+            List<Month> translated = new ArrayList<>();
+            for (int i = 0; i < months.length(); i++) {
+                translated.add(MonthTranslator.fromJson(months.getJSONObject(i)));
+            }
+            cal.updateMonths(translated);
+        }
+
+        return new Campaign(name, entitySet, timelineData, cal);
     }
 }

@@ -1,5 +1,6 @@
 package campaignencyclopedia.display.swing;
 
+import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.RelationshipDataManager;
 import campaignencyclopedia.data.RelationshipType;
 import java.awt.Component;
@@ -15,6 +16,8 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import toolbox.display.EditListener;
 import toolbox.display.dialog.DialogContent;
 
@@ -22,18 +25,18 @@ import toolbox.display.dialog.DialogContent;
  *
  * @author adam
  */
-public class RelationshipConfigurationEditorDialogContent implements DialogContent {
+public class RelationshipConfigEditorDialogContent implements DialogContent {
 
     private JPanel m_content;
     private JList<String> m_list;
-    private SortedListModel<String> m_model;
+    private SortableListModel<String> m_model;
     private JButton m_addButton;
     private JButton m_restoreDefaultsButton;
     private JButton m_removeSelectedButton;
     private EditListener m_editListener;
     private JTextField m_addTextField;
 
-    public RelationshipConfigurationEditorDialogContent() {
+    public RelationshipConfigEditorDialogContent() {
         initialize();
     }
 
@@ -41,7 +44,7 @@ public class RelationshipConfigurationEditorDialogContent implements DialogConte
         // INITIALIZE COMPONENTS
         m_content = new JPanel(new GridBagLayout());
 
-        m_model = new SortedListModel<>();
+        m_model = new SortableListModel<>();
         m_model.addAllElements(RelationshipDataManager.getRelationships());
 
         m_list = new JList<>();
@@ -68,6 +71,20 @@ public class RelationshipConfigurationEditorDialogContent implements DialogConte
             }
         });
         m_addTextField = new JTextField(15);
+        m_addTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                updateAddButtonValidity();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                updateAddButtonValidity();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                updateAddButtonValidity();
+            }
+        });
         m_addButton = new JButton("Add");
         m_addButton.addActionListener(new ActionListener() {
             @Override
@@ -116,6 +133,18 @@ public class RelationshipConfigurationEditorDialogContent implements DialogConte
         gbc.gridx = 2;
         gbc.gridy = 2;
         m_content.add(m_addButton, gbc);
+        
+        updateAddButtonValidity();
+    }
+    
+    /** Checks and updates the enabled status of the add button based on the value in the text field. */
+    private void updateAddButtonValidity() {
+        String value = m_addTextField.getText().trim();
+        if (value.isEmpty() || m_model.contains(value)) {
+            m_addButton.setEnabled(false);
+        } else {
+            m_addButton.setEnabled(true);
+        }
     }
 
 

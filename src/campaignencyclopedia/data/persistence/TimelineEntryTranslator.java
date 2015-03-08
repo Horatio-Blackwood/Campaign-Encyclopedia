@@ -1,6 +1,6 @@
 package campaignencyclopedia.data.persistence;
 
-import campaignencyclopedia.data.Season;
+import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
 import java.util.UUID;
 import toolbox.file.persistence.json.JsonObject;
@@ -12,7 +12,7 @@ import toolbox.file.persistence.json.JsonObject;
 public class TimelineEntryTranslator {
 
     private static final String TITLE = "title";
-    private static final String SEASON = "season";
+    private static final String MONTH = "month";
     private static final String YEAR = "year";
     private static final String ID = "id";
     private static final String ASSOCIATED_ENTITY = "associated-entity";
@@ -25,7 +25,7 @@ public class TimelineEntryTranslator {
      */
     public static JsonObject toJsonObject(TimelineEntry entry) {
         JsonObject json = new JsonObject();
-        json.put(SEASON, entry.getSeason().name());
+        json.put(MONTH, MonthTranslator.toJson(entry.getMonth()));
         json.put(YEAR, entry.getYear());
         json.put(ID, entry.getId().toString());
 
@@ -44,6 +44,7 @@ public class TimelineEntryTranslator {
     }
 
     public static TimelineEntry fromJson(String jsonString) {
+        System.out.println(jsonString);
         JsonObject json = new JsonObject(jsonString);
 
         String title = null;
@@ -51,11 +52,15 @@ public class TimelineEntryTranslator {
             title = json.getString(TITLE);
         }
 
-        Season season = Season.valueOf(json.getString(SEASON));
+        JsonObject jsonMonth = null;
+        if (json.has(MONTH)) {
+            jsonMonth = json.getJsonObject(MONTH);
+        }
+        Month month = MonthTranslator.fromJson(jsonMonth);
         int year = json.getInt(YEAR);
         UUID id = UUID.fromString(json.getString(ID));
         UUID associatedEntity = UUID.fromString(json.getString(ASSOCIATED_ENTITY));
 
-        return new TimelineEntry(title, season, year, associatedEntity, id);
+        return new TimelineEntry(title, month, year, associatedEntity, id);
     }
 }

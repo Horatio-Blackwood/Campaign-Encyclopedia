@@ -40,7 +40,7 @@ public class TimelineDialogContent implements DialogContent {
 
     private JList<TimelineEntry> m_eventList;
 
-    private SortedListModel<TimelineEntry> m_listModel;
+    private SortableListModel<TimelineEntry> m_listModel;
 
     /** The data accessor to fetch data for display and update with new data. */
     private CampaignDataManager m_cdm;
@@ -56,7 +56,7 @@ public class TimelineDialogContent implements DialogContent {
             throw new IllegalArgumentException("Parameter 'cdm' cannot be null.");
         }
         m_parent = parent;
-        m_listModel = new SortedListModel<>();
+        m_listModel = new SortableListModel<>();
         m_listModel.addAllElements(entries);
         m_cdm = cdm;
         m_display = display;
@@ -97,7 +97,7 @@ public class TimelineDialogContent implements DialogContent {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                final AddNewTimelineEntryDialogContent dc = new AddNewTimelineEntryDialogContent(m_cdm);
+                final NewTimelineEntryDialogContent dc = new NewTimelineEntryDialogContent(m_cdm);
 
                 Runnable commit = new Runnable() {
                     @Override

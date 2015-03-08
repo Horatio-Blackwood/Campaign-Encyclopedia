@@ -63,7 +63,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     private JList<Entity> m_entityList;
 
     /** The Entity JList Model, for storing the data and filter. */
-    private SortedListModel<Entity> m_entityModel;
+    private SortableListModel<Entity> m_entityModel;
 
     /** The campaign title label. */
     private JLabel m_campaignTitleLabel;
@@ -111,11 +111,8 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** The text Color used on the blue background. */
     public static final Color SILVER = new Color(248, 248, 248);
 
-    /** The current release version number*/
-    public  static final String VERSION = "v1.0 RC2";
-
-    /** The date this version was released. */
-    public static final String RELEASE_DATE = "03.02.2015";
+    /** The current release version number. Date:  03.07.2015 */
+    private  static final String VERSION = "v1.0 RC3";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
@@ -455,7 +452,7 @@ public class MainDisplay implements EditListener, UserDisplay {
      * @return the Entity List component.
      */
     private Component createEntityList() {
-        m_entityModel = new SortedListModel<>();
+        m_entityModel = new SortableListModel<>();
         m_entityModel.addAllElements(m_cdm.getAllEntities());
 
         m_entityList = new JList<>();

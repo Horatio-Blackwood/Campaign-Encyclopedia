@@ -2,7 +2,7 @@ package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.data.Season;
+import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
 import core.display.text.LimitedLengthIntegerDocument;
 import java.awt.Component;
@@ -23,22 +23,22 @@ import toolbox.display.EditListener;
 import toolbox.display.dialog.DialogContent;
 
 /**
- *
+ * The Dialog Content to add Timeline Events to the campaign timeline.
  * @author adam
  */
-public class AddNewTimelineEntryDialogContent implements DialogContent {
+public class NewTimelineEntryDialogContent implements DialogContent {
 
     private final CampaignDataManager m_cdm;
 
     private JPanel m_content;
     private JTextField m_titleField;
-    private JComboBox<Season> m_seasonSelector;
+    private JComboBox<Month> m_monthModel;
     private JTextField m_yearField;
     private JComboBox<Entity> m_entitySelector;
 
     private EditListener m_editListener;
 
-    public AddNewTimelineEntryDialogContent(CampaignDataManager cdm) {
+    public NewTimelineEntryDialogContent(CampaignDataManager cdm) {
         m_cdm = cdm;
         initailize();
     }
@@ -79,18 +79,16 @@ public class AddNewTimelineEntryDialogContent implements DialogContent {
             }
         };
 
-        m_seasonSelector = new JComboBox<>();
-        m_seasonSelector.addItem(Season.UNSET);
-        m_seasonSelector.addItem(Season.SPRING);
-        m_seasonSelector.addItem(Season.SUMMER);
-        m_seasonSelector.addItem(Season.FALL);
-        m_seasonSelector.addItem(Season.WINTER);
-        m_seasonSelector.setSelectedItem(Season.UNSET);
-        m_seasonSelector.addItemListener(itemListener);
-        m_seasonSelector.setRenderer(new ListCellRenderer<Season>(){
+        m_monthModel = new JComboBox<>();
+        for (Month month : m_cdm.getData().getCalendar().getMonths()) {
+            m_monthModel.addItem(month);
+        }
+        m_monthModel.setSelectedIndex(0);
+        m_monthModel.addItemListener(itemListener);
+        m_monthModel.setRenderer(new ListCellRenderer<Month>(){
             @Override
-            public Component getListCellRendererComponent(JList<? extends Season> jlist, Season e, int i, boolean bln, boolean bln1) {
-                return new JLabel(e.getDisplayString());
+            public Component getListCellRendererComponent(JList<? extends Month> jlist, Month e, int i, boolean bln, boolean bln1) {
+                return new JLabel(e.getName());
             }
         });
 
@@ -113,7 +111,7 @@ public class AddNewTimelineEntryDialogContent implements DialogContent {
         m_content.add(title, gbc);
 
         gbc.gridy = 1;
-        JLabel season = new JLabel("Season:");
+        JLabel season = new JLabel("Month:");
         season.setHorizontalAlignment(JLabel.LEFT);
         m_content.add(season, gbc);
 
@@ -137,7 +135,7 @@ public class AddNewTimelineEntryDialogContent implements DialogContent {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0f;
-        m_content.add(m_seasonSelector, gbc);
+        m_content.add(m_monthModel, gbc);
 
         gbc.gridy = 2;
         m_content.add(m_yearField, gbc);
@@ -155,7 +153,7 @@ public class AddNewTimelineEntryDialogContent implements DialogContent {
 
     public TimelineEntry getData() {
         return new TimelineEntry(m_titleField.getText(),
-                                 (Season)m_seasonSelector.getSelectedItem(),
+                                 (Month)m_monthModel.getSelectedItem(),
                                  Integer.valueOf(m_yearField.getText()),
                                  ((Entity)m_entitySelector.getSelectedItem()).getId());
     }

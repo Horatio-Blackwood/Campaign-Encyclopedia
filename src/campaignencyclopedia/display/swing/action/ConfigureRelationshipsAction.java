@@ -1,7 +1,7 @@
 package campaignencyclopedia.display.swing.action;
 
 import campaignencyclopedia.data.RelationshipDataManager;
-import campaignencyclopedia.display.swing.RelationshipConfigurationEditorDialogContent;
+import campaignencyclopedia.display.swing.RelationshipConfigEditorDialogContent;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
@@ -25,7 +25,7 @@ public class ConfigureRelationshipsAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent ae) {
-        final RelationshipConfigurationEditorDialogContent dc = new RelationshipConfigurationEditorDialogContent();
+        final RelationshipConfigEditorDialogContent dc = new RelationshipConfigEditorDialogContent();
         Runnable commitRunnable = new Runnable() {
             @Override
             public void run() {

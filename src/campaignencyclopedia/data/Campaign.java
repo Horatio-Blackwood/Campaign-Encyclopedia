@@ -18,13 +18,17 @@ public class Campaign {
     /** A set of TimelineEntry objects for this Campaign. */
     private final Set<TimelineEntry> m_timelineEntries;
 
+    /** The Calendar for this campaign. */
+    private final CampaignCalendar m_calendar;
+
     /**
      * Constructor.
      * @param name The name of the Campaign.
      * @param entities The Entity data that makes up this Campaign's primary content.
      * @param timelineData the TimelineEntry data for the Campaign.
+     * @param cal the campaign calendar.
      */
-    public Campaign(String name, Set<Entity> entities, Set<TimelineEntry> timelineData) {
+    public Campaign(String name, Set<Entity> entities, Set<TimelineEntry> timelineData, CampaignCalendar cal) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Parameter 'name' must not be null or empty.");
         }
@@ -34,9 +38,13 @@ public class Campaign {
         if (timelineData == null) {
             throw new IllegalArgumentException("Parameter 'timelineData' must not be null.");
         }
+        if (cal == null) {
+            throw new IllegalArgumentException("Parameter 'cal' must not be null.");
+        }
         m_name = name;
         m_entities = new HashSet<>(entities);
         m_timelineEntries = new HashSet<>(timelineData);
+        m_calendar = cal;
     }
 
     /**
@@ -61,5 +69,13 @@ public class Campaign {
      */
     public String getName() {
         return m_name;
+    }
+
+    /**
+     * Returns the calendar for this Campaign.
+     * @return the calendar for this Campaign.
+     */
+    public CampaignCalendar getCalendar() {
+        return m_calendar;
     }
 }

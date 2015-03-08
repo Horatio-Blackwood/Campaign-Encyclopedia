@@ -1,6 +1,7 @@
 package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.DataAccessor;
+import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
 import java.awt.Color;
 import java.awt.Component;
@@ -49,10 +50,10 @@ public class TimelineEventCellRenderer implements ListCellRenderer<TimelineEntry
         }
 
         // Set the year and season
-        if (e.getSeason() == null) {
+        if (Month.UNSPECIFIED.equals(e.getMonth())) {
             seasonYearLabel.setText(String.valueOf(e.getYear()));
         } else {
-            seasonYearLabel.setText(e.getSeason().getDisplayString() + " " + e.getYear());
+            seasonYearLabel.setText(e.getMonth() + " " + e.getYear());
         }
 
         // Set Opacity & Border

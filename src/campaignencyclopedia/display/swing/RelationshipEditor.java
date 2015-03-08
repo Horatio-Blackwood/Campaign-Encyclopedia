@@ -39,7 +39,7 @@ public class RelationshipEditor {
     private final JButton m_deleteButton;
 
     /** The List Model that backs the JList. */
-    private final SortedListModel<Relationship> m_model;
+    private final SortableListModel<Relationship> m_model;
 
     private final DataAccessor m_accessor;
     private final EditListener m_editListener;
@@ -94,7 +94,7 @@ public class RelationshipEditor {
             }
         });
 
-        m_model = new SortedListModel<>();
+        m_model = new SortableListModel<>();
         m_model.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent lde) {

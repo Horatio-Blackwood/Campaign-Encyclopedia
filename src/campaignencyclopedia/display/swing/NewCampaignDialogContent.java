@@ -1,6 +1,7 @@
 package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.Campaign;
+import campaignencyclopedia.data.CampaignCalendar;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.TimelineEntry;
 import java.awt.BorderLayout;
@@ -15,17 +16,21 @@ import toolbox.display.EditListener;
 import toolbox.display.dialog.DialogContent;
 
 /**
- *
+ * A dialog content for creating a new Campaign.
  * @author adam
  */
 public class NewCampaignDialogContent implements DialogContent {
 
+    /** The primary content panel of this DialogContent. */
     private JPanel m_content;
 
+    /** The name editor field. */
     private JTextField m_nameField;
 
+    /** A dialog edit listener. */
     private EditListener m_editListener;
 
+    /** Constructor */
     public NewCampaignDialogContent() {
         initialize();
     }
@@ -35,7 +40,7 @@ public class NewCampaignDialogContent implements DialogContent {
      * @return the new campaign.
      */
     public Campaign getCampaign() {
-        return new Campaign(m_nameField.getText(), new HashSet<Entity>(), new HashSet<TimelineEntry>());
+        return new Campaign(m_nameField.getText(), new HashSet<Entity>(), new HashSet<TimelineEntry>(), new CampaignCalendar());
     }
 
     /** Initialize the display components of this DialogContent. */

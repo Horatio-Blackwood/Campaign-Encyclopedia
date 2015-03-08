@@ -8,8 +8,11 @@ import java.util.UUID;
  */
 public class TimelineEntry implements Comparable<TimelineEntry> {
 
+    /** The title of the entry. */
     private final String m_title;
-    private final Season m_season;
+
+    /** The month (or other sub-year time unit) that this timeline entry occurred. */
+    private final Month m_month;
     private final int m_year;
     private final UUID m_entryId;
     private final UUID m_associatedEntity;
@@ -19,13 +22,13 @@ public class TimelineEntry implements Comparable<TimelineEntry> {
      * or both.
      *
      * @param title the title of the entry, may be empty or null - only if the associated Entry is not null.
-     * @param season the Season, may be null or UNSET.
+     * @param month the Season/Month, may be null or UNSET.
      * @param year the year.
      * @param associatedEntity an Entity associated with this TimelineEntity, if any.  May be null, but only if
      * the title is not empty or null.
      */
-    public TimelineEntry(String title, Season season, int year, UUID associatedEntity) {
-        this(title, season, year, associatedEntity, UUID.randomUUID());
+    public TimelineEntry(String title, Month month, int year, UUID associatedEntity) {
+        this(title, month, year, associatedEntity, UUID.randomUUID());
     }
 
     /**
@@ -33,28 +36,39 @@ public class TimelineEntry implements Comparable<TimelineEntry> {
      * or both.
      *
      * @param title the title of the entry, may be empty or null - only if the associated Entry is not null.
-     * @param season the Season, may be null or UNSET.
+     * @param month the Month, may be null or UNSET.
      * @param year the year.
      * @param associatedEntity an Entity associated with this TimelineEntity.
      * @param entryId the unique ID of this TimelineEntry.
      */
-    public TimelineEntry(String title, Season season, int year, UUID associatedEntity, UUID entryId) {
+    public TimelineEntry(String title, Month month, int year, UUID associatedEntity, UUID entryId) {
         if (associatedEntity == null) {
             throw new IllegalArgumentException("associatedEnttiy must not be null.");
         }
+        if (month == null) {
+            throw new IllegalArgumentException("month must not be null.");
+        }
         m_title = title;
-        m_season = season;
+        m_month = month;
         m_year = year;
         m_associatedEntity = associatedEntity;
         m_entryId = entryId;
     }
 
+    /**
+     * Returns the title of this TimelineEntry.
+     * @return the title of this TimelineEntry.
+     */
     public String getTitle() {
         return m_title;
     }
 
-    public Season getSeason() {
-        return m_season;
+    /**
+     * Returns the Month of this Timeline Entry.
+     * @return the Month of this Timeline Entry.
+     */
+    public Month getMonth() {
+        return m_month;
     }
 
     public int getYear() {
@@ -77,8 +91,7 @@ public class TimelineEntry implements Comparable<TimelineEntry> {
         } else if (m_year < t.getYear()) {
             return -1;
         }
-
-        // If the years are the same, return ordered by season.
-        return(m_season.compareTo(t.getSeason()));
+        
+        return (m_month.compareTo(t.getMonth()));
     }
 }
