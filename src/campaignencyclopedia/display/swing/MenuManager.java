@@ -3,7 +3,7 @@ package campaignencyclopedia.display.swing;
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.display.UserDisplay;
-import campaignencyclopedia.display.swing.action.ConfigureMonthsAction;
+import campaignencyclopedia.display.swing.action.ConfigureCampaignCalendarAction;
 import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;
 import campaignencyclopedia.display.swing.action.DeleteEntityAction;
 import campaignencyclopedia.display.swing.action.ExportCampaignToPdfAction;
@@ -48,8 +48,8 @@ public class MenuManager {
     /** An action for configuring the relationships of the campaign. */
     private final ConfigureRelationshipsAction m_configureRelationships;
 
-    /** An action for configuring the months in this campaign. */
-    private final ConfigureMonthsAction m_configureMonths;
+    /** An action for configuring the calendar in this campaign. */
+    private final ConfigureCampaignCalendarAction m_configureCalendar;
 
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
     private final Frame m_frame;
@@ -81,7 +81,7 @@ public class MenuManager {
 
         m_showTimelineAction = new ShowTimelineAction(m_frame, m_display, cdm);
         m_configureRelationships = new ConfigureRelationshipsAction(m_frame);
-        m_configureMonths = new ConfigureMonthsAction(m_frame, cdm);
+        m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, cdm);
     }
 
 
@@ -137,10 +137,10 @@ public class MenuManager {
         showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
         JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
-        JMenuItem configureMonths = new JMenuItem(m_configureMonths);
+        JMenuItem configureCalendar = new JMenuItem(m_configureCalendar);
 
         dataMenu.add(showTimeline);
-        dataMenu.add(configureMonths);
+        dataMenu.add(configureCalendar);
         dataMenu.add(configureRelationships);
 
         return dataMenu;

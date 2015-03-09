@@ -1,7 +1,7 @@
 package campaignencyclopedia.display.swing.action;
 
 import campaignencyclopedia.data.CampaignDataManager;
-import campaignencyclopedia.display.swing.MonthConfigEditorDialogContent;
+import campaignencyclopedia.display.swing.CampaignCalendarEditorDialogContent;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
@@ -10,10 +10,10 @@ import toolbox.display.dialog.DialogFactory;
 import toolbox.display.dialog.OkCancelCommitManager;
 
 /**
- *
+ * An action for configuring the calendar for this campaign.
  * @author adam
  */
-public class ConfigureMonthsAction extends AbstractAction {
+public class ConfigureCampaignCalendarAction extends AbstractAction {
 
     /** The window to use to center dialogs launched by this action.  */
     private final Frame m_frame;
@@ -21,15 +21,24 @@ public class ConfigureMonthsAction extends AbstractAction {
     /** The campaign data manager to update with new calendar information. */
     private final CampaignDataManager m_cdm;
 
-    public ConfigureMonthsAction(Frame parent, CampaignDataManager cdm) {
-        super("Configure Months...");
+    /**
+     * Creates a new Configure Calendar Action.
+     * @param parent the parent component, a top-level window, used for positioning dialogs launched by this action.
+     * @param cdm the Campaign Data Manager.
+     */
+    public ConfigureCampaignCalendarAction(Frame parent, CampaignDataManager cdm) {
+        super("Configure Calendar...");
+        if (cdm == null) {
+            throw new IllegalArgumentException("Parameter 'cdm' may not be null.");
+        }
         m_frame = parent;
         m_cdm = cdm;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent ae) {
-        final MonthConfigEditorDialogContent dc = new MonthConfigEditorDialogContent(m_cdm.getData().getCalendar());
+        final CampaignCalendarEditorDialogContent dc = new CampaignCalendarEditorDialogContent(m_cdm.getData().getCalendar());
         Runnable commitRunnable = new Runnable() {
             @Override
             public void run() {
@@ -38,6 +47,6 @@ public class ConfigureMonthsAction extends AbstractAction {
             }
         };
         DialogCommitManager dcm = new OkCancelCommitManager(commitRunnable);
-        DialogFactory.buildDialog(m_frame, "Configure Months", true, dc, dcm);
+        DialogFactory.buildDialog(m_frame, "Campaign Calendar Editor", true, dc, dcm);
     }
 }

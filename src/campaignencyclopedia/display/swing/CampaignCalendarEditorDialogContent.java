@@ -33,7 +33,7 @@ import toolbox.display.dialog.DialogContent;
  * A configuration dialog for the campaign calendar (Months).
  * @author adam
  */
-public class MonthConfigEditorDialogContent implements DialogContent {
+public class CampaignCalendarEditorDialogContent implements DialogContent {
 
     private JPanel m_content;
     private JList<String> m_list;
@@ -43,8 +43,13 @@ public class MonthConfigEditorDialogContent implements DialogContent {
     private EditListener m_editListener;
     private JTextField m_addTextField;
     private CampaignCalendar m_cal;
+    private boolean m_dataChanged = false;
 
-    public MonthConfigEditorDialogContent(CampaignCalendar cal) {
+    /**
+     * Creates a new instance of the MonthConfigEditorDialogContent.
+     * @param cal the current Campaign Calendar.  Must not be null.
+     */
+    public CampaignCalendarEditorDialogContent(CampaignCalendar cal) {
         if (cal == null) {
             throw new IllegalArgumentException("Parameter 'cal' cannot be null.");
         }
@@ -52,6 +57,7 @@ public class MonthConfigEditorDialogContent implements DialogContent {
         initialize();
     }
 
+    /** Initializes and lays out this display's components. */
     private void initialize() {
         // INITIALIZE COMPONENTS
         m_content = new JPanel(new GridBagLayout());
@@ -77,6 +83,8 @@ public class MonthConfigEditorDialogContent implements DialogContent {
                             String selected = m_list.getSelectedValue();
                             if (selected != null) {
                                 m_model.removeElement(selected);
+                                m_dataChanged = true;
+                                alertListener();
                             }
                         }
                     });
@@ -91,6 +99,8 @@ public class MonthConfigEditorDialogContent implements DialogContent {
                             if (selected != null) {
                                 m_model.removeElement(selected);
                                 m_model.insertElementAt(selected, index);
+                                m_dataChanged = true;
+                                alertListener();
                             }
                         }
                     });
@@ -102,6 +112,8 @@ public class MonthConfigEditorDialogContent implements DialogContent {
                             if (selected != null) {
                                 m_model.removeElement(selected);
                                 m_model.insertElementAt(selected, index);
+                                m_dataChanged = true;
+                                alertListener();
                             }
                         }
                     });
@@ -145,6 +157,8 @@ public class MonthConfigEditorDialogContent implements DialogContent {
                 if (!relationship.isEmpty()) {
                     m_model.addElement(relationship);
                     m_addTextField.setText("");
+                    m_dataChanged = true;
+                    alertListener();
                 }
             }
         });
@@ -184,15 +198,29 @@ public class MonthConfigEditorDialogContent implements DialogContent {
         updateAddButtonValidity();
     }
 
+    /**  
+     * Updates the add button's enabled status based on the entered value for a new month to add.  If the value 
+     * to add is not valid, disables the button, otherwise, re-enables it.
+     */
     private void updateAddButtonValidity() {
-        if (m_addTextField.getText().trim().isEmpty() ||
-                m_addTextField.getText().trim().toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
+        String value = m_addTextField.getText().trim();
+        // False if:
+        //      - supplied value is empty
+        //      - value is 'Unspecified'
+        //      - value is any existing value.
+        if (value.isEmpty() ||
+                value.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase()) ||
+                m_model.contains(value)) {
             m_addButton.setEnabled(false);
         } else {
             m_addButton.setEnabled(true);
         }
     }
 
+    /**
+     * Returns the CampaignCalendar that is defined by the user in this Dialog.
+     * @return the defined CampaignCalendar.
+     */
     public CampaignCalendar getCalendar() {
         CampaignCalendar cal = new CampaignCalendar();
         List<Month> newCalendar = new ArrayList<>();
@@ -208,23 +236,34 @@ public class MonthConfigEditorDialogContent implements DialogContent {
         return cal;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Component getContent() {
         return m_content;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDialogEditListener(EditListener el) {
         m_editListener = el;
     }
+    
+    /** Alerts the edit listener, (if one exists) that the contents of the dialog have changed. */
+    private void alertListener() {
+        if (m_editListener != null) {
+            m_editListener.edited();
+        }
+    }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isDataCommittable() {
         return true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isCommitPermitted() {
-        return true;
+        return m_dataChanged;
     }
 }
