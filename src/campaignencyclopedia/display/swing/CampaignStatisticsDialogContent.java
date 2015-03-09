@@ -309,7 +309,7 @@ public class CampaignStatisticsDialogContent implements DialogContent {
             
             // Relationships
             cs.secretRelationships += entity.getSecretData().getRelationships().size();
-            cs.relationships += (entity.getPublicData().getRelationships().size() + cs.secretRelationships);
+            cs.relationships += (entity.getPublicData().getRelationships().size() + entity.getSecretData().getRelationships().size());
             
         }
         
