@@ -44,7 +44,6 @@ public class TimelineEntryTranslator {
     }
 
     public static TimelineEntry fromJson(String jsonString) {
-        System.out.println(jsonString);
         JsonObject json = new JsonObject(jsonString);
 
         String title = null;

@@ -65,12 +65,6 @@ public class CampaignCalendar {
      * otherwise or if the supplied name is empty or null.
      */
     public boolean hasMonth(Month month) {
-        System.out.println("Checking if " + month.getName() + " is in this calendar.  Calendar has:  ");
-        for (Month m : m_months) {
-            System.out.println("  - " + m.getName());
-        }
-        System.out.println("Has Month:  " + m_months.contains(month));
-        
         return m_months.contains(month);
     }
 

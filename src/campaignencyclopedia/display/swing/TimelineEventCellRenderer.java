@@ -40,9 +40,6 @@ public class TimelineEventCellRenderer implements ListCellRenderer<TimelineEntry
 
         // Use Associated Entity name if title is empty
         if (e.getTitle() == null || e.getTitle().isEmpty()) {
-            System.out.println(e.getTitle());
-            System.out.println(e.getAssociatedId());
-            System.out.println(m_accessor);
             titleLabel.setText(m_accessor.getEntity(e.getAssociatedId()).getName());
         } else {
             // If a valid title has been entered, use it.

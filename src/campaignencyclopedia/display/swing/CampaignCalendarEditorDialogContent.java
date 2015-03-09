@@ -258,12 +258,12 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
     /** {@inheritDoc} */
     @Override
     public boolean isDataCommittable() {
-        return true;
+        return m_dataChanged;
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isCommitPermitted() {
-        return m_dataChanged;
+        return true;
     }
 }
