@@ -49,11 +49,18 @@ public class TagsEditor {
         });
     }
 
+    /**
+     * Returns the tags for this Tag Editor.
+     * @return the tags displayed in this tag editor.
+     */
     public Set<String> getTags() {
-        String[] tags = m_tagsArea.getText().split(",");
+        String tagText = m_tagsArea.getText().trim();
         Set<String> tagSet = new HashSet<>();
-        for (String tag : tags) {
-            tagSet.add(tag.trim());
+        if (!tagText.isEmpty()) {
+            String[] tags = tagText.split(",");
+            for (String tag : tags) {
+                tagSet.add(tag.trim());
+            }
         }
         return tagSet;
     }

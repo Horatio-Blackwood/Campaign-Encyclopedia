@@ -11,6 +11,7 @@ import campaignencyclopedia.display.swing.action.ExportEntityToPdf;
 import campaignencyclopedia.display.swing.action.NewCampaignAction;
 import campaignencyclopedia.display.swing.action.OpenCampaignAction;
 import campaignencyclopedia.display.swing.action.SaveCampaignAction;
+import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
 import java.awt.Frame;
 import javax.swing.JMenu;
@@ -50,6 +51,8 @@ public class MenuManager {
 
     /** An action for configuring the calendar in this campaign. */
     private final ConfigureCampaignCalendarAction m_configureCalendar;
+    
+    private final ShowCampaignStatisticsAction m_showStats;
 
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
     private final Frame m_frame;
@@ -79,9 +82,10 @@ public class MenuManager {
         m_pdfWithoutSecretsAction = new ExportCampaignToPdfAction(m_frame, m_cdm, "Export to PDF w/o Secrets", false);
         m_exportWithoutSecretsAction = new SaveCampaignAction(m_frame, m_cdm, "Export Campaign w/o Secrets", false);
 
-        m_showTimelineAction = new ShowTimelineAction(m_frame, m_display, cdm);
+        m_showTimelineAction = new ShowTimelineAction(m_frame, m_display, m_cdm);
         m_configureRelationships = new ConfigureRelationshipsAction(m_frame);
-        m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, cdm);
+        m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, m_cdm);
+        m_showStats = new ShowCampaignStatisticsAction(m_frame, m_cdm);
     }
 
 
@@ -116,6 +120,7 @@ public class MenuManager {
         JMenu export = new JMenu("Export");
 
         JMenuItem exportPdfWith = new JMenuItem(m_pdfWithSecretsAction);
+        exportPdfWith.setAccelerator(KeyStroke.getKeyStroke('E', java.awt.event.InputEvent.CTRL_DOWN_MASK));
         JMenuItem exportPdfWithout = new JMenuItem(m_pdfWithoutSecretsAction);
         JMenuItem exportCampaignWithout = new JMenuItem(m_exportWithoutSecretsAction);
 
@@ -137,11 +142,14 @@ public class MenuManager {
         showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
         JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
+        configureRelationships.setAccelerator(KeyStroke.getKeyStroke('R', java.awt.event.InputEvent.CTRL_DOWN_MASK));
         JMenuItem configureCalendar = new JMenuItem(m_configureCalendar);
+        JMenuItem showStats = new JMenuItem(m_showStats);
 
         dataMenu.add(showTimeline);
-        dataMenu.add(configureCalendar);
         dataMenu.add(configureRelationships);
+        dataMenu.add(configureCalendar);
+        dataMenu.add(showStats);
 
         return dataMenu;
     }

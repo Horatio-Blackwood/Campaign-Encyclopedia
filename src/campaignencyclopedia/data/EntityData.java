@@ -16,11 +16,24 @@ public class EntityData {
     private final Set<Relationship> m_relationships;
 
     public EntityData(String description, Set<String> tags, Set<Relationship> relationships) {
+        if (description == null) {
+            throw new IllegalArgumentException("Parameter description must not be null.");
+        }
+        if (tags == null) {
+            throw new IllegalArgumentException("Parameter tags must not be null.");
+        }
+        if (relationships == null) {
+            throw new IllegalArgumentException("Parameter relationships must not be null.");
+        }
         m_tags = new HashSet<>(tags);
         m_description = description;
         m_relationships = relationships;
     }
 
+    /**
+     * Returns the Set of tags for this EntityData.
+     * @return the Set of tags for this EntityData.
+     */
     public Set<String> getTags() {
         return m_tags;
     }
