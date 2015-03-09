@@ -1,6 +1,5 @@
 package campaignencyclopedia.display.swing;
 
-import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.RelationshipDataManager;
 import campaignencyclopedia.data.RelationshipType;
 import java.awt.Component;
@@ -22,7 +21,7 @@ import toolbox.display.EditListener;
 import toolbox.display.dialog.DialogContent;
 
 /**
- *
+ * A dialog content for customizing the relationships in the application.
  * @author adam
  */
 public class RelationshipConfigEditorDialogContent implements DialogContent {
@@ -35,6 +34,7 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
     private JButton m_removeSelectedButton;
     private EditListener m_editListener;
     private JTextField m_addTextField;
+    private boolean m_dataChanged = false;
 
     public RelationshipConfigEditorDialogContent() {
         initialize();
@@ -58,6 +58,8 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
             public void actionPerformed(ActionEvent ae) {
                 m_model.clear();
                 m_model.addAllElements(RelationshipType.getStringList());
+                m_dataChanged = true;
+                alertListener();
             }
         });
         m_removeSelectedButton = new JButton("Remove Selected");
@@ -67,6 +69,8 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
                 String selected = m_list.getSelectedValue();
                 if (selected != null) {
                     m_model.removeElement(selected);
+                    m_dataChanged = true;
+                    alertListener();
                 }
             }
         });
@@ -93,6 +97,8 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
                 if (!relationship.isEmpty()) {
                     m_model.addElement(relationship);
                     m_addTextField.setText("");
+                    m_dataChanged = true;
+                    alertListener();
                 }
             }
         });
@@ -147,26 +153,40 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
         }
     }
 
-
+    /**
+     * Returns the relationship list configured in this Dialog Content.
+     * @return the relationship list configured in this Dialog Content.
+     */
     public List<String> getRelationships() {
         return m_model.getAllElements();
     }
 
+    /** {@inheritDoc} */
     @Override
     public Component getContent() {
         return m_content;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDialogEditListener(EditListener el) {
         m_editListener = el;
     }
-
-    @Override
-    public boolean isDataCommittable() {
-        return true;
+    
+    /** Alerts the edit listener, (if one exists) that the contents of the dialog have changed. */
+    private void alertListener() {
+        if (m_editListener != null) {
+            m_editListener.edited();
+        }
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean isDataCommittable() {
+        return m_dataChanged;
+    }
+
+    /** {@inheritDoc} */
     @Override
     public boolean isCommitPermitted() {
         return true;
