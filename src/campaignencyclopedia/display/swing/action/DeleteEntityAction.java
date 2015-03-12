@@ -16,7 +16,7 @@ import java.util.UUID;
 import javax.swing.AbstractAction;
 
 /**
- *
+ * An action for deleting Entities.
  * @author adam
  */
 public class DeleteEntityAction extends AbstractAction {
@@ -28,6 +28,7 @@ public class DeleteEntityAction extends AbstractAction {
 
     /**
      * Creates a new DeleteEntityAction.
+     * @param parent the parent display to use for positioning any dialogs launched by this display.
      * @param toDelete the Entity to delete.
      * @param cdm the CampaignDataManager to update.
      * @param display the UserDisplay to update.
@@ -94,10 +95,14 @@ public class DeleteEntityAction extends AbstractAction {
                 SaveHelper.autosave(m_parent, m_cdm, updateRequired);
             }
         }).run();
-
-
     }
 
+    /**
+     * Filters the relationships.
+     * @param entity the Entity ID of the entity being deleted.
+     * @param relationships the relationships to check for links to the ID of the Entity being deleted.
+     * @return all relationships that don't link up to the ID of the Entity being deleted.
+     */
     private Set<Relationship> filterRelationships(UUID entity, Set<Relationship> relationships) {
         Set<Relationship> rels = new HashSet<>();
         for (Relationship r : relationships) {

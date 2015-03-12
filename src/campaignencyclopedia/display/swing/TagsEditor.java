@@ -20,16 +20,16 @@ public class TagsEditor {
 
     /** The label for this editor. */
     private final JLabel m_label;
-    
+
     /** Text area where Tags will be displayed. */
     private final JTextArea m_tagsArea;
-    
-    private final EditListener m_editListener;
+
+    private EditListener m_editListener;
 
     public TagsEditor(String title, EditListener editListener) {
         m_label = new JLabel(title);
         m_editListener = editListener;
-        
+
         m_tagsArea = new JTextArea(3, 30);
         m_tagsArea.setWrapStyleWord(true);
         m_tagsArea.setLineWrap(true);
@@ -86,6 +86,10 @@ public class TagsEditor {
 
     public Component getEditorComponent() {
         return m_tagsArea;
+    }
+
+    public void setEditListener(EditListener el) {
+        m_editListener = el;
     }
 
     void clear() {

@@ -18,6 +18,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -25,9 +26,12 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -37,6 +41,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -359,20 +364,25 @@ public class MainDisplay implements EditListener, UserDisplay {
             }
         });
 
-        m_commitEntityButton = new JButton("Save Item");
-        m_commitEntityButton.setEnabled(isEntityContentCommittable());
-        m_commitEntityButton.addActionListener(new ActionListener() {
+        m_commitEntityButton = new JButton();
+        AbstractAction save = new AbstractAction("Save Item") {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 commitDisplayedDataToCdm();
                 // Always includes secret data.
                 SaveHelper.autosave(m_frame, m_cdm, true);
             }
-        });
+        };
+        m_commitEntityButton.setAction(save);
+        m_commitEntityButton.setEnabled(isEntityContentCommittable());
         m_commitEntityButton.setEnabled(false);
+        String saveKey = "Save";
+        InputMap saveInputMap = m_commitEntityButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        saveInputMap.put(KeyStroke.getKeyStroke('S', InputEvent.CTRL_DOWN_MASK), saveKey);
+        m_commitEntityButton.getActionMap().put(saveKey, save);
 
-        m_clearEntityEditorButton = new JButton("Clear");
-        m_clearEntityEditorButton.addActionListener(new ActionListener() {
+        m_clearEntityEditorButton = new JButton();
+        AbstractAction clear = new AbstractAction("Clear") {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 if (!isCurrentDataSaved()) {
@@ -380,11 +390,15 @@ public class MainDisplay implements EditListener, UserDisplay {
                         commitDisplayedDataToCdm();
                     }
                 }
-
                 // Finally, clear the displayed contents.
                 clearDisplayedEntity();
             }
-        });
+        };
+        m_clearEntityEditorButton.setAction(clear);
+        String clearKey = "clearKey";
+        InputMap clearInputMap = m_clearEntityEditorButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        clearInputMap.put(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK), clearKey);
+        m_clearEntityEditorButton.getActionMap().put(clearKey, clear);
 
         m_typeSelector = new JComboBox<>();
         for (EntityType type : EntityType.values()) {

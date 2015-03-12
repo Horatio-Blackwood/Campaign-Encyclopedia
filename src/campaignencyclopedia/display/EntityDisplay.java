@@ -14,14 +14,14 @@ public interface EntityDisplay {
      */
     public UUID getShownEntity();
 
-    /** 
-     * Displays the entity associated with the supplied ID.  If no entity is found, the display is cleared. 
+    /**
+     * Displays the entity associated with the supplied ID.  If no entity is found, the display is cleared.
      * @param entity the ID of the entity to show.
      */
     public void showEntity(UUID entity);
-    
+
 
     /** Clears the entity currently displayed. */
     public void clearDisplayedEntity();
-    
+
 }

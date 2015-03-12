@@ -14,6 +14,7 @@ import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
 import java.awt.Frame;
+import java.awt.event.InputEvent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -51,7 +52,7 @@ public class MenuManager {
 
     /** An action for configuring the calendar in this campaign. */
     private final ConfigureCampaignCalendarAction m_configureCalendar;
-    
+
     private final ShowCampaignStatisticsAction m_showStats;
 
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
@@ -98,11 +99,11 @@ public class MenuManager {
 
         // Create Actions
         JMenuItem newCampaign  = new JMenuItem(m_newAction);
-        newCampaign.setAccelerator(KeyStroke.getKeyStroke('N', java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        newCampaign.setAccelerator(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         JMenuItem openCampaign = new JMenuItem(m_openAction);
-        openCampaign.setAccelerator(KeyStroke.getKeyStroke('O', java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        openCampaign.setAccelerator(KeyStroke.getKeyStroke('O', InputEvent.CTRL_DOWN_MASK));
         JMenuItem saveCampaign = new JMenuItem(m_saveAction);
-        saveCampaign.setAccelerator(KeyStroke.getKeyStroke('S', java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        saveCampaign.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 
         // Add Actions
         campaignMenu.add(newCampaign);
@@ -120,7 +121,7 @@ public class MenuManager {
         JMenu export = new JMenu("Export");
 
         JMenuItem exportPdfWith = new JMenuItem(m_pdfWithSecretsAction);
-        exportPdfWith.setAccelerator(KeyStroke.getKeyStroke('E', java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        exportPdfWith.setAccelerator(KeyStroke.getKeyStroke('E', InputEvent.CTRL_DOWN_MASK));
         JMenuItem exportPdfWithout = new JMenuItem(m_pdfWithoutSecretsAction);
         JMenuItem exportCampaignWithout = new JMenuItem(m_exportWithoutSecretsAction);
 
@@ -139,10 +140,9 @@ public class MenuManager {
         JMenu dataMenu = new JMenu("Data");
 
         JMenuItem showTimeline = new JMenuItem(m_showTimelineAction);
-        showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', java.awt.event.InputEvent.CTRL_DOWN_MASK));
-
+        showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', InputEvent.CTRL_DOWN_MASK));
         JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
-        configureRelationships.setAccelerator(KeyStroke.getKeyStroke('R', java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        configureRelationships.setAccelerator(KeyStroke.getKeyStroke('R', InputEvent.CTRL_DOWN_MASK));
         JMenuItem configureCalendar = new JMenuItem(m_configureCalendar);
         JMenuItem showStats = new JMenuItem(m_showStats);
 

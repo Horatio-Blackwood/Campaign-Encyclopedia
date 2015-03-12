@@ -3,7 +3,6 @@ package campaignencyclopedia.display.swing.action;
 import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.persistence.CampaignTranslator;
-import campaignencyclopedia.display.swing.MainDisplay;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +66,7 @@ public class SaveHelper {
             try {
                 FileTools.writeFile(cdm.getSaveFileName(), CampaignTranslator.toJson(campaign, true));
             } catch (IOException ex) {
-                Logger.getLogger(MainDisplay.class.getName()).log(Level.SEVERE, "Failed to save campaign.", ex);
+                Logger.getLogger(SaveHelper.class.getName()).log(Level.SEVERE, "Failed to save campaign.", ex);
             }
         } else {
             SaveHelper.save(frame, cdm, includeSecrets);
