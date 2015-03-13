@@ -196,6 +196,13 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
         m_content.add(m_restoreDefaultsButton, gbc);
 
         updateAddButtonValidity();
+        
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                m_addTextField.requestFocus();
+            }            
+        });
     }
 
     /**  

@@ -15,6 +15,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import toolbox.display.EditListener;
@@ -141,6 +142,12 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
         m_content.add(m_addButton, gbc);
         
         updateAddButtonValidity();
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                m_addTextField.requestFocus();
+            }            
+        });
     }
     
     /** Checks and updates the enabled status of the add button based on the value in the text field. */

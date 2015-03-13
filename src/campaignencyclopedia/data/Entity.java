@@ -1,6 +1,5 @@
 package campaignencyclopedia.data;
 
-import campaignencyclopedia.data.persistence.EntityTranslator;
 import java.util.Objects;
 import java.util.UUID;
 

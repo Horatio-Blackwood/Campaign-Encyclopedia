@@ -245,6 +245,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         if (!isCurrentDataSaved()){
             if (isSaveDesired()) {
                 commitDisplayedDataToCdm();
+                SaveHelper.autosave(m_frame, m_cdm, true);
             }
         }
         if (entity != null) {
@@ -392,10 +393,11 @@ public class MainDisplay implements EditListener, UserDisplay {
                 }
                 // Finally, clear the displayed contents.
                 clearDisplayedEntity();
+                m_entityNameField.requestFocus();
             }
         };
         m_clearEntityEditorButton.setAction(clear);
-        m_clearEntityEditorButton.setToolTipText("Clears the displayed data, (CTRL+N)");
+        m_clearEntityEditorButton.setToolTipText("Clear data for a new item, (CTRL+N)");
         String clearKey = "clearKey";
         InputMap clearInputMap = m_clearEntityEditorButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         clearInputMap.put(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK), clearKey);

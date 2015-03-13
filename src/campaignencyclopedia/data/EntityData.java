@@ -65,6 +65,7 @@ public class EntityData {
         }
         final EntityData other = (EntityData) obj;
         if (!Objects.equals(this.m_tags, other.m_tags)) {
+            System.out.println("edtags");
             return false;
         }
         if (!Objects.equals(this.m_description, other.m_description)) {
