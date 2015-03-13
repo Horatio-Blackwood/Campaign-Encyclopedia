@@ -374,7 +374,7 @@ public class MainDisplay implements EditListener, UserDisplay {
             }
         };
         m_commitEntityButton.setAction(save);
-        m_commitEntityButton.setEnabled(isEntityContentCommittable());
+        m_commitEntityButton.setToolTipText("Save this item, (CTRL+S)");
         m_commitEntityButton.setEnabled(false);
         String saveKey = "Save";
         InputMap saveInputMap = m_commitEntityButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -395,6 +395,7 @@ public class MainDisplay implements EditListener, UserDisplay {
             }
         };
         m_clearEntityEditorButton.setAction(clear);
+        m_clearEntityEditorButton.setToolTipText("Clears the displayed data, (CTRL+N)");
         String clearKey = "clearKey";
         InputMap clearInputMap = m_clearEntityEditorButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         clearInputMap.put(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK), clearKey);
