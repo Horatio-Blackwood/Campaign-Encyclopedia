@@ -26,10 +26,19 @@ import plainpdf.PdfFont;
  */
 public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
 
+    /** The parent window for positioning dialogs launched by this action. */
     private final Frame m_parent;
 
+    /** A Logger. */
     private static final Logger LOGGER = Logger.getLogger(ExportCampaignToPdfAction.class.getName());
 
+    /**
+     * Creates an action for exporting the PDF action.
+     * @param parent The parent window for positioning dialogs launched by this action.
+     * @param cdm a campaign data manager to get the data from.
+     * @param name the name of the action to display.
+     * @param includeSecrets truer if secrets should be included.
+     */
     public ExportCampaignToPdfAction(Frame parent, CampaignDataManager cdm, String name, boolean includeSecrets) {
         super(parent, cdm, name, includeSecrets);
         m_parent = parent;
@@ -64,22 +73,23 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
                 if (entity.isSecret() && !m_includeSecrets) {
                     continue;
                 }
-                pdf.renderLine(entity.getName(), PdfFont.HELVETICA_BOLD, SECTION);
-
+                pdf.insertPageBreak();
                 // Entity Type
                 if (entity.isSecret()) {
+                    pdf.renderLine(entity.getName(), PdfFont.HELVETICA_BOLD, SECTION, Color.RED);
                     pdf.renderLine("Secret " + entity.getType().getDisplayString(), Color.RED);
                 } else {
+                    pdf.renderLine(entity.getName(), PdfFont.HELVETICA_BOLD, SECTION);
                     pdf.renderLine(entity.getType().getDisplayString());
                 }
                 pdf.insertBlankLine();
 
                 // Public & Secret Data
                 EntityData publicData = entity.getPublicData();
-                processEntityData(publicData, pdf, "Public Data");
+                processEntityData(publicData, pdf, false);
                 if (m_includeSecrets) {
                     EntityData secretData = entity.getSecretData();
-                    processEntityData(secretData, pdf, "Secret Data");
+                    processEntityData(secretData, pdf, true);
                 }
                 pdf.insertBlankLine();
             }

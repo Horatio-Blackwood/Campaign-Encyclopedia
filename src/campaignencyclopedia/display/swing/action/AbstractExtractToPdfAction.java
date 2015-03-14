@@ -4,6 +4,7 @@ import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
+import java.awt.Color;
 import java.awt.Frame;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,10 +21,18 @@ import plainpdf.PdfFont;
  */
 public abstract class AbstractExtractToPdfAction extends AbstractAction {
 
+    /** Title font size. */
     protected static final int TITLE = 38;
+
+    /** The section header (Entity Name) font size. */
     protected static final int SECTION = 24;
+
+    /** Entity subsection header font size.. */
     protected static final int SUB_SECTION = 14;
+
+    /** The paragraph body font size. */
     protected static final int NORMAL = 12;
+
     protected final CampaignDataManager m_cdm;
     protected final Frame m_parent;
     protected final boolean m_includeSecrets;
@@ -42,32 +51,47 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
      * Renders the supplied EntityData to the supplied PDF document.
      * @param data the data to render.
      * @param pdf the PDF to render the data into.
+     * @param secret true if this is secret data.
      * @throws IOException if an error occurs generating the PDF.
      */
-    protected void processEntityData(EntityData data, Pdf pdf, String header) throws IOException {
+    protected void processEntityData(EntityData data, Pdf pdf, boolean secret) throws IOException {
         String description = data.getDescription().trim();
         Set<Relationship> rels = data.getRelationships();
         if (description.isEmpty() && rels.isEmpty()) {
             return;
         }
         // Render header
-        pdf.renderLine(header, PdfFont.HELVETICA_BOLD, SUB_SECTION);
+        if (secret) {
+            pdf.renderLine("Secret Data", PdfFont.HELVETICA_BOLD, SUB_SECTION, Color.RED);
+        } else {
+            pdf.renderLine("Public Data", PdfFont.HELVETICA_BOLD, SUB_SECTION);
+        }
+
 
         // Render description, if one exists
         if (!description.isEmpty()) {
-            pdf.renderLine("Description", PdfFont.HELVETICA_BOLD, NORMAL);
+            if (secret) {
+                pdf.renderLine("Secret Description", PdfFont.HELVETICA_BOLD, NORMAL, Color.RED);
+            } else {
+                pdf.renderLine("Description", PdfFont.HELVETICA_BOLD, NORMAL);
+            }
             String[] paragraphs = description.split("\n");
             for (String par : paragraphs) {
                 pdf.renderLine(par);
             }
+            pdf.insertBlankLine();
         }
 
         // Render relationships, if any exists
-        pdf.insertBlankLine();
         if (!data.getRelationships().isEmpty()) {
             List<Relationship> relationships = new ArrayList<>(rels);
             Collections.sort(relationships);
-            pdf.renderLine("Relationships", PdfFont.HELVETICA_BOLD, NORMAL);
+            if (secret) {
+                pdf.renderLine("Secret Relationships", PdfFont.HELVETICA_BOLD, NORMAL, Color.RED);
+            } else {
+                pdf.renderLine("Relationships", PdfFont.HELVETICA_BOLD, NORMAL);
+            }
+
             for (Relationship rel : relationships) {
                 Entity linkedTo = m_cdm.getEntity(rel.getIdOfRelation());
                 if (linkedTo.isSecret() && !m_includeSecrets) {
@@ -75,7 +99,6 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
                 } else {
                     pdf.renderLine(rel.getRelationship() + " " + linkedTo.getName());
                 }
-
             }
         }
         pdf.insertBlankLine();
