@@ -142,8 +142,8 @@ public class MenuManager {
      * Returns the Data menu.
      * @return the Data menu for the application.
      */
-    public JMenu getDataMenu() {
-        JMenu dataMenu = new JMenu("Data");
+    public JMenu getCampaignMenu() {
+        JMenu dataMenu = new JMenu("Campaign");
 
         JMenuItem editName = new JMenuItem(m_editName);
         JMenuItem showTimeline = new JMenuItem(m_showTimelineAction);

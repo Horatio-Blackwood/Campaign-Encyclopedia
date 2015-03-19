@@ -22,7 +22,7 @@ public class EditCampaignNameAction extends AbstractAction {
     private UserDisplay m_display;
 
     public EditCampaignNameAction(Frame parent, CampaignDataManager cdm, UserDisplay display) {
-        super("Edit Campaign Name...");
+        super("Edit Name...");
         if (cdm == null) {
             throw new IllegalArgumentException("Parameter 'cdm' can't be null.");
         }
