@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import toolbox.file.FileTools;
+import toolbox.file.persistence.json.JsonException;
 
 /**
  * A class that helps to support saving data.
@@ -63,6 +64,8 @@ public class SaveHelper {
                         cdm.setFileName(path);
                     } catch (IOException ex) {
                         LOGGER.log(Level.SEVERE, "Failed to save the campaign.", ex);
+                    } catch (JsonException jex) {
+                        LOGGER.log(Level.SEVERE, "Failed to translate the campaign.", jex);
                     }
                 }
             }).start();
@@ -84,7 +87,9 @@ public class SaveHelper {
             try {
                 FileTools.writeFile(cdm.getSaveFileName(), CampaignTranslator.toJson(campaign, true));
             } catch (IOException ex) {
-                Logger.getLogger(SaveHelper.class.getName()).log(Level.SEVERE, "Failed to save campaign.", ex);
+                LOGGER.log(Level.SEVERE, "Failed to save campaign.", ex);
+            } catch (JsonException jex) {
+                LOGGER.log(Level.SEVERE, "Failed to translate the campaign.", jex);
             }
         } else {
             SaveHelper.save(frame, cdm, includeSecrets);

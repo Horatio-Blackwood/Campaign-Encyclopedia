@@ -27,7 +27,7 @@ public class RelationshipDataManager {
             try {
                 RELATIONSHIPS.addAll(FileTools.readAllLinesFromFile(RELATIONSHIP_FILE));
             } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Failed to read relationships from " + RELATIONSHIP_FILE + ".", ex);
+                LOGGER.log(Level.WARNING, "Failed to read relationships from '" + RELATIONSHIP_FILE + "'.", ex);
             }
         } else {
             LOGGER.config("No relationship file detected, using default relationship list.");
@@ -103,7 +103,7 @@ public class RelationshipDataManager {
         try {
             FileTools.writeFile(RELATIONSHIP_FILE, RELATIONSHIPS);
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to write relationships from " + RELATIONSHIP_FILE + ".", ex);
+            LOGGER.log(Level.SEVERE, "Failed to write relationships to file '" + RELATIONSHIP_FILE + "'.", ex);
         }
     }
 }
