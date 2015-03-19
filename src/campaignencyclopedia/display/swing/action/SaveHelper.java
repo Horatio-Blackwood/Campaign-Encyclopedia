@@ -21,6 +21,15 @@ public class SaveHelper {
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(SaveHelper.class.getName());
 
+    /**
+     * A helper function to save the campaign.  If a filename has been specified, this method simply uses it,
+     * otherwise, 'save' will be called which will prompt the user for a destination file name.
+     *
+     * @param parent the top-level window to position dialogs launched by this static method when called.
+     * @param cdm the CampaignDataManager to get the data to save from.
+     * @param includeSecrets true if secrets should be included in the saved file resulting from this call, false if
+     * they should not be included.
+     */
     public static void save(final Frame parent, final CampaignDataManager cdm, final boolean includeSecrets) {
         final JFileChooser chooser = new JFileChooser("./campaigns");
         chooser.addChoosableFileFilter(new FileFilter() {
@@ -53,13 +62,22 @@ public class SaveHelper {
                         FileTools.writeFile(path, campaign);
                         cdm.setFileName(path);
                     } catch (IOException ex) {
-                        LOGGER.log(Level.WARNING, "Failed to save the campaign.", ex);
+                        LOGGER.log(Level.SEVERE, "Failed to save the campaign.", ex);
                     }
                 }
             }).start();
         }
     }
 
+    /**
+     * A helper function to autosave the campaign.  If a filename has been specified, this method simply uses it,
+     * otherwise, 'save' will be called which will prompt the user for a destination file name.
+     *
+     * @param frame the top-level window to position dialogs launched by this static method when called.
+     * @param cdm the CampaignDataManager to get the data to save from.
+     * @param includeSecrets true if secrets should be included in the saved file resulting from this call, false if
+     * they should not be included.
+     */
     public static void autosave(Frame frame, CampaignDataManager cdm, boolean includeSecrets) {
         if (cdm.getSaveFileName() != null) {
             Campaign campaign = cdm.getData();

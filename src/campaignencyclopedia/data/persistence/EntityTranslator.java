@@ -14,10 +14,19 @@ import toolbox.file.persistence.json.JsonObject;
  */
 public class EntityTranslator {
 
+    /** The JSON tag for the name of the entity. */
     private static final String NAME = "name";
+
+    /** The JSON tag for the Type of Entity. */
     private static final String TYPE = "type";
+
+    /** The JSON tag for the unique identifier of the Entity. */
     private static final String ID = "id";
+
+    /** The JSON tag for the secret data of the entity. */
     private static final String SECRET_DATA = "secret-data";
+
+    /** The JSON tag for the public data of the entity. */
     private static final String PUBLIC_DATA = "public-data";
     private static final String IS_SECRET = "is-secret";
 

@@ -6,6 +6,7 @@ import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.ConfigureCampaignCalendarAction;
 import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;
 import campaignencyclopedia.display.swing.action.DeleteEntityAction;
+import campaignencyclopedia.display.swing.action.EditCampaignNameAction;
 import campaignencyclopedia.display.swing.action.ExportCampaignToPdfAction;
 import campaignencyclopedia.display.swing.action.ExportEntityToPdf;
 import campaignencyclopedia.display.swing.action.NewCampaignAction;
@@ -53,7 +54,11 @@ public class MenuManager {
     /** An action for configuring the calendar in this campaign. */
     private final ConfigureCampaignCalendarAction m_configureCalendar;
 
+    /** The action for showing the statistics dialog. */
     private final ShowCampaignStatisticsAction m_showStats;
+
+    /** The action for editing the name of the Campaign. */
+    private final EditCampaignNameAction m_editName;
 
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
     private final Frame m_frame;
@@ -83,6 +88,7 @@ public class MenuManager {
         m_pdfWithoutSecretsAction = new ExportCampaignToPdfAction(m_frame, m_cdm, "Export to PDF w/o Secrets", false);
         m_exportWithoutSecretsAction = new SaveCampaignAction(m_frame, m_cdm, "Export Campaign w/o Secrets", false);
 
+        m_editName = new EditCampaignNameAction(m_frame, m_cdm, m_display);
         m_showTimelineAction = new ShowTimelineAction(m_frame, m_display, m_cdm);
         m_configureRelationships = new ConfigureRelationshipsAction(m_frame);
         m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, m_cdm);
@@ -139,6 +145,7 @@ public class MenuManager {
     public JMenu getDataMenu() {
         JMenu dataMenu = new JMenu("Data");
 
+        JMenuItem editName = new JMenuItem(m_editName);
         JMenuItem showTimeline = new JMenuItem(m_showTimelineAction);
         showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', InputEvent.CTRL_DOWN_MASK));
         JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
@@ -146,6 +153,7 @@ public class MenuManager {
         JMenuItem configureCalendar = new JMenuItem(m_configureCalendar);
         JMenuItem showStats = new JMenuItem(m_showStats);
 
+        dataMenu.add(editName);
         dataMenu.add(showTimeline);
         dataMenu.add(configureRelationships);
         dataMenu.add(configureCalendar);

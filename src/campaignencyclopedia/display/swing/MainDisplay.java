@@ -221,6 +221,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** {@inheritDoc} */
     @Override
     public void displayCampaign(Campaign campaign) {
+        clearAllData();
         m_campaignTitleLabel.setText(campaign.getName());
         m_entityModel.addAllElements(campaign.getEntities());
     }
