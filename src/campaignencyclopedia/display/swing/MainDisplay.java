@@ -116,8 +116,8 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** The text Color used on the blue background. */
     public static final Color SILVER = new Color(248, 248, 248);
 
-    /** The current release version number. Date:  03.07.2015 */
-    private  static final String VERSION = "v1.0 RC4";
+    /** The current release version number. Date:  03.18.2015 */
+    private  static final String VERSION = "v1.0.0";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());

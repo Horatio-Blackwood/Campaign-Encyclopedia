@@ -28,6 +28,8 @@ public class EntityTranslator {
 
     /** The JSON tag for the public data of the entity. */
     private static final String PUBLIC_DATA = "public-data";
+
+    /** The JSON tag for the is or is not secret state of this Entity. */
     private static final String IS_SECRET = "is-secret";
 
     /**
