@@ -293,7 +293,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         // Create and set main menu
         m_menuManager = new MenuManager(m_frame, this, m_cdm);
         JMenuBar menuBar = new JMenuBar();
-        menuBar.add(m_menuManager.getCampaignMenu());
+        menuBar.add(m_menuManager.getFileMenu());
         menuBar.add(m_menuManager.getExportMenu());
         menuBar.add(m_menuManager.getDataMenu());
         m_frame.setJMenuBar(menuBar);

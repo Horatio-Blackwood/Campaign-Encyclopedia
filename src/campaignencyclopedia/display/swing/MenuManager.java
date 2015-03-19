@@ -100,8 +100,8 @@ public class MenuManager {
      * Returns the campaign menu for the application menu bar.
      * @return the campaign menu for the application menu bar.
      */
-    public JMenu getCampaignMenu() {
-        JMenu campaignMenu = new JMenu("Campaign");
+    public JMenu getFileMenu() {
+        JMenu campaignMenu = new JMenu("File");
 
         // Create Actions
         JMenuItem newCampaign  = new JMenuItem(m_newAction);
