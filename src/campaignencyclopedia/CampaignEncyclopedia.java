@@ -44,7 +44,6 @@ public class CampaignEncyclopedia {
             LOGGER.log(Level.FINER, "Unsupported Look and Feel provided by UIManager.", ex);
         }
 
-        LOGGER.severe("Test");
         CampaignDataManager cdm = new CampaignDataManager();
         MainDisplay display = new MainDisplay(cdm);
         display.launch();
