@@ -9,3 +9,4 @@
 /campaigns/*
 /current_release/tmp/*
 /config/*
+/logs/*
