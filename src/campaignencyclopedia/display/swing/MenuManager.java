@@ -15,9 +15,12 @@ import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
@@ -60,6 +63,12 @@ public class MenuManager {
     /** The action for editing the name of the Campaign. */
     private final EditCampaignNameAction m_editName;
 
+    /** The action for showing the application help. */
+    private final AbstractAction m_helpAction;
+
+    /** The action for showing the 'about' display. */
+    private final AbstractAction m_aboutAction;
+
     /** A reference to the application's top level window, used for centering any dialogs launched by actions in this manager. */
     private final Frame m_frame;
 
@@ -93,6 +102,38 @@ public class MenuManager {
         m_configureRelationships = new ConfigureRelationshipsAction(m_frame);
         m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, m_cdm);
         m_showStats = new ShowCampaignStatisticsAction(m_frame, m_cdm);
+
+        // Help Menu
+        m_helpAction = new AbstractAction("Help") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                String msg = "Notes:\n" +
+                             "    After all data transactions (deletes, adds etc), your campaign is auto-saved.\n" +
+                             "    Search only searches on item name, item type and tags.\n\n" +
+                             "Hotkeys:\n" +
+                             "    CTRL+E - Export the campaign to PDF, with secret data\n" +
+                             "    CTRL+F - put the cursor in the quick search box\n" +
+                             "    CTRL+N - Clear the currently displayed item to create a new one\n" +
+                             "    CTRL+SHIFT+N - create a new camapign\n" +
+                             "    CTRL+O - Open a new campaign file\n" +
+                             "    CTRL+R - Open the relationships editor\n" +
+                             "    CTRL+S - Save the changes to the currently displayed entity\n" +
+                             "    CTRL+SHIFT+S - Save the campaign with a new filename\n" +
+                             "    CTRL+T - Open the timeline editor";
+                JOptionPane.showMessageDialog(m_frame, msg, "Help", JOptionPane.PLAIN_MESSAGE);
+            }
+        };
+
+        m_aboutAction = new AbstractAction("About") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                String msg = "Campaign Encyclopedia " + MainDisplay.VERSION + "\n" +
+                             "Author:  Adam Anderson\n" +
+                             "Release Date:  " + MainDisplay.DATE + "\n" +
+                             "Home Page:  https://github.com/Horatio-Blackwood/Campaign-Encyclopedia";
+                JOptionPane.showMessageDialog(m_frame, msg, "About Campaign Encyclopedia", JOptionPane.PLAIN_MESSAGE);
+            }
+        };
     }
 
 
@@ -160,6 +201,18 @@ public class MenuManager {
         dataMenu.add(showStats);
 
         return dataMenu;
+    }
+
+    public JMenu getHelpMenu() {
+        JMenu helpMenu = new JMenu("Help");
+
+        JMenuItem helpItem = new JMenuItem(m_helpAction);
+        JMenuItem aboutItem = new JMenuItem(m_aboutAction);
+
+        helpMenu.add(helpItem);
+        helpMenu.add(aboutItem);
+
+        return helpMenu;
     }
 
     /**

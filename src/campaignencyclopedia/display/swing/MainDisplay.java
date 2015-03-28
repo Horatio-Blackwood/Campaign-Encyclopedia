@@ -119,8 +119,11 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** The text Color used on the blue background. */
     public static final Color SILVER = new Color(248, 248, 248);
 
-    /** The current release version number. Date:  03.18.2015 */
-    private  static final String VERSION = "v1.0.0";
+    /** The current release version number. */
+    public static final String VERSION = "v1.0.1";
+
+    /** The date this release was created. */
+    public static final String DATE = "March 28, 2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
@@ -315,6 +318,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         menuBar.add(m_menuManager.getFileMenu());
         menuBar.add(m_menuManager.getExportMenu());
         menuBar.add(m_menuManager.getCampaignMenu());
+        menuBar.add(m_menuManager.getHelpMenu());
 
         // Add Components to the Frame.
         m_frame.setJMenuBar(menuBar);
@@ -592,6 +596,24 @@ public class MainDisplay implements EditListener, UserDisplay {
             public void changedUpdate(DocumentEvent de) {
                 updateEntityFilter();
             }
+        });
+        m_searchBox.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+            }
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyChar() == KeyEvent.VK_ENTER) {
+                    if (m_entityModel.getSize() > 0) {
+                        m_entityList.setSelectedIndex(0);
+                    }
+                    m_entityList.requestFocus();
+                }
+            }
+            @Override
+            public void keyReleased(KeyEvent ke) {
+            }
+
         });
 
         // Layout
