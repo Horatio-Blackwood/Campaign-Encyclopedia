@@ -20,24 +20,39 @@ public class EntityDataDisplay {
 
     /** A DataAccessor for requesting or supplying data to/from the rest of the system. */
     private final DataAccessor m_dataAccessor;
-    
+
     /** A display for showing Entities.*/
     private final EntityDisplay m_display;
-    
+
     /** A listener for edits made to this display. */
     private final EditListener m_editListener;
-    
-    
-    
+
+    /** True if this entity data display is to be for secret data. */
     private final boolean m_isSecret;
 
+    /** The primary content component of this display. */
     private JPanel m_content;
+
+    /** An editor for this entity data's relationships. */
     private RelationshipEditor m_relationships;
+
+    /** An editor for this entity data's tags. */
     private TagsEditor m_tags;
+
+    /** An editor for this entity data's description. */
     private DescriptionEditor m_description;
+
+    /** The parent frame this display is shown in, used to center dialogs launched over this display. */
     private final Frame m_parent;
 
-
+    /**
+     * Creates a new EntityDataDisplay.
+     * @param parent parent frame this display is shown in, used to center dialogs launched over this display.
+     * @param accessor a data accessor for fetching data as needed.
+     * @param display an EntityDislay.  Used to show displays when requested by actions.
+     * @param editListener an edit listener.
+     * @param isSecret true if the entity data displayed on this instance is secrete entity data.
+     */
     public EntityDataDisplay(Frame parent, DataAccessor accessor, EntityDisplay display, EditListener editListener, boolean isSecret) {
         m_parent = parent;
         m_dataAccessor = accessor;
@@ -60,7 +75,7 @@ public class EntityDataDisplay {
     public Component getDisplayComponent() {
         return m_content;
     }
-    
+
     void clear() {
         m_description.clear();
         m_tags.clear();
@@ -111,14 +126,14 @@ public class EntityDataDisplay {
         gbc.gridwidth = 2;
         JScrollPane relationShipScrollPane = new JScrollPane(m_relationships.getEditorComponent());
         m_content.add(relationShipScrollPane, gbc);
-        
+
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 1.0f;
         gbc.weighty = 0.0f;
         gbc.gridwidth = 1;
         m_content.add(m_relationships.getAddRelationshipButton(), gbc);
-        
+
         gbc.gridx = 1;
         gbc.gridy = 4;
         m_content.add(m_relationships.getDeleteRelationshipButton(), gbc);

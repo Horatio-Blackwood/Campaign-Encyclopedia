@@ -154,7 +154,7 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
             }
         }
     }
-    
+
     /**
      * Returns true if this model already contains the supplied element.
      * @param element the Element to check.
