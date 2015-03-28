@@ -284,7 +284,8 @@ public class MainDisplay implements EditListener, UserDisplay {
         m_frame.setLayout(new BorderLayout());
         m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Creating the containing panel.
+        // Creating the containing panel (have to use this instead of just the JFrame
+        // directly in order to support the input map since JFrame is not a JComponent.
         JPanel panel = new JPanel(new BorderLayout());
 
         // Set up input map action for putting the cursor in the find text box.
@@ -498,17 +499,33 @@ public class MainDisplay implements EditListener, UserDisplay {
         m_entityList = new JList<>();
         m_entityList.setCellRenderer(new EntityListCellRenderer());
         m_entityList.setModel(m_entityModel);
-        m_entityList.addMouseListener(new MouseAdapter() {
+
+        // Define reusable showEntity runnable (for both key and mouse listeners)
+        final Runnable showEntity = new Runnable() {
             @Override
-            public void mousePressed(MouseEvent me) {
+            public void run() {
                 int selectedIndex = m_entityList.getSelectedIndex();
-                if (me.getClickCount() > 1 && selectedIndex >= 0) {
+                if (selectedIndex >= 0) {
                     Entity selected = m_entityModel.getElementAt(selectedIndex);
                     if (selected != null) {
                         displayEntity(selected);
                     }
+                }
+            }
+        };
+
+        // Setup Mouse Listener
+        m_entityList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent me) {
+                m_entityList.setSelectedIndex(m_entityList.locationToIndex(me.getPoint()));
+                int selectedIndex = m_entityList.getSelectedIndex();
+                if (me.getClickCount() > 1 && selectedIndex >= 0) {
+                    showEntity.run();
                 } else if (SwingUtilities.isRightMouseButton(me)) {
+
                     if (selectedIndex >= 0) {
+
                         Entity selectedEntity =  m_entityModel.getElementAt(selectedIndex);
                         JPopupMenu contextMenu = m_menuManager.getEntityContextMenu(selectedEntity);
                         contextMenu.show(m_entityList, me.getX(), me.getY());
@@ -516,6 +533,24 @@ public class MainDisplay implements EditListener, UserDisplay {
                 }
             }
 
+        });
+
+        // Setup Key Listener
+        m_entityList.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                // Ignored
+            }
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyChar() == KeyEvent.VK_ENTER) {
+                    showEntity.run();
+                }
+            }
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                // Ignored
+            }
         });
         return new JScrollPane(m_entityList);
     }
