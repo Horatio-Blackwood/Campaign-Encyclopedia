@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 
 /**
  * An action for deleting Entities.
@@ -49,50 +50,55 @@ public class DeleteEntityAction extends AbstractAction {
             @Override
             public void run() {
                 UUID id = m_entity.getId();
+                Entity toDelete = m_cdm.getEntity(id);
                 List<Entity> toBeUpdated = new ArrayList<>();
                 boolean updateRequired = false;
 
-                // Remove from backing data structures and display
-                m_cdm.removeEntity(id);
-                m_display.removeEntity(m_entity);
-                if (m_display.getShownEntity() != null && m_display.getShownEntity().equals(id)) {
-                    m_display.clearDisplayedEntity();
-                }
-
-                // Figure out what other Entities are affected by this removal (those which have Relationships with
-                // the one being removed, for instance).
-                for (Entity entity : m_cdm.getAllEntities()) {
-                    updateRequired = false;
-                    EntityData publicData = entity.getPublicData();
-                    EntityData secretData = entity.getSecretData();
-
-                    Set<Relationship> pubRels = publicData.getRelationships();
-                    Set<Relationship> secRels = secretData.getRelationships();
-
-                    Set<Relationship> filteredPublicRels = filterRelationships(id, pubRels);
-                    Set<Relationship> filteredSecretRels = filterRelationships(id, secRels);
-
-                    // Check Public Data
-                    if (pubRels.size() != filteredPublicRels.size()) {
-                        updateRequired = true;
-                    }
-                    if (secRels.size() != filteredSecretRels.size()) {
-                        updateRequired = true;
+                String message = "Are you sure you want to delete '" + toDelete.getName() + "' from your campaign?";
+                int result = JOptionPane.showConfirmDialog(m_parent, message, "Are you sure?", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    // Remove from backing data structures and display
+                    m_cdm.removeEntity(id);
+                    m_display.removeEntity(m_entity);
+                    if (m_display.getShownEntity() != null && m_display.getShownEntity().equals(id)) {
+                        m_display.clearDisplayedEntity();
                     }
 
-                    if (updateRequired) {
-                        EntityData newPublic = new EntityDataBuilder(publicData).relationships(filteredPublicRels).build();
-                        EntityData newSecret = new EntityDataBuilder(secretData).relationships(filteredSecretRels).build();
-                        toBeUpdated.add(new Entity(entity.getId(), entity.getName(), entity.getType(), newPublic, newSecret, entity.isSecret()));
+                    // Figure out what other Entities are affected by this removal (those which have Relationships with
+                    // the one being removed, for instance).
+                    for (Entity entity : m_cdm.getAllEntities()) {
+                        updateRequired = false;
+                        EntityData publicData = entity.getPublicData();
+                        EntityData secretData = entity.getSecretData();
+
+                        Set<Relationship> pubRels = publicData.getRelationships();
+                        Set<Relationship> secRels = secretData.getRelationships();
+
+                        Set<Relationship> filteredPublicRels = filterRelationships(id, pubRels);
+                        Set<Relationship> filteredSecretRels = filterRelationships(id, secRels);
+
+                        // Check Public Data
+                        if (pubRels.size() != filteredPublicRels.size()) {
+                            updateRequired = true;
+                        }
+                        if (secRels.size() != filteredSecretRels.size()) {
+                            updateRequired = true;
+                        }
+
+                        if (updateRequired) {
+                            EntityData newPublic = new EntityDataBuilder(publicData).relationships(filteredPublicRels).build();
+                            EntityData newSecret = new EntityDataBuilder(secretData).relationships(filteredSecretRels).build();
+                            toBeUpdated.add(new Entity(entity.getId(), entity.getName(), entity.getType(), newPublic, newSecret, entity.isSecret()));
+                        }
                     }
-                }
 
-                for (Entity entity : toBeUpdated) {
-                    m_cdm.addOrUpdateEntity(entity);
-                }
+                    for (Entity entity : toBeUpdated) {
+                        m_cdm.addOrUpdateEntity(entity);
+                    }
 
-                // Then Save.
-                SaveHelper.autosave(m_parent, m_cdm, updateRequired);
+                    // Then Save.
+                    SaveHelper.autosave(m_parent, m_cdm, updateRequired);
+                }
             }
         }).run();
     }
