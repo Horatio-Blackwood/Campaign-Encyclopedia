@@ -19,11 +19,14 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -275,20 +278,35 @@ public class MainDisplay implements EditListener, UserDisplay {
         try {
             m_frame.setIconImage(ImageIO.read(new File("./assets/app.png")));
         } catch (IOException ex) {
-            LOGGER.config("Unable to load application icon.");
+            LOGGER.log(Level.CONFIG, "Unable to load application icon.", ex);
         }
         m_frame.setPreferredSize(m_windowSize);
         m_frame.setLayout(new BorderLayout());
         m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        // Creating the containing panel.
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Set up input map action for putting the cursor in the find text box.
+        String findHotKey = "find";
+        AbstractAction find = new AbstractAction(findHotKey) {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                m_searchBox.requestFocus();
+            }
+        };
+        InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        inputMap.put(KeyStroke.getKeyStroke('F', InputEvent.CTRL_DOWN_MASK), findHotKey);
+        panel.getActionMap().put(findHotKey, find);
+
         // Add Title/Search bar
-        m_frame.add(createTitleBar(), BorderLayout.NORTH);
+        panel.add(createTitleBar(), BorderLayout.NORTH);
 
         // Add entity editor
-        m_frame.add(createEntityDisplay(), BorderLayout.CENTER);
+        panel.add(createEntityDisplay(), BorderLayout.CENTER);
 
         // Add entity list.
-        m_frame.add(createEntityList(), BorderLayout.WEST);
+        panel.add(createEntityList(), BorderLayout.WEST);
 
         // Create and set main menu
         m_menuManager = new MenuManager(m_frame, this, m_cdm);
@@ -296,7 +314,11 @@ public class MainDisplay implements EditListener, UserDisplay {
         menuBar.add(m_menuManager.getFileMenu());
         menuBar.add(m_menuManager.getExportMenu());
         menuBar.add(m_menuManager.getCampaignMenu());
+
+        // Add Components to the Frame.
         m_frame.setJMenuBar(menuBar);
+        m_frame.add(panel, BorderLayout.CENTER);
+
     }
 
     /** Returns true if the currently displayed data is saved. */
