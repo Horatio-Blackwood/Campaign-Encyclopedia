@@ -10,6 +10,8 @@ The details of your NPCs, PCs, places, legendary artifacts and secret organizati
 ## Customizable Calendar and Timeline
 Campaign Encyclopedia enables you to record a timeline for your world that shows key events throughout history as well as define your calendar as you've imagined it for your game world.
 
-
 ## Export
 Once written your campaign can be exported to both PDF and the native campaign file format (JSON) with or without any secret data.  This allows your players to use your world information as a reference.
+
+## Screenshot
+![Screenshot](/screenshot.png)
