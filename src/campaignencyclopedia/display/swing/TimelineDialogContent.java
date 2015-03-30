@@ -1,6 +1,7 @@
 package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.CampaignDataManager;
+import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import campaignencyclopedia.display.swing.action.SaveHelper;
@@ -12,6 +13,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
@@ -69,15 +72,45 @@ public class TimelineDialogContent implements DialogContent {
         m_eventList = new JList<>();
         m_eventList.setModel(m_listModel);
         m_eventList.setCellRenderer(new TimelineEventCellRenderer(m_cdm));
+        
+        // Define reusable showEntity runnable (for both key and mouse listeners)
+        final Runnable showEntity = new Runnable() {
+            @Override
+            public void run() {
+                TimelineEntry selected = m_listModel.getElementAt(m_eventList.getSelectedIndex());
+                if (selected != null) {
+                    m_display.showEntity(selected.getAssociatedId());
+                }
+            }
+        };
+        
         m_eventList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent me) {
-                if (me.getClickCount() > 1) {
-                    TimelineEntry selected = m_listModel.getElementAt(m_eventList.getSelectedIndex());
-                    if (selected != null) {
-                        m_display.showEntity(selected.getAssociatedId());
-                    }
+                m_eventList.setSelectedIndex(m_eventList.locationToIndex(me.getPoint()));
+                int selectedIndex = m_eventList.getSelectedIndex();
+                if (me.getClickCount() > 1 && selectedIndex >= 0) {
+                    showEntity.run();
                 }
+            }
+        });
+        
+        // Setup Key Listener
+        m_eventList.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                // Ignored
+            }
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                int selectedIndex = m_eventList.getSelectedIndex();
+                if (ke.getKeyChar() == KeyEvent.VK_ENTER && selectedIndex >= 0) {
+                    showEntity.run();
+                }
+            }
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                // Ignored
             }
         });
 

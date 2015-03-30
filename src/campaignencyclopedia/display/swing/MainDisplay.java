@@ -529,7 +529,6 @@ public class MainDisplay implements EditListener, UserDisplay {
                 } else if (SwingUtilities.isRightMouseButton(me)) {
 
                     if (selectedIndex >= 0) {
-
                         Entity selectedEntity =  m_entityModel.getElementAt(selectedIndex);
                         JPopupMenu contextMenu = m_menuManager.getEntityContextMenu(selectedEntity);
                         contextMenu.show(m_entityList, me.getX(), me.getY());
@@ -547,7 +546,8 @@ public class MainDisplay implements EditListener, UserDisplay {
             }
             @Override
             public void keyPressed(KeyEvent ke) {
-                if (ke.getKeyChar() == KeyEvent.VK_ENTER) {
+                int selectedIndex = m_entityList.getSelectedIndex();
+                if (ke.getKeyChar() == KeyEvent.VK_ENTER && selectedIndex >= 0) {
                     showEntity.run();
                 }
             }
