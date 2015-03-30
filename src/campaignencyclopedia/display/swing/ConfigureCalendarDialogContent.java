@@ -10,6 +10,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -88,47 +90,51 @@ public class ConfigureCalendarDialogContent implements DialogContent {
         m_list.addMouseListener(new MouseAdapter(){
             @Override
             public void mousePressed(MouseEvent me) {
-                String month = m_list.getSelectedValue();
-                if (SwingUtilities.isRightMouseButton(me) && !month.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
-                    JPopupMenu menu = new JPopupMenu();
-                    menu.add(new AbstractAction("Remove") {
-                        @Override
-                        public void actionPerformed(ActionEvent ae) {
-                            String selected = m_list.getSelectedValue();
-                            if (selected != null) {
-                                m_model.removeElement(selected);
-                                alertListener();
+                m_list.setSelectedIndex(m_list.locationToIndex(me.getPoint()));
+                int selectedIndex = m_list.getSelectedIndex();
+                if (SwingUtilities.isRightMouseButton(me) && selectedIndex >= 0) {
+                    String month = m_list.getSelectedValue();
+                    if (SwingUtilities.isRightMouseButton(me) && !month.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
+                        JPopupMenu menu = new JPopupMenu();
+                        menu.add(new AbstractAction("Remove") {
+                            @Override
+                            public void actionPerformed(ActionEvent ae) {
+                                String selected = m_list.getSelectedValue();
+                                if (selected != null) {
+                                    m_model.removeElement(selected);
+                                    alertListener();
+                                }
                             }
-                        }
-                    });
-                    menu.add(new AbstractAction("Move Up") {
-                        @Override
-                        public void actionPerformed(ActionEvent ae) {
-                            int index = m_list.getSelectedIndex();
-                            String selected = m_list.getSelectedValue();
-                            if (index > 0) {
-                                index = index - 1;
+                        });
+                        menu.add(new AbstractAction("Move Up") {
+                            @Override
+                            public void actionPerformed(ActionEvent ae) {
+                                int index = m_list.getSelectedIndex();
+                                String selected = m_list.getSelectedValue();
+                                if (index > 0) {
+                                    index = index - 1;
+                                }
+                                if (selected != null) {
+                                    m_model.removeElement(selected);
+                                    m_model.insertElementAt(selected, index);
+                                    alertListener();
+                                }
                             }
-                            if (selected != null) {
-                                m_model.removeElement(selected);
-                                m_model.insertElementAt(selected, index);
-                                alertListener();
+                        });
+                        menu.add(new AbstractAction("Move Down") {
+                            @Override
+                            public void actionPerformed(ActionEvent ae) {
+                                int index = m_list.getSelectedIndex() + 1;
+                                String selected = m_list.getSelectedValue();
+                                if (selected != null) {
+                                    m_model.removeElement(selected);
+                                    m_model.insertElementAt(selected, index);
+                                    alertListener();
+                                }
                             }
-                        }
-                    });
-                    menu.add(new AbstractAction("Move Down") {
-                        @Override
-                        public void actionPerformed(ActionEvent ae) {
-                            int index = m_list.getSelectedIndex() + 1;
-                            String selected = m_list.getSelectedValue();
-                            if (selected != null) {
-                                m_model.removeElement(selected);
-                                m_model.insertElementAt(selected, index);
-                                alertListener();
-                            }
-                        }
-                    });
-                    menu.show(m_list, me.getX(), me.getY());
+                        });
+                        menu.show(m_list, me.getX(), me.getY());
+                    }
                 }
             }
         });
@@ -145,7 +151,37 @@ public class ConfigureCalendarDialogContent implements DialogContent {
                 }
             }
         });
+        
+        // Text Field
         m_addTextField = new JTextField(15);
+        final Runnable addRunnable = new Runnable() {
+            @Override
+            public void run() {
+                String month = m_addTextField.getText().trim();
+                if (!month.isEmpty()) {
+                    m_model.addElement(month);
+                    m_addTextField.setText("");
+                    alertListener();
+                    m_addTextField.requestFocus();
+                }
+            }
+        };
+        m_addTextField.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                // Ignored
+            }
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyChar() == KeyEvent.VK_ENTER) {
+                    addRunnable.run();
+                }
+            }
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                // Ignored
+            }
+        });
         m_addTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent de) {
@@ -160,16 +196,13 @@ public class ConfigureCalendarDialogContent implements DialogContent {
                 updateAddButtonValidity();
             }
         });
+        
+        // Add Button
         m_addButton = new JButton("Add");
         m_addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                String relationship = m_addTextField.getText().trim();
-                if (!relationship.isEmpty()) {
-                    m_model.addElement(relationship);
-                    m_addTextField.setText("");
-                    alertListener();
-                }
+                addRunnable.run();
             }
         });
 
