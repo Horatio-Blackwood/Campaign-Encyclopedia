@@ -9,6 +9,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JList;
@@ -37,6 +41,7 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
     private JTextField m_addTextField;
     private boolean m_dataChanged = false;
 
+    /** Constructor. */
     public RelationshipConfigEditorDialogContent() {
         initialize();
     }
@@ -75,7 +80,38 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
                 }
             }
         });
+        
+        // Add Text Field
         m_addTextField = new JTextField(15);
+        final Runnable addRunnable = new Runnable() {
+            @Override
+            public void run() {
+                String relationship = m_addTextField.getText().trim();
+                if (!relationship.isEmpty()) {
+                    m_model.addElement(relationship);
+                    m_addTextField.setText("");
+                    m_dataChanged = true;
+                    alertListener();
+                    m_addTextField.requestFocus();
+                }
+            }
+        };
+        m_addTextField.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                // Ignored
+            }
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyChar() == KeyEvent.VK_ENTER) {
+                    addRunnable.run();
+                }
+            }
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                // Ignored
+            }
+        });
         m_addTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent de) {
@@ -90,17 +126,13 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
                 updateAddButtonValidity();
             }
         });
+        
+        // Add Button
         m_addButton = new JButton("Add");
         m_addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                String relationship = m_addTextField.getText().trim();
-                if (!relationship.isEmpty()) {
-                    m_model.addElement(relationship);
-                    m_addTextField.setText("");
-                    m_dataChanged = true;
-                    alertListener();
-                }
+                addRunnable.run();
             }
         });
 
@@ -190,7 +222,11 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
     /** {@inheritDoc} */
     @Override
     public boolean isDataCommittable() {
-        return m_dataChanged;
+        List<String> displayed = new ArrayList<>(m_model.getAllElements());
+        List<String> original = new ArrayList<>(RelationshipDataManager.getRelationships());
+        Collections.sort(displayed);
+        Collections.sort(original);
+        return !displayed.equals(original);
     }
 
     /** {@inheritDoc} */
