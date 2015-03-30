@@ -31,21 +31,36 @@ import toolbox.display.dialog.DialogContent;
  */
 public class RelationshipConfigEditorDialogContent implements DialogContent {
 
+    /** The primary component of this dialog content. */
     private JPanel m_content;
+    
+    /** JList to display the Relationships. */
     private JList<String> m_list;
+    
+    /** The data model to store the data for the JList in. */
     private SortableListModel<String> m_model;
+    
+    /** The add button. */
     private JButton m_addButton;
+    
+    /** The Restore defaults button. */
     private JButton m_restoreDefaultsButton;
+    
+    /** The remove selected defaults button. */
     private JButton m_removeSelectedButton;
+    
+    /** The edit listener for this dialog content. */
     private EditListener m_editListener;
+    
+    /** The JTextField for adding new relationships. */
     private JTextField m_addTextField;
-    private boolean m_dataChanged = false;
 
     /** Constructor. */
     public RelationshipConfigEditorDialogContent() {
         initialize();
     }
 
+    /** Initializes the components of this display. */
     private void initialize() {
         // INITIALIZE COMPONENTS
         m_content = new JPanel(new GridBagLayout());
@@ -64,7 +79,6 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
             public void actionPerformed(ActionEvent ae) {
                 m_model.clear();
                 m_model.addAllElements(RelationshipType.getStringList());
-                m_dataChanged = true;
                 alertListener();
             }
         });
@@ -75,7 +89,6 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
                 String selected = m_list.getSelectedValue();
                 if (selected != null) {
                     m_model.removeElement(selected);
-                    m_dataChanged = true;
                     alertListener();
                 }
             }
@@ -90,7 +103,6 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
                 if (!relationship.isEmpty()) {
                     m_model.addElement(relationship);
                     m_addTextField.setText("");
-                    m_dataChanged = true;
                     alertListener();
                     m_addTextField.requestFocus();
                 }
