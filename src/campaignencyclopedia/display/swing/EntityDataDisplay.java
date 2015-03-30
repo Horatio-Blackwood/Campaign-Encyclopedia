@@ -34,7 +34,7 @@ public class EntityDataDisplay {
     private JPanel m_content;
 
     /** An editor for this entity data's relationships. */
-    private RelationshipEditor m_relationships;
+    private EntityRelationshipEditor m_relationships;
 
     /** An editor for this entity data's tags. */
     private TagsEditor m_tags;
@@ -88,11 +88,11 @@ public class EntityDataDisplay {
         if (m_isSecret) {
             m_description = new DescriptionEditor("Secret Description", m_editListener);
             m_tags = new TagsEditor("Secret Tags", m_editListener);
-            m_relationships = new RelationshipEditor(m_parent, m_dataAccessor, m_display, "Secret Relationships", m_editListener);
+            m_relationships = new EntityRelationshipEditor(m_parent, m_dataAccessor, m_display, "Secret Relationships", m_editListener);
         } else {
             m_description = new DescriptionEditor("Description", m_editListener);
             m_tags = new TagsEditor("Tags", m_editListener);
-            m_relationships = new RelationshipEditor(m_parent, m_dataAccessor, m_display, "Relationships", m_editListener);
+            m_relationships = new EntityRelationshipEditor(m_parent, m_dataAccessor, m_display, "Relationships", m_editListener);
         }
 
         // Layout display

@@ -24,12 +24,14 @@ import toolbox.display.dialog.DialogFactory;
 import toolbox.display.dialog.OkCancelCommitManager;
 
 /**
- *
+ * An editor for applying relationship to Entities.
  * @author adam
  */
-public class RelationshipEditor {
+public class EntityRelationshipEditor {
     /** The title label of this editor. */
     private final JLabel m_label;
+    
+    /** Display for relationships associated with a given Entity. */
     private final JList<Relationship> m_list;
 
     /** The Add Relationship button. */
@@ -47,7 +49,15 @@ public class RelationshipEditor {
 
     private Frame m_parent;
 
-    public RelationshipEditor(Frame parent, DataAccessor accessor, EntityDisplay display, String title, EditListener editListener) {
+    /**
+     * Creates a new instance of EntityRelationshipEditor.
+     * @param parent a parent Frame to center dialogs launched by one of the buttons of this display.
+     * @param accessor a data accessor for fetching required information for relationship editing.
+     * @param display an EntityDisplay for showing entities if the user chooses to traverse one of the relationships.
+     * @param title the title to display for this Relationship Editor.
+     * @param editListener an edit listener to alert of changes made to this editor.
+     */
+    public EntityRelationshipEditor(Frame parent, DataAccessor accessor, EntityDisplay display, String title, EditListener editListener) {
         m_accessor = accessor;
         m_editListener = editListener;
         m_entityDisplay = display;
