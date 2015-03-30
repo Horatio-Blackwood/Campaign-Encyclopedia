@@ -33,23 +33,37 @@ import toolbox.display.dialog.DialogContent;
  * A configuration dialog for the campaign calendar (Months).
  * @author adam
  */
-public class CampaignCalendarEditorDialogContent implements DialogContent {
+public class ConfigureCalendarDialogContent implements DialogContent {
 
+    /** The primary content panel of this dialog. */
     private JPanel m_content;
+    
+    /** The display component for showing the calendar months as presently constituted. */
     private JList<String> m_list;
+    
+    /** A model for the JList. */
     private DefaultListModel<String> m_model;
+    
+    /** A button to add a month to the calendar. */
     private JButton m_addButton;
+    
+    /** A button to restore the default calendar. */
     private JButton m_restoreDefaultsButton;
+    
+    /** The dialog content's edit listener. */
     private EditListener m_editListener;
+    
+    /** The add text field for creating a new month. */
     private JTextField m_addTextField;
+    
+    /** The campaign calendar currently set on the campaign. */
     private CampaignCalendar m_cal;
-    private boolean m_dataChanged = false;
 
     /**
      * Creates a new instance of the MonthConfigEditorDialogContent.
      * @param cal the current Campaign Calendar.  Must not be null.
      */
-    public CampaignCalendarEditorDialogContent(CampaignCalendar cal) {
+    public ConfigureCalendarDialogContent(CampaignCalendar cal) {
         if (cal == null) {
             throw new IllegalArgumentException("Parameter 'cal' cannot be null.");
         }
@@ -83,7 +97,6 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
                             String selected = m_list.getSelectedValue();
                             if (selected != null) {
                                 m_model.removeElement(selected);
-                                m_dataChanged = true;
                                 alertListener();
                             }
                         }
@@ -99,7 +112,6 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
                             if (selected != null) {
                                 m_model.removeElement(selected);
                                 m_model.insertElementAt(selected, index);
-                                m_dataChanged = true;
                                 alertListener();
                             }
                         }
@@ -112,7 +124,6 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
                             if (selected != null) {
                                 m_model.removeElement(selected);
                                 m_model.insertElementAt(selected, index);
-                                m_dataChanged = true;
                                 alertListener();
                             }
                         }
@@ -157,7 +168,6 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
                 if (!relationship.isEmpty()) {
                     m_model.addElement(relationship);
                     m_addTextField.setText("");
-                    m_dataChanged = true;
                     alertListener();
                 }
             }
@@ -265,7 +275,8 @@ public class CampaignCalendarEditorDialogContent implements DialogContent {
     /** {@inheritDoc} */
     @Override
     public boolean isDataCommittable() {
-        return m_dataChanged;
+        CampaignCalendar newCal = getCalendar();
+        return !m_cal.equals(newCal);
     }
 
     /** {@inheritDoc} */

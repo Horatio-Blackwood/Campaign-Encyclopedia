@@ -1,7 +1,7 @@
 package campaignencyclopedia.display.swing.action;
 
 import campaignencyclopedia.data.CampaignDataManager;
-import campaignencyclopedia.display.swing.CampaignCalendarEditorDialogContent;
+import campaignencyclopedia.display.swing.ConfigureCalendarDialogContent;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
@@ -38,7 +38,7 @@ public class ConfigureCampaignCalendarAction extends AbstractAction {
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent ae) {
-        final CampaignCalendarEditorDialogContent dc = new CampaignCalendarEditorDialogContent(m_cdm.getData().getCalendar());
+        final ConfigureCalendarDialogContent dc = new ConfigureCalendarDialogContent(m_cdm.getData().getCalendar());
         Runnable commitRunnable = new Runnable() {
             @Override
             public void run() {

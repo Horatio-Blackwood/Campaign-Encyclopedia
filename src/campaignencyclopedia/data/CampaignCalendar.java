@@ -3,6 +3,7 @@ package campaignencyclopedia.data;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -81,4 +82,30 @@ public class CampaignCalendar {
         m_months.add(Month.UNSPECIFIED);
         m_months.addAll(months);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 47 * hash + Objects.hashCode(this.m_months);
+        return hash;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CampaignCalendar other = (CampaignCalendar) obj;
+        if (!Objects.equals(this.m_months, other.m_months)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 }
