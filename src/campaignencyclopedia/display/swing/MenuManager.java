@@ -14,9 +14,11 @@ import campaignencyclopedia.display.swing.action.OpenCampaignAction;
 import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
+import campaignencyclopedia.display.swing.orbital.OrbitalEntityViewer;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -220,9 +222,16 @@ public class MenuManager {
      * @param entity the Entity to build the context menu for.
      * @return the Entity context menu for the supplied entity.
      */
-    public JPopupMenu getEntityContextMenu(Entity entity) {
+    public JPopupMenu getEntityContextMenu(final Entity entity) {
         JPopupMenu menu = new JPopupMenu();
 
+        menu.add(new AbstractAction("Launch Orbital Viewer") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                OrbitalEntityViewer viewer = new OrbitalEntityViewer(m_display, m_cdm, entity.getId());
+                viewer.launch();
+            }
+        });
         menu.add(new DeleteEntityAction(m_frame, entity, m_cdm, m_display));
         menu.add(new ExportEntityToPdf(m_frame, entity, m_cdm, "Export to PDF w/Secrets", true));
         if (!entity.isSecret()) {
