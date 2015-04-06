@@ -8,19 +8,24 @@ import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +35,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JComponent;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import traer.physics.Particle;
 import traer.physics.ParticleSystem;
 import traer.physics.Spring;
@@ -39,7 +46,7 @@ import traer.physics.Vector3D;
  *
  * @author adam
  */
-public class DynamicOrbitalEntityCanvas extends JComponent {
+public class DynamicOrbitalEntityCanvas extends JComponent implements Scrollable {
     /** The color to render places in. */
     private static final Color PLACE_COLOR = new Color(64, 160, 64);
 
@@ -60,10 +67,10 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
 
     private static final Color LINE_COLOR = new Color(84, 84, 84);
 
-    private static final int DOT_LINE_LENGTH = 175;
+    private static final int DOT_LINE_LENGTH = 200;
     private static final int CIRCLE_RADIUS = 20;
     private static final int PAD = 4;
-    private static final int BIG_PAD = 15;
+    private static final int SCROLL_PAD = 100;
     
     private static final Font PRIMARY_ENTITY_FONT = new Font("Arial", Font.PLAIN, 14);
     
@@ -72,9 +79,6 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
     private static final Shape BACK_BUTTON = new Rectangle2D.Double(0, 0, 40, 20);
     private static final Shape FWD_BUTTON = new Rectangle2D.Double(40, 0, 40, 20);
 
-    // Current Data (should be smarter than this)
-    // The path is the navigation history of how the user got to the current screen, and is navigable via mouse clicks.
-    private NavigationPath m_path;
 
     // Clickable Points
     // here should be some sort of map of locations on this canvas that you can click and navigate, and a mouse listener
@@ -95,9 +99,21 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
     private long m_previousUpdateTime;
     
     private ParticleSystem m_particleSystem;
+    private float m_gravity = 0.0f;
+    private float m_drag = 10.0f;
+    private float m_repulsiveForce = -1000;
+    private float m_minRepulsiveDistance = 30;
+    private float m_springStrength = 0.3f;
+    private float m_springDampening = 0.4f;
+    
     private Particle m_currentParticle = null;
     
     private final Random m_rand = new Random();
+
+    private final int m_maxUnitIncrement = 5;
+    private float m_verticalScrollTranslation = 0.0f;
+    private float m_horizontalScrollTranslation = 0.0f;
+    private float m_scaleFactor = 1.0f;
 
     
     /**
@@ -115,13 +131,12 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
         }
         m_accessor = accessor;
         m_display = display;
-        m_path = new NavigationPath(initialId);
         
         m_renderingConfigMap = new HashMap<>();
         
         
         //Initialize physics
-        m_particleSystem = new ParticleSystem(0.0f, 2.5f);
+        m_particleSystem = new ParticleSystem(m_gravity, m_drag);
         m_particleSystem.setIntegrator(ParticleSystem.RUNGE_KUTTA);
         
         initializeEntities();
@@ -134,6 +149,7 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
                 long currentTime = System.currentTimeMillis();
                 update(currentTime - m_previousUpdateTime);
                 m_previousUpdateTime = currentTime;
+                revalidate();
                 repaint();
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
@@ -147,7 +163,7 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
         
         //Entities
         for (Entity e : allEntities) {
-            Particle p = createParticle(300 + m_rand.nextInt(100), 200 + m_rand.nextInt(100));
+            Particle p = createParticle(200 + m_rand.nextInt(200), 200 + m_rand.nextInt(100));
             
             int r = getDotRadius();
             RenderingConfig rc = new RenderingConfig();
@@ -165,15 +181,22 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
             
             for (Relationship r : relationships) {
                 Particle a = m_renderingConfigMap.get(e.getId()).particle;
+                RenderingConfig otherRc = m_renderingConfigMap.get(r.getIdOfRelation());
+                if (otherRc == null) {
+                    //Error, relationship is to a nonexistant Entity
+                    System.out.println("Error, relationship on: " + e.getId() + "is to a nonexistant Entity: " + r.getIdOfRelation());
+                    continue;
+                }
                 Particle b = m_renderingConfigMap.get(r.getIdOfRelation()).particle;
                 
-                m_particleSystem.makeSpring(a, b, 0.3f, 0.2f, getDotLineLength());
+                m_particleSystem.makeSpring(a, b, m_springStrength, m_springDampening, getDotLineLength());
             }
         }
     }
 
     
     private void update(long dt) {
+//        System.out.println("Scale: " + m_scaleFactor);
         m_particleSystem.tick();
     }
 
@@ -183,11 +206,19 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
 
         // Rendering stuff
         Graphics2D g2 = (Graphics2D)g;
+        g2.setColor(Color.LIGHT_GRAY);
+        g2.fillRect(0, 0, getWidth(), getHeight());
+
+        
+        //Translate by scroll amount
+        g2.scale(m_scaleFactor, m_scaleFactor);
+        g2.translate(m_horizontalScrollTranslation, m_verticalScrollTranslation);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         FontMetrics orignalFontMetrics = g2.getFontMetrics();
         Font originalFont = g2.getFont();
         Font boldFont = originalFont.deriveFont(Font.BOLD);
         
+        g2.drawRect(0, 0, getWidth(), getHeight());
         g2.setColor(Color.BLACK);
         //Draw Springs
         for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
@@ -195,24 +226,24 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
             drawSpring(s, g2);
         }
         
-        
+        //Draw entities
         for (UUID id : m_renderingConfigMap.keySet()) {
             RenderingConfig rc = m_renderingConfigMap.get(id);
             drawRenderingConfig(rc, g2);
         }
 
+
     }
     
     private Particle createParticle(int x, int y) {
-        Particle newParticle = m_particleSystem.makeParticle(5, x, y, 0);
+        Particle newParticle = m_particleSystem.makeParticle(20, x, y, 0);
         
         for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
             Particle p = m_particleSystem.getParticle(i);
             if (p.equals(newParticle)) {
-                System.out.println("Skipping self");
                 continue;
             }
-            m_particleSystem.makeAttraction(p, newParticle, -200, 10);
+            m_particleSystem.makeAttraction(p, newParticle, m_repulsiveForce, m_minRepulsiveDistance);
         }
         
         return newParticle;
@@ -297,7 +328,9 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
             @Override
             public void mousePressed(MouseEvent me) {
                 Point click = me.getPoint();
-                Vector3D clickVector = new Vector3D(click.x, click.y, 0);
+                Vector3D clickVector = new Vector3D((click.x / m_scaleFactor - m_horizontalScrollTranslation),
+                                                    (click.y / m_scaleFactor - m_verticalScrollTranslation),
+                                                    0);
                 int r = getDotRadius();
                 int r2 = r*r;
                 Particle clickedParticle = null;
@@ -307,7 +340,6 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
                     
                     if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
                         clickedParticle = p;
-                        System.out.println("Clicked Particle: " + clickedParticle);
                         break;
                     }
                 }
@@ -355,19 +387,98 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
             @Override
             public void mouseDragged(MouseEvent me) {
                 if (m_currentParticle != null) {
-                    m_currentParticle.position().set(me.getX(), me.getY(), 0);
+                    m_currentParticle.position().set((me.getX() / m_scaleFactor) - m_horizontalScrollTranslation,
+                                                     (me.getY() / m_scaleFactor) - m_verticalScrollTranslation,
+                                                     0);
                 }
             }
         });
+        addMouseWheelListener(new MouseAdapter() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent mwe) {
+                if ((mwe.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK)) == InputEvent.SHIFT_DOWN_MASK) {
+                    m_scaleFactor += mwe.getPreciseWheelRotation() / 100.0f;
+                }
+            }
+        });
+        
     }
 
-    /** A data bag for holding the locations calculated for rendering data. */
-    private class RenderingConfig {
-        private String text;
-        private Shape dot;
-        private Color color;
-        private Particle particle;
+    @Override
+    public Dimension getPreferredSize() {
+        int furthestLeft = 0;
+        int furthestRight = 0;
+        int furthestTop = 0;
+        int furthestBottom = 0;
+        
+        for (RenderingConfig rc : m_renderingConfigMap.values()) {
+            if (rc.particle.position().x() < furthestLeft) {
+                furthestLeft = (int)rc.particle.position().x();
+            } else if (rc.particle.position().x() > furthestRight) {
+                furthestRight = (int)rc.particle.position().x();
+            }
+            if (rc.particle.position().y() < furthestTop) {
+                furthestTop = (int)rc.particle.position().y();
+            } else if (rc.particle.position().y() > furthestBottom) {
+                furthestBottom = (int)rc.particle.position().y();
+            }
+        }
+        
+        m_verticalScrollTranslation = (-furthestTop + SCROLL_PAD);
+        m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
+        
+        float horizontalGraphSpan = (furthestRight - furthestLeft);
+        float verticalGraphSpan = (furthestBottom - furthestTop);
+        
+        int xDim = (int)((horizontalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
+        int yDim = (int)((verticalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
+        return new Dimension(xDim, yDim);
     }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+        //Get the current position.
+        int currentPosition = 0;
+        if (orientation == SwingConstants.HORIZONTAL) {
+            currentPosition = visibleRect.x;
+        } else {
+            currentPosition = visibleRect.y;
+        }
+
+        //Return the number of pixels between currentPosition
+        //and the nearest tick mark in the indicated direction.
+        if (direction < 0) {
+            int newPosition = currentPosition - (currentPosition / m_maxUnitIncrement) * m_maxUnitIncrement;
+            return (newPosition == 0) ? m_maxUnitIncrement : newPosition;
+        } else {
+            return ((currentPosition / m_maxUnitIncrement) + 1) * m_maxUnitIncrement - currentPosition;
+        }
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        if (orientation == SwingConstants.HORIZONTAL) {
+            return visibleRect.width - m_maxUnitIncrement;
+        } else {
+            return visibleRect.height - m_maxUnitIncrement;
+        }
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return false;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
     
     
 
@@ -376,4 +487,12 @@ public class DynamicOrbitalEntityCanvas extends JComponent {
         
     }
 
+    
+    /** A data bag for holding the locations calculated for rendering data. */
+    private class RenderingConfig {
+        private String text;
+        private Shape dot;
+        private Color color;
+        private Particle particle;
+    }
 }
