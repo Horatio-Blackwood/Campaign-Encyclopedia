@@ -4,6 +4,8 @@ import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
+import campaignencyclopedia.data.Month;
+import campaignencyclopedia.data.TimelineEntry;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -11,7 +13,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -26,9 +31,6 @@ import plainpdf.PdfFont;
  */
 public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
 
-    /** The parent window for positioning dialogs launched by this action. */
-    private final Frame m_parent;
-
     /** A Logger. */
     private static final Logger LOGGER = Logger.getLogger(ExportCampaignToPdfAction.class.getName());
 
@@ -41,16 +43,16 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
      */
     public ExportCampaignToPdfAction(Frame parent, CampaignDataManager cdm, String name, boolean includeSecrets) {
         super(parent, cdm, name, includeSecrets);
-        m_parent = parent;
     }
 
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent ae) {
-
         Campaign campaign = m_cdm.getData();
         final Pdf pdf = new Pdf(PdfFont.HELVETICA, NORMAL);
+        
         try {
+            // == TITLE PAGE ==========
             pdf.insertBlankLine(TITLE);
             pdf.insertBlankLine(TITLE);
             pdf.insertBlankLine(TITLE);
@@ -60,9 +62,14 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
             } else {
                 pdf.renderLine("includes secret data");
             }
-
             pdf.insertPageBreak();
+            
+            
+            // == TIMELINE ============
+            exportTimeline(pdf);
+           
 
+            // == ENTITY DATA =========
             // Get and Sort the Entities of this Campaign
             List<Entity> entities = new ArrayList<>(campaign.getEntities());
             Collections.sort(entities);
@@ -76,8 +83,8 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
                 pdf.insertPageBreak();
                 // Entity Type
                 if (entity.isSecret()) {
-                    pdf.renderLine(entity.getName(), PdfFont.HELVETICA_BOLD, SECTION, Color.RED);
-                    pdf.renderLine("Secret " + entity.getType().getDisplayString(), Color.RED);
+                    pdf.renderLine(entity.getName(), PdfFont.HELVETICA_BOLD, SECTION, SECRET_COLOR);
+                    pdf.renderLine("Secret " + entity.getType().getDisplayString(), SECRET_COLOR);
                 } else {
                     pdf.renderLine(entity.getName(), PdfFont.HELVETICA_BOLD, SECTION);
                     pdf.renderLine(entity.getType().getDisplayString());
@@ -129,4 +136,96 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
         }
     }
 
+    /**
+     * Exports the timeline of the campaign.
+     * @param pdf PDF file to render the timeline data to.
+     * @throws IOException 
+     */
+    private void exportTimeline(Pdf pdf) throws IOException {
+        pdf.renderLine("Campaign Timeline", PdfFont.HELVETICA_BOLD, SECTION);
+        pdf.insertBlankLine(SECTION);
+        Map<TimelineDate, List<TimelineEntry>> timeline = new HashMap<>();
+        for (TimelineEntry tle : m_cdm.getTimelineData()) {
+            TimelineDate tld = new TimelineDate(tle.getMonth(), tle.getYear());
+            if (timeline.get(tld) == null) {
+                timeline.put(tld, new ArrayList<TimelineEntry>());
+            }
+            timeline.get(tld).add(tle);
+        }
+        List<TimelineDate> timelineDates = new ArrayList<>(timeline.keySet());
+        Collections.sort(timelineDates);
+        for (TimelineDate date : timelineDates) {
+            pdf.renderLine(date.month.getName() + " " + date.year, PdfFont.HELVETICA_BOLD);
+            List<TimelineEntry> entries = timeline.get(date);
+            Collections.sort(entries);
+            for (TimelineEntry tle : entries) {
+                // If secret and secrets not permitted, skip it.
+                if (tle.isSecret() && !m_includeSecrets) {
+                    continue;
+                }
+                String msg;
+                if (tle.getTitle() == null || tle.getTitle().isEmpty()) {
+                    msg = m_cdm.getEntity(tle.getAssociatedId()).getName();
+                } else {
+                    msg = tle.getTitle();
+                }
+                if (tle.isSecret()) {
+                    msg += " (secret)";
+                    pdf.renderLine(msg, SECRET_COLOR);
+                } else {
+                    pdf.renderLine(msg);
+                }
+            }
+            pdf.insertBlankLine(6);
+        }
+    }
+    
+    /** A Helper class for organizing timeline data for PDF rendering. */
+    private class TimelineDate implements Comparable<TimelineDate> {
+        private final Month month;
+        private final int year;
+        
+        private TimelineDate(Month m, int y) {
+            month = m;
+            year = y;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 67 * hash + Objects.hashCode(this.month);
+            hash = 67 * hash + this.year;
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final TimelineDate other = (TimelineDate) obj;
+            if (!Objects.equals(this.month, other.month)) {
+                return false;
+            }
+            if (this.year != other.year) {
+                return false;
+            }
+            return true;
+        }
+
+        /** {@Override} */
+        @Override
+        public int compareTo(TimelineDate t) {
+            // Compare by Year
+            if (year > t.year) {
+                return 1;
+            } else if (year < t.year) {
+                return -1;
+            }
+            return (month.compareTo(t.month));
+        }
+    }
 }

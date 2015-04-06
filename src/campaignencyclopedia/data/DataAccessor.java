@@ -39,9 +39,16 @@ public interface DataAccessor {
      */
     public void addOrUpdateEntity(Entity entity);
 
+    /**
+     * Called to add or update the supplied TimelineEntry in the data model.
+     * @param entry the TimelineEntry to update.
+     */
+    public void addOrUpdateTimelineEntry(TimelineEntry entry);
 
-    public void addOrKUpdateTimelineEntry(TimelineEntry entry);
-
+    /**
+     * Removes the TimelineEntry with the supplied ID.
+     * @param id the ID of the TimelineEntry to remove.
+     */
     public void removeTimelineEntry(UUID id);
 
     /**

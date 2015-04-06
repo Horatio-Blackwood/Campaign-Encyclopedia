@@ -50,17 +50,33 @@ public class NavigationPath {
             m_cursor++;            
         }
     }
-    
-    public void forward() {
+
+    /**
+     * Updates the cursor position forward one position and returns true.  If current data 
+     * makes this impossible, returns false.
+     * @return true after moving the cursor forward one position, false otherwise.
+     */
+    public boolean forward() {
         if (m_history.size() > 0 && m_cursor != (m_history.size() - 1)) {
             m_cursor++;
+            return true;
         }
+        
+        return false;
     }
     
-    public void back() {
+    /**
+     * Updates the cursor position backwards one position and returns true.  If current data 
+     * makes this impossible, returns false.
+     * @return true after moving the cursor back one position, false otherwise.
+     */
+    public boolean back() {
         if (m_history.size() > 0 && m_cursor > 0) {
             m_cursor--;
+            return true;
         }
+        
+        return false;
     }
     
     public UUID getCurrentId() {
@@ -68,13 +84,20 @@ public class NavigationPath {
     }
 
     /**
-     * Returns the recent history of navigation, as managed by this object.
+     * Returns the recent history of navigation, as managed by this object.  If the recent history is empty, an empty 
+     * history is returned with a cursor of -1.
+     * 
      * @return the recent history of navigation.
      */
     RecentHistory getRecentHistory() {
         // If more than max recent history values...
         List<UUID> history = new ArrayList<>();
         int curentPosition = 0;
+        
+        // If we're empty, return an empty history.
+        if (m_history.isEmpty()) {
+            return new RecentHistory(new ArrayList<UUID>(), -1);
+        }
         
         // Check forwards
         ListIterator<UUID> iter = m_history.listIterator(m_cursor);
@@ -100,5 +123,19 @@ public class NavigationPath {
      */
     public List<UUID> getHistory() {
         return Collections.unmodifiableList(m_history);
+    }
+
+    /**
+     * Remove all instances of the supplied ID.
+     * @param id the ID to expunge from the Navigation Path.
+     */
+    void removeAll(UUID id) {
+        while (m_history.contains(id)) {
+            int index = m_history.indexOf(id);
+            if (index < m_cursor) {
+                m_cursor = m_cursor - 1;
+            }
+            m_history.remove(id);
+        }
     }
 }

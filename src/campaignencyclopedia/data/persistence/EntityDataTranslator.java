@@ -2,7 +2,11 @@ package campaignencyclopedia.data.persistence;
 
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import toolbox.file.persistence.json.JsonArray;
 import toolbox.file.persistence.json.JsonException;
@@ -15,13 +19,26 @@ import toolbox.file.persistence.json.JsonObject;
 public class EntityDataTranslator {
 
     /** The JSON key for the tags. */
-    public static final String TAGS = "tags";
+    private static final String TAGS = "tags";
 
     /** The JSON key for the relationships. */
-    public static final String RELATIONSHIPS = "relationships";
+    private static final String RELATIONSHIPS = "relationships";
 
     /** The JSON key for the description. */
-    public static final String DESCRIPTION = "description";
+    private static final String DESCRIPTION = "description";
+
+    /** The translator-only relationship comparator. */
+    private static final Comparator<Relationship> REL_COMPARATOR = new Comparator<Relationship>() {
+            @Override
+            public int compare(Relationship t, Relationship t1) {
+                int val = t.compareTo(t1);
+                if (val == 0) {
+                    // Only for the purpose of sortingfor the translator
+                    return t.getIdOfRelation().compareTo(t1.getIdOfRelation());
+                }
+                return val;
+            }
+        };
 
     /**
      * Translates the supplied EntityData to the JSON Object that will represent it on disk.
@@ -29,18 +46,22 @@ public class EntityDataTranslator {
      * @return the JSON Object that represented it.
      * @throws JsonException if an error occurs during translation.
      */
-    public static JsonObject toJson(EntityData data) throws JsonException {
+    public static JsonObject toJsonObject(EntityData data) throws JsonException {
         JsonObject json = new JsonObject();
 
         // Description
         json.put(DESCRIPTION, data.getDescription());
 
         // Tags
-        JsonArray tags = new JsonArray(new HashSet<Object>(data.getTags()));
-        json.put(TAGS, tags);
+        List<String> tags = new ArrayList<>(data.getTags());
+        Collections.sort(tags);
+        JsonArray jTags = new JsonArray(tags);
+        json.put(TAGS, jTags);
 
         // Relationships
-        Set<JsonObject> relationships = new HashSet<>();
+        List<Relationship> rels = new ArrayList<>(data.getRelationships());
+        Collections.sort(rels, REL_COMPARATOR);
+        List<JsonObject> relationships = new ArrayList<>();
         for (Relationship rel : data.getRelationships()) {
             relationships.add(RelationshipTranslator.toJson(rel));
         }

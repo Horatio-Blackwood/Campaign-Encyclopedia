@@ -2,6 +2,7 @@ package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.ConfigureCampaignCalendarAction;
 import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;
@@ -18,7 +19,6 @@ import campaignencyclopedia.display.swing.orbital.OrbitalEntityViewer;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -229,6 +229,7 @@ public class MenuManager {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 OrbitalEntityViewer viewer = new OrbitalEntityViewer(m_display, m_cdm, entity.getId());
+                m_cdm.addListener(viewer);
                 viewer.launch();
             }
         });

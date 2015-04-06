@@ -6,6 +6,7 @@ import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class CampaignTranslator {
     private static final String NAME = "campaign-name";
     /** The JSON tag for the Entities in the campaign. */
     private static final String ENTITIES = "entities";
-    /** The JSON tag for the timeline data. */
+    /** The JSON tag for the time line data. */
     private static final String TIMELINE_ENTRIES = "timeline-entries";
     /** The JSON tag for the Campaign Calendar. */
     private static final String CAMPAIGN_CALENDAR = "calendar";
@@ -37,8 +38,13 @@ public class CampaignTranslator {
         // Collect the secret entities for use later during translation.
         Set<UUID> secretEntities = new HashSet<>();
 
-        Set<JsonObject> entities = new HashSet<>();
-        for (Entity entity : campaign.getEntities()) {
+        // Translate and store Entities in sorted order.
+        // --- Sort them to ensure a consistent output order (useful for diffs)
+        List<Entity> allEntities = new ArrayList<>(campaign.getEntities());
+        Collections.sort(allEntities);
+        // --- Translate and add them to JSON structure.
+        List<JsonObject> entities = new ArrayList<>();
+        for (Entity entity : allEntities) {
             if (entity.isSecret()) {
                 secretEntities.add(entity.getId());
                 if (!includeSecrets) {
@@ -49,8 +55,11 @@ public class CampaignTranslator {
         }
         json.put(ENTITIES, entities);
 
-        Set<JsonObject> timelineEntries = new HashSet<>();
-        for (TimelineEntry te : campaign.getTimelineEntries()) {
+        // Translate the timeline entires in sorted order.
+        List<TimelineEntry> timeline = new ArrayList<>(campaign.getTimelineEntries());
+        Collections.sort(timeline);
+        List<JsonObject> timelineEntries = new ArrayList<>();
+        for (TimelineEntry te : timeline) {
             UUID associatedEntity = te.getAssociatedId();
             if (associatedEntity != null && secretEntities.contains(associatedEntity) && !includeSecrets) {
                 continue;
@@ -59,8 +68,10 @@ public class CampaignTranslator {
         }
         json.put(TIMELINE_ENTRIES, timelineEntries);
 
-        Set<JsonObject> calendarMonths = new HashSet<>();
-        for (Month month : campaign.getCalendar().getMonths()) {
+        List<Month> months = new ArrayList<>(campaign.getCalendar().getMonths());
+        Collections.sort(months);
+        List<JsonObject> calendarMonths = new ArrayList<>();
+        for (Month month : months) {
             if (!month.equals(Month.UNSPECIFIED)) {
                 calendarMonths.add(MonthTranslator.toJson(month));
             }

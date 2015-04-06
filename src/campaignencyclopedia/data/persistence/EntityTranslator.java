@@ -42,9 +42,9 @@ public class EntityTranslator {
     public static JsonObject toJsonObject(Entity entity, boolean includeSecrets) throws JsonException {
         JsonObject json = new JsonObject();
         if (includeSecrets) {
-            json.put(SECRET_DATA, EntityDataTranslator.toJson(entity.getSecretData()));
+            json.put(SECRET_DATA, EntityDataTranslator.toJsonObject(entity.getSecretData()));
         }
-        json.put(PUBLIC_DATA, EntityDataTranslator.toJson(entity.getPublicData()));
+        json.put(PUBLIC_DATA, EntityDataTranslator.toJsonObject(entity.getPublicData()));
         json.put(ID, entity.getId().toString());
         json.put(TYPE, entity.getType().name());
         json.put(NAME, entity.getName());

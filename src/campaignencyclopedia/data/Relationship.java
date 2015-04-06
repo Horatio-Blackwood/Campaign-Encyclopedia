@@ -19,10 +19,10 @@ public class Relationship implements Comparable<Relationship> {
     /**
      * Constructor.
      * @param relation the UUID of the Entity that is the relation.
-     * @param relatinship the type of this Relationship.
+     * @param relationship the type of this Relationship.
      */
-    public Relationship(UUID relation, String relatinship) {
-        m_relationship = relatinship;
+    public Relationship(UUID relation, String relationship) {
+        m_relationship = relationship;
         m_id = relation;
     }
 
@@ -61,7 +61,7 @@ public class Relationship implements Comparable<Relationship> {
             return false;
         }
         final Relationship other = (Relationship) obj;
-        if (this.m_relationship != other.m_relationship) {
+        if (!this.m_relationship.equals(other.m_relationship)) {
             return false;
         }
         if (!Objects.equals(this.m_id, other.m_id)) {
@@ -73,7 +73,7 @@ public class Relationship implements Comparable<Relationship> {
     /** {@inheritDoc} */
     @Override
     public int compareTo(Relationship t) {
-        return m_relationship.compareTo(m_relationship);
+        return m_relationship.compareTo(t.getRelationship());
     }
 
     /** {@inheritDoc} */

@@ -11,6 +11,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.UUID;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -26,19 +28,40 @@ import toolbox.display.dialog.DialogContent;
  * The Dialog Content to add Timeline Events to the campaign timeline.
  * @author adam
  */
-public class NewTimelineEntryDialogContent implements DialogContent {
+public class TimelineEntryDialogContent implements DialogContent {
 
+    /** A campaign data manager. */
     private final CampaignDataManager m_cdm;
 
+    /** The primary content display component. */
     private JPanel m_content;
+    
+    /** The JTextField for showing/editing the title. */
     private JTextField m_titleField;
-    private JComboBox<Month> m_monthModel;
+    
+    /** The JComboBox for selecting the Month. */
+    private JComboBox<Month> m_monthSelector;
+    
+    /** The JTextField for showing/editing the year. */
     private JTextField m_yearField;
+    
+    /** The JComboBox for selecting the associated Entity. */
     private JComboBox<Entity> m_entitySelector;
 
+    /** The check box for determining showing/editing the secret/not secret state of the time line entry. */
+    private JCheckBox m_isSecretCheckBox;
+    
+    /** The edit listener for this Dialog Content. */
     private EditListener m_editListener;
+    
+    /** The ID of the Entry being edited, or null if creating a new Entry. */
+    private UUID m_idOfEntryBeingEdited;
 
-    public NewTimelineEntryDialogContent(CampaignDataManager cdm) {
+    /**
+     * Creates a new instance of TimelineEntryDialogContent.
+     * @param cdm a campaign data manager for getting/setting data.
+     */
+    public TimelineEntryDialogContent(CampaignDataManager cdm) {
         m_cdm = cdm;
         initailize();
     }
@@ -79,13 +102,13 @@ public class NewTimelineEntryDialogContent implements DialogContent {
             }
         };
 
-        m_monthModel = new JComboBox<>();
+        m_monthSelector = new JComboBox<>();
         for (Month month : m_cdm.getData().getCalendar().getMonths()) {
-            m_monthModel.addItem(month);
+            m_monthSelector.addItem(month);
         }
-        m_monthModel.setSelectedIndex(0);
-        m_monthModel.addItemListener(itemListener);
-        m_monthModel.setRenderer(new ListCellRenderer<Month>(){
+        m_monthSelector.setSelectedIndex(0);
+        m_monthSelector.addItemListener(itemListener);
+        m_monthSelector.setRenderer(new ListCellRenderer<Month>(){
             @Override
             public Component getListCellRendererComponent(JList<? extends Month> jlist, Month e, int i, boolean bln, boolean bln1) {
                 return new JLabel(e.getName());
@@ -97,6 +120,8 @@ public class NewTimelineEntryDialogContent implements DialogContent {
             m_entitySelector.addItem(e);
         }
         m_entitySelector.addItemListener(itemListener);
+        
+        m_isSecretCheckBox = new JCheckBox("Secret Timeline Entry");
 
         // Lay 'em Out
         // Column One - Labels
@@ -135,7 +160,7 @@ public class NewTimelineEntryDialogContent implements DialogContent {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0f;
-        m_content.add(m_monthModel, gbc);
+        m_content.add(m_monthSelector, gbc);
 
         gbc.gridy = 2;
         m_content.add(m_yearField, gbc);
@@ -144,6 +169,10 @@ public class NewTimelineEntryDialogContent implements DialogContent {
         gbc.gridwidth = 2;
         gbc.weightx = 1.0f;
         m_content.add(m_entitySelector, gbc);
+        
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        m_content.add(m_isSecretCheckBox, gbc);
 
         // Column Three - Optional Label
         gbc.gridx = 3;
@@ -152,10 +181,34 @@ public class NewTimelineEntryDialogContent implements DialogContent {
     }
 
     public TimelineEntry getData() {
-        return new TimelineEntry(m_titleField.getText(),
-                                 (Month)m_monthModel.getSelectedItem(),
-                                 Integer.valueOf(m_yearField.getText()),
-                                 ((Entity)m_entitySelector.getSelectedItem()).getId());
+        if (m_idOfEntryBeingEdited == null) {
+            return new TimelineEntry(m_titleField.getText(),
+                                    (Month)m_monthSelector.getSelectedItem(),
+                                     Integer.valueOf(m_yearField.getText()),
+                                     m_isSecretCheckBox.isSelected(),
+                                    ((Entity)m_entitySelector.getSelectedItem()).getId());
+        } else {
+            return new TimelineEntry(m_titleField.getText(),
+                                    (Month)m_monthSelector.getSelectedItem(),
+                                     Integer.valueOf(m_yearField.getText()),
+                                     m_isSecretCheckBox.isSelected(),
+                                    ((Entity)m_entitySelector.getSelectedItem()).getId(),
+                                     m_idOfEntryBeingEdited);
+        }
+    }
+    
+    public void setData(TimelineEntry entry) {
+        if (entry.getTitle() != null) {
+            m_titleField.setText(entry.getTitle());
+        }
+        if (entry.getMonth() != null) {
+            m_monthSelector.setSelectedItem(entry.getMonth());
+        }
+        m_yearField.setText(String.valueOf(entry.getYear()));
+        m_isSecretCheckBox.setSelected(entry.isSecret());
+        Entity associatedEntity = m_cdm.getEntity(entry.getAssociatedId());
+        m_entitySelector.setSelectedItem(associatedEntity);
+        m_idOfEntryBeingEdited = entry.getId();
     }
 
     @Override

@@ -5,6 +5,7 @@ import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityDataBuilder;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.UserDisplay;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -91,9 +92,17 @@ public class DeleteEntityAction extends AbstractAction {
                             toBeUpdated.add(new Entity(entity.getId(), entity.getName(), entity.getType(), newPublic, newSecret, entity.isSecret()));
                         }
                     }
-
+                    // --- Update the Entities that have changed due to this Entity being removed.
                     for (Entity entity : toBeUpdated) {
                         m_cdm.addOrUpdateEntity(entity);
+                    }
+                    
+                                        
+                    // Finally, remove any timeline entries assoiciated with the Entity.
+                    for (TimelineEntry entry : m_cdm.getTimelineData()) {
+                        if (entry.getAssociatedId().equals(m_entity.getId())) {
+                            m_cdm.removeTimelineEntry(entry.getId());
+                        }
                     }
 
                     // Then Save.

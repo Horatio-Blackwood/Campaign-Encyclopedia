@@ -32,9 +32,17 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
 
     /** The paragraph body font size. */
     protected static final int NORMAL = 12;
+    
+    /** The Color used to render secret data / headers. */
+    protected static final Color SECRET_COLOR = Color.RED;
 
+    /** A campaign data manager to fetch the data to export from. */
     protected final CampaignDataManager m_cdm;
+    
+    /** The parent window for positioning dialogs launched by this action. */
     protected final Frame m_parent;
+    
+    /** True if secrets should be included in this export. */
     protected final boolean m_includeSecrets;
 
     public AbstractExtractToPdfAction(Frame parent, CampaignDataManager cdm, String name, boolean includeSecrets) {
@@ -62,7 +70,7 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
         }
         // Render header
         if (secret) {
-            pdf.renderLine("Secret Data", PdfFont.HELVETICA_BOLD, SUB_SECTION, Color.RED);
+            pdf.renderLine("Secret Data", PdfFont.HELVETICA_BOLD, SUB_SECTION, SECRET_COLOR);
         } else {
             pdf.renderLine("Public Data", PdfFont.HELVETICA_BOLD, SUB_SECTION);
         }
@@ -71,7 +79,7 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
         // Render description, if one exists
         if (!description.isEmpty()) {
             if (secret) {
-                pdf.renderLine("Secret Description", PdfFont.HELVETICA_BOLD, NORMAL, Color.RED);
+                pdf.renderLine("Secret Description", PdfFont.HELVETICA_BOLD, NORMAL, SECRET_COLOR);
             } else {
                 pdf.renderLine("Description", PdfFont.HELVETICA_BOLD, NORMAL);
             }
@@ -87,7 +95,7 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
             List<Relationship> relationships = new ArrayList<>(rels);
             Collections.sort(relationships);
             if (secret) {
-                pdf.renderLine("Secret Relationships", PdfFont.HELVETICA_BOLD, NORMAL, Color.RED);
+                pdf.renderLine("Secret Relationships", PdfFont.HELVETICA_BOLD, NORMAL, SECRET_COLOR);
             } else {
                 pdf.renderLine("Relationships", PdfFont.HELVETICA_BOLD, NORMAL);
             }

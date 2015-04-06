@@ -16,6 +16,7 @@ public class TimelineEntryTranslator {
     private static final String YEAR = "year";
     private static final String ID = "id";
     private static final String ASSOCIATED_ENTITY = "associated-entity";
+    private static final String SECRET = "is-secret";
 
     /**
      *
@@ -39,6 +40,9 @@ public class TimelineEntryTranslator {
         if (associatedEntity != null) {
             json.put(ASSOCIATED_ENTITY, associatedEntity.toString());
         }
+        
+        // Secret / Not Secret
+        json.put(SECRET, entry.isSecret());
 
         return json;
     }
@@ -46,20 +50,29 @@ public class TimelineEntryTranslator {
     public static TimelineEntry fromJson(String jsonString) {
         JsonObject json = new JsonObject(jsonString);
 
+        // Title
         String title = null;
         if (json.has(TITLE)) {
             title = json.getString(TITLE);
         }
 
+        // Month
         JsonObject jsonMonth = null;
         if (json.has(MONTH)) {
             jsonMonth = json.getJsonObject(MONTH);
         }
+        
+        // Secret
+        boolean isSecret = false;
+        if (json.has(SECRET)) {
+            isSecret = json.getBoolean(SECRET);
+        }
+        
         Month month = MonthTranslator.fromJson(jsonMonth);
         int year = json.getInt(YEAR);
         UUID id = UUID.fromString(json.getString(ID));
         UUID associatedEntity = UUID.fromString(json.getString(ASSOCIATED_ENTITY));
 
-        return new TimelineEntry(title, month, year, associatedEntity, id);
+        return new TimelineEntry(title, month, year, isSecret, associatedEntity, id);
     }
 }
