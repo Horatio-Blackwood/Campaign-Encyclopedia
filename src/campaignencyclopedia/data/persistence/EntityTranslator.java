@@ -1,5 +1,6 @@
 package campaignencyclopedia.data.persistence;
 
+import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityDataBuilder;
@@ -35,16 +36,17 @@ public class EntityTranslator {
     /**
      * Returns the JSON object that represents the supplied Entity object.
      * @param entity the Entity to translate.
+     * @param da a data accessor.
      * @param includeSecrets true if secrets should be included, false otherwise.
      * @return the JSON Object that represents the supplied Entity object.
      * @throws JsonException if an error occurs during translation.
      */
-    public static JsonObject toJsonObject(Entity entity, boolean includeSecrets) throws JsonException {
+    public static JsonObject toJsonObject(Entity entity, DataAccessor da, boolean includeSecrets) throws JsonException {
         JsonObject json = new JsonObject();
         if (includeSecrets) {
-            json.put(SECRET_DATA, EntityDataTranslator.toJsonObject(entity.getSecretData()));
+            json.put(SECRET_DATA, EntityDataTranslator.toJsonObject(entity.getSecretData(), da, includeSecrets));
         }
-        json.put(PUBLIC_DATA, EntityDataTranslator.toJsonObject(entity.getPublicData()));
+        json.put(PUBLIC_DATA, EntityDataTranslator.toJsonObject(entity.getPublicData(), da, includeSecrets));
         json.put(ID, entity.getId().toString());
         json.put(TYPE, entity.getType().name());
         json.put(NAME, entity.getName());

@@ -1,5 +1,6 @@
 package campaignencyclopedia.data.persistence;
 
+import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
 import java.util.ArrayList;
@@ -43,10 +44,12 @@ public class EntityDataTranslator {
     /**
      * Translates the supplied EntityData to the JSON Object that will represent it on disk.
      * @param data the object to translate.
+     * @param da
+     * @param includeSecrets
      * @return the JSON Object that represented it.
      * @throws JsonException if an error occurs during translation.
      */
-    public static JsonObject toJsonObject(EntityData data) throws JsonException {
+    public static JsonObject toJsonObject(EntityData data, DataAccessor da, boolean includeSecrets) throws JsonException {
         JsonObject json = new JsonObject();
 
         // Description
@@ -55,7 +58,7 @@ public class EntityDataTranslator {
         // Tags
         List<String> tags = new ArrayList<>(data.getTags());
         Collections.sort(tags);
-        JsonArray jTags = new JsonArray(tags);
+        JsonArray jTags = new JsonArray(new ArrayList<Object>(tags));
         json.put(TAGS, jTags);
 
         // Relationships
@@ -63,6 +66,9 @@ public class EntityDataTranslator {
         Collections.sort(rels, REL_COMPARATOR);
         List<JsonObject> relationships = new ArrayList<>();
         for (Relationship rel : data.getRelationships()) {
+            if (da.getEntity(rel.getIdOfRelation()).isSecret() && !includeSecrets) {
+                continue;
+            }
             relationships.add(RelationshipTranslator.toJson(rel));
         }
         json.put(RELATIONSHIPS, relationships);

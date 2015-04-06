@@ -56,7 +56,7 @@ public class SaveHelper {
                     try {
                         File selectedFile = chooser.getSelectedFile();
                         String path = selectedFile.getAbsolutePath().trim();
-                        String campaign = CampaignTranslator.toJson(cdm.getData(), includeSecrets);
+                        String campaign = CampaignTranslator.toJson(cdm.getData(), cdm, includeSecrets);
                         if (!path.endsWith(".campaign")) {
                             path = path + ".campaign";
                         }
@@ -85,7 +85,7 @@ public class SaveHelper {
         if (cdm.getSaveFileName() != null) {
             Campaign campaign = cdm.getData();
             try {
-                FileTools.writeFile(cdm.getSaveFileName(), CampaignTranslator.toJson(campaign, true));
+                FileTools.writeFile(cdm.getSaveFileName(), CampaignTranslator.toJson(campaign, cdm, true));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to save campaign.", ex);
             } catch (JsonException jex) {

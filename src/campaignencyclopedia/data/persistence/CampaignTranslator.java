@@ -2,6 +2,7 @@ package campaignencyclopedia.data.persistence;
 
 import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.CampaignCalendar;
+import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
@@ -31,7 +32,7 @@ public class CampaignTranslator {
     private static final String CAMPAIGN_CALENDAR = "calendar";
 
 
-    public static String toJson(Campaign campaign, boolean includeSecrets) throws JsonException {
+    public static String toJson(Campaign campaign, DataAccessor da, boolean includeSecrets) throws JsonException {
         JsonObject json = new JsonObject();
         json.put(NAME,campaign.getName());
 
@@ -51,7 +52,7 @@ public class CampaignTranslator {
                     continue;
                 }
             }
-            entities.add(EntityTranslator.toJsonObject(entity, includeSecrets));
+            entities.add(EntityTranslator.toJsonObject(entity, da, includeSecrets));
         }
         json.put(ENTITIES, entities);
 
