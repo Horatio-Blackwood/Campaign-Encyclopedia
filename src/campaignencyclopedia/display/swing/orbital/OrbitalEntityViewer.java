@@ -29,7 +29,7 @@ public class OrbitalEntityViewer {
     private JFrame m_frame;
     
     /** The orbital canvas upon which the data will be rendered. */
-    private final OrbitalEntityCanvas m_canvas;
+    private final DynamicOrbitalEntityCanvas m_canvas;
     
     /**
      * Creates a new OrbitalEntityViewer.
@@ -38,7 +38,7 @@ public class OrbitalEntityViewer {
      * @param toView the ID of the initial Entity to view.
      */
     public OrbitalEntityViewer(EntityDisplay display, DataAccessor da, UUID toView ) {
-        m_canvas = new OrbitalEntityCanvas(display, da, toView);
+        m_canvas = new DynamicOrbitalEntityCanvas(display, da, toView);
         initialize();
     }
     
