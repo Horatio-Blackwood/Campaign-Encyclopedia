@@ -91,7 +91,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     private JComboBox<EntityType> m_typeSelector;
 
     /** A button for creating a  new entity. */
-    private JButton m_clearEntityEditorButton;
+    private JButton m_newEntityButton;
 
     /** A button for adding/updating the currently displayed entity. */
     private JButton m_commitEntityButton;
@@ -120,10 +120,10 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.0.2";
+    public static final String VERSION = "v1.1.0-alpha";
 
     /** The date this release was created. */
-    public static final String DATE = "March 29, 2015";
+    public static final String DATE = "April 5, 2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
@@ -297,6 +297,7 @@ public class MainDisplay implements EditListener, UserDisplay {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 m_searchBox.requestFocus();
+                m_searchBox.selectAll();
             }
         };
         InputMap inputMap = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -410,8 +411,8 @@ public class MainDisplay implements EditListener, UserDisplay {
         saveInputMap.put(KeyStroke.getKeyStroke('S', InputEvent.CTRL_DOWN_MASK), saveKey);
         m_commitEntityButton.getActionMap().put(saveKey, save);
 
-        m_clearEntityEditorButton = new JButton();
-        AbstractAction clear = new AbstractAction("Clear") {
+        m_newEntityButton = new JButton();
+        AbstractAction clear = new AbstractAction("New") {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 if (!isCurrentDataSaved()) {
@@ -424,12 +425,12 @@ public class MainDisplay implements EditListener, UserDisplay {
                 m_entityNameField.requestFocus();
             }
         };
-        m_clearEntityEditorButton.setAction(clear);
-        m_clearEntityEditorButton.setToolTipText("Clear data for a new item, (CTRL+N)");
+        m_newEntityButton.setAction(clear);
+        m_newEntityButton.setToolTipText("Clear data for a new item, (CTRL+N)");
         String clearKey = "clearKey";
-        InputMap clearInputMap = m_clearEntityEditorButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        InputMap clearInputMap = m_newEntityButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         clearInputMap.put(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK), clearKey);
-        m_clearEntityEditorButton.getActionMap().put(clearKey, clear);
+        m_newEntityButton.getActionMap().put(clearKey, clear);
 
         m_typeSelector = new JComboBox<>();
         for (EntityType type : EntityType.values()) {
@@ -465,7 +466,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         topRow.add(m_typeSelector, gbc);
 
         gbc.gridx = 4;
-        topRow.add(m_clearEntityEditorButton, gbc);
+        topRow.add(m_newEntityButton, gbc);
 
         gbc.gridx = 5;
         topRow.add(m_commitEntityButton, gbc);
