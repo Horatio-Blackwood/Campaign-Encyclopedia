@@ -1,4 +1,4 @@
-package campaignencyclopedia.display.swing.orbital;
+package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;

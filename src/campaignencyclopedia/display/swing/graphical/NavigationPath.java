@@ -1,4 +1,4 @@
-package campaignencyclopedia.display.swing.orbital;
+package campaignencyclopedia.display.swing.graphical;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,8 +18,11 @@ public class NavigationPath {
     /** The current navigation path position. */
     private int m_cursor;
     
-    /** The maximum number of elements to give back as recent history. */
-    private static final int RECENT_HISTORY_SIZE = 5;
+    /** The maximum number of elements to give back as recent history navigating forward. */
+    private static final int MAX_FORWARD_ELEMENTS = 2;
+    
+/** The maximum number of elements to give back as recent history navigating backward. */
+    private static final int MAX_BACKWARD_ELEMENTS = 4;
     
     public NavigationPath(UUID start) {
         if (start == null) {
@@ -102,14 +105,14 @@ public class NavigationPath {
         // Check forwards
         ListIterator<UUID> iter = m_history.listIterator(m_cursor);
         int forwardAdds = 0;
-        while (iter.hasNext() && forwardAdds <= 2) {
+        while (iter.hasNext() && forwardAdds <= MAX_FORWARD_ELEMENTS) {
             history.add(iter.next());
             forwardAdds++;
         }
         
         // Check backwards
         iter = m_history.listIterator(m_cursor);
-        while (iter.hasPrevious() && history.size() <= 4) {
+        while (iter.hasPrevious() && history.size() <= MAX_BACKWARD_ELEMENTS) {
             history.add(0, iter.previous());
             curentPosition++;
         }

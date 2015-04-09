@@ -1,4 +1,4 @@
-package campaignencyclopedia.display.swing.orbital;
+package campaignencyclopedia.display.swing.graphical;
 
 import java.util.List;
 import java.util.UUID;

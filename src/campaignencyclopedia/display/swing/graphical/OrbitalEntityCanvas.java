@@ -1,8 +1,7 @@
-package campaignencyclopedia.display.swing.orbital;
+package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.data.EntityType;
 import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;
@@ -35,25 +34,6 @@ import javax.swing.JComponent;
  * @author adam
  */
 public class OrbitalEntityCanvas extends JComponent implements CampaignDataManagerListener  {
-    /** The color to render places in. */
-    private static final Color PLACE_COLOR = new Color(64, 160, 64);
-
-    /** The Color to render PCs. */
-    private static final Color PC_COLOR = new Color(72, 72, 232);
-
-    // Gold
-    private static final Color NPC_COLOR = new Color(180, 64, 255);
-
-    // Orange
-    private static final Color ITEM_COLOR = new Color(255, 128, 64);
-
-    // Crimson
-    private static final Color EVENT_COLOR = new Color(160, 64, 64);
-
-    // Grey
-    private static final Color ORG_COLOR = new Color(128, 128, 128);
-
-    private static final Color LINE_COLOR = new Color(84, 84, 84);
 
     private static final int DOT_LINE_LENGTH = 225;
     private static final int TEXT_LINE_LENGTH = 265;
@@ -170,11 +150,11 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                     RenderingConfig rf = m_renderingConfigMap.get(id);
                     if (relatedTo != null) {
                         // Lines first
-                        g2.setPaint(LINE_COLOR);
+                        g2.setPaint(Colors.LINE);
                         g2.draw(new Line2D.Double(center.x, center.y, rf.dotPoint.x, rf.dotPoint.y));
 
                         // Then Dots
-                        g2.setPaint(getColor(relatedTo.getType()));
+                        g2.setPaint(Colors.getColor(relatedTo.getType()));
                         rf.dot = new Ellipse2D.Double(rf.dotPoint.x - halfDotRadius, rf.dotPoint.y - halfDotRadius, dotRadius, dotRadius);
                         g2.fill(rf.dot);
 
@@ -191,10 +171,10 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                 }
 
                 // RENDER CURRENT PRIMARY ENTITY
-                // --- Gather needed valuse
+                // --- Gather needed values
 
                 // --- DOT
-                g2.setPaint(getColor(current.getType()));
+                g2.setPaint(Colors.getColor(current.getType()));
                 m_currentEntityShape = new Ellipse2D.Double(center.x - dotRadius, center.y - dotRadius, dotRadius * 2, dotRadius * 2);
                 g2.fill(m_currentEntityShape);
 
@@ -337,24 +317,6 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
 
     private int getDotRadius() {
         return CIRCLE_RADIUS;
-    }
-
-    private Color getColor(EntityType type) {
-        switch (type) {
-            case PLAYER_CHARACTER:
-                return PC_COLOR;
-            case NON_PLAYER_CHARACTER:
-                return NPC_COLOR;
-            case PLACE:
-                return PLACE_COLOR;
-            case ITEM:
-                return ITEM_COLOR;
-            case ORGANIZATION:
-                return ORG_COLOR;
-            case EVENT:
-                return EVENT_COLOR;
-        }
-        throw new IllegalStateException("Received request to get color for unknown entity type:  " + type.name());
     }
 
     private void initializeMouseListener() {
