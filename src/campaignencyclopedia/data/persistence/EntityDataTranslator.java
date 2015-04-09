@@ -65,7 +65,7 @@ public class EntityDataTranslator {
         List<Relationship> rels = new ArrayList<>(data.getRelationships());
         Collections.sort(rels, REL_COMPARATOR);
         List<JsonObject> relationships = new ArrayList<>();
-        for (Relationship rel : data.getRelationships()) {
+        for (Relationship rel : rels) {
             if (da.getEntity(rel.getIdOfRelation()).isSecret() && !includeSecrets) {
                 continue;
             }
