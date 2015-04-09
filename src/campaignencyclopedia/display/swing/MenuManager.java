@@ -14,11 +14,11 @@ import campaignencyclopedia.display.swing.action.OpenCampaignAction;
 import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
+import campaignencyclopedia.display.swing.orbital.DynamicOrbitalEntityViewer;
 import campaignencyclopedia.display.swing.orbital.OrbitalEntityViewer;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -198,6 +198,13 @@ public class MenuManager {
 
         dataMenu.add(editName);
         dataMenu.add(showTimeline);
+        dataMenu.add(new AbstractAction("Launch Campaign Graph Viewer") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                DynamicOrbitalEntityViewer viewer = new DynamicOrbitalEntityViewer(m_display, m_cdm);
+                viewer.launch();
+            }
+        });
         dataMenu.add(configureRelationships);
         dataMenu.add(configureCalendar);
         dataMenu.add(showStats);

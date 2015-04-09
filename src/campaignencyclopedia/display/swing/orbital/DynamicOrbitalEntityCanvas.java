@@ -18,6 +18,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -120,12 +122,8 @@ public class DynamicOrbitalEntityCanvas extends JComponent implements Scrollable
      * Creates a new instance of Orbital Entity Canvas.
      * @param display an entity display to show Entity data on.
      * @param accessor a data accessor to fetch Entity data from.
-     * @param initialId the ID of the initial Entity to show.
      */
-    public DynamicOrbitalEntityCanvas(EntityDisplay display, DataAccessor accessor, UUID initialId) {
-        if (initialId == null) {
-            throw new IllegalArgumentException("Parameter 'initialId' cannot be null.");
-        }
+    public DynamicOrbitalEntityCanvas(EntityDisplay display, DataAccessor accessor) {
         if (display == null) {
             throw new IllegalArgumentException("Parameter 'initialId' cannot be null.");
         }
@@ -154,7 +152,7 @@ public class DynamicOrbitalEntityCanvas extends JComponent implements Scrollable
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
         
-        //show(m_accessor.getEntity(initialId));
+        initializeKeyListener();
         initializeMouseListener();
     }
 
@@ -323,6 +321,38 @@ public class DynamicOrbitalEntityCanvas extends JComponent implements Scrollable
         throw new IllegalStateException("Received request to get color for unknown entity type:  " + type.name());
     }
     
+    private void initializeKeyListener() {
+        addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.isControlDown()) {
+                    if (e.getKeyCode() == KeyEvent.VK_PLUS ||
+                        e.getKeyCode() == KeyEvent.VK_I ||
+                        e.getKeyCode() == KeyEvent.VK_EQUALS) {
+                        
+                        m_scaleFactor += 0.1f;
+                        System.out.println("+ : " + m_scaleFactor);
+                    } else if (e.getKeyCode() == KeyEvent.VK_MINUS ||
+                               e.getKeyCode() == KeyEvent.VK_K ||
+                               e.getKeyCode() == KeyEvent.VK_UNDERSCORE) {
+                        
+                        m_scaleFactor -= 0.1f;
+                        System.out.println("- : " + m_scaleFactor);
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        });
+    }
+    
     private void initializeMouseListener() {
         addMouseListener(new MouseAdapter(){
             @Override
@@ -479,13 +509,7 @@ public class DynamicOrbitalEntityCanvas extends JComponent implements Scrollable
         return false;
     }
 
-    
-    
 
-    /** Launches an orbital canvas window */
-    public void launch() {
-        
-    }
 
     
     /** A data bag for holding the locations calculated for rendering data. */

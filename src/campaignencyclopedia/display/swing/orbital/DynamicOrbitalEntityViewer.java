@@ -6,22 +6,25 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import toolbox.display.DisplayUtilities;
 
 /**
  * A graphical, Entity viewer that shows Entities and their relationships in an orbital fashion.
  * @author adam
  */
-public class OrbitalEntityViewer {
+public class DynamicOrbitalEntityViewer {
 
     /** A logger. */
-    private static final Logger LOGGER = Logger.getLogger(OrbitalEntityViewer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DynamicOrbitalEntityViewer.class.getName());
     
     /** The starting dimensions of the top-level window. */
     private static final Dimension m_windowSize = new Dimension(900, 675);
@@ -30,16 +33,15 @@ public class OrbitalEntityViewer {
     private JFrame m_frame;
     
     /** The orbital canvas upon which the data will be rendered. */
-    private final OrbitalEntityCanvas m_canvas;
+    private final DynamicOrbitalEntityCanvas m_canvas;
     
     /**
      * Creates a new OrbitalEntityViewer.
      * @param display an EntityDisplay to show Entity data on.
      * @param da the data accessor to fetch data to view.
-     * @param toView the ID of the initial Entity to view.
      */
-    public OrbitalEntityViewer(EntityDisplay display, DataAccessor da, UUID toView ) {
-        m_canvas = new OrbitalEntityCanvas(display, da, toView);
+    public DynamicOrbitalEntityViewer(EntityDisplay display, DataAccessor da) {
+        m_canvas = new DynamicOrbitalEntityCanvas(display, da);
         initialize();
     }
     
@@ -60,7 +62,10 @@ public class OrbitalEntityViewer {
         m_frame.setPreferredSize(m_windowSize);
         m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
+        m_canvas.setFocusable(true);
+        m_canvas.requestFocusInWindow();
         JScrollPane canvasScroller = new JScrollPane(m_canvas);
+        
         m_frame.add(canvasScroller, BorderLayout.CENTER);
     }
     
