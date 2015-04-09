@@ -120,10 +120,10 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.1.0-alpha";
+    public static final String VERSION = "v1.1.0";
 
     /** The date this release was created. */
-    public static final String DATE = "April 5, 2015";
+    public static final String DATE = "April 9, 2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());

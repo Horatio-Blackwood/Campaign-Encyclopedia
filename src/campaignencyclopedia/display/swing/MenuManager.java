@@ -121,7 +121,14 @@ public class MenuManager {
                              "    CTRL+R - Open the relationships editor\n" +
                              "    CTRL+S - Save the changes to the currently displayed entity\n" +
                              "    CTRL+SHIFT+S - Save the campaign with a new filename\n" +
-                             "    CTRL+T - Open the timeline editor";
+                             "    CTRL+T - Open the timeline editor\n\n" +
+                             "Orbital View Controls:\n" +
+                             "    Hover over an item to view relationship details\n" +
+                             "    Click on any outer node to navigate to that node\n" +
+                             "    or use the Back and Fwd buttons\n" +
+                             "    CTRL+Click on any item to display it in the editort";
+
+                        ;
                 JOptionPane.showMessageDialog(m_frame, msg, "Help", JOptionPane.PLAIN_MESSAGE);
             }
         };
