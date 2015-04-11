@@ -65,10 +65,23 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     /** The font to render entity names in. */
     private static final Font ENTITY_NAME_FONT = new Font("Arial", Font.PLAIN, 14);
     
+    /** The max scroll increment for being scrollable. */
+    private final int m_maxUnitIncrement = 5;
+    /** The vertical translation of coordinates in the particle system to the viewer 
+     *  system since you can't scroll to or use negative coordinates in Swing/Scrollable. */
+    private float m_verticalScrollTranslation = 0.0f;
+    /** The horizontal translation of coordinates in the particle system to the viewer 
+     *  system since you can't scroll to or use negative coordinates in Swing/Scrollable. */
+    private float m_horizontalScrollTranslation = 0.0f;
+    /** The scale factor used for zooming. */
+    private float m_scaleFactor = 1.0f;
+    
     
     // PHYSICS PARAMETERS
     /** The particle physics system. */
     private ParticleSystem m_particleSystem;
+    /** The last time the system ticked, in miliseconds. */
+    private long m_previousUpdateTime;
     /** The gravity value. */
     private static final float GRAVITY = 0.0f;
     /** Amount of drag. */
@@ -89,18 +102,8 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     private static final int Y_RANGE = 400;
     /** The mass of the particle. */
     private static final int PARTICLE_MASS = 20;
-    private static final boolean ON_LOCKDOWN = false;
-    
-    
-    
-    // RENDERING & PHYSICS PARAMETERS
-    private final Random m_rand = new Random();
-    private final ScheduledExecutorService m_ses = Executors.newSingleThreadScheduledExecutor();
-    private long m_previousUpdateTime;
-    private final int m_maxUnitIncrement = 5;
-    private float m_verticalScrollTranslation = 0.0f;
-    private float m_horizontalScrollTranslation = 0.0f;
-    private float m_scaleFactor = 1.0f;
+    /** Whether or not the nodes are frozen */
+    private boolean m_onLockdown = false;
 
 
     // GENERAL MEMBERS
@@ -114,6 +117,10 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     private final DataAccessor m_accessor;
     /** An EntityDisplay to show/edit Entity data on/with. */
     private final EntityDisplay m_display;
+    /** Random number generator. */
+    private final Random m_rand = new Random();
+    /** Executor for tasks such as the update loop. */
+    private final ScheduledExecutorService m_ses = Executors.newSingleThreadScheduledExecutor();
     /** A Logger. */
     private static final Logger LOGGER = Logger.getLogger(CampaignEntityGraphCanvas.class.getName());
     
@@ -138,6 +145,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         m_particleSystem = new ParticleSystem(GRAVITY, DRAG);
         m_particleSystem.setIntegrator(ParticleSystem.RUNGE_KUTTA);
         
+        //Initialize entities
         initializeEntities();
         
         //Set up rendering update loop
@@ -157,12 +165,12 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         initializeMouseListener();
     }
 
-    /** Load up all of the entity data for rendering. */
+    /** Load up all of the existing entity data for rendering. */
     public final void initializeEntities() {
         
         List<Entity> allEntities = m_accessor.getAllEntities();
         
-        //Entities
+        //Entities: create a particle in the system and a configuration for rendering
         for (Entity e : allEntities) {
             Particle p = createParticle(X_RANGE + m_rand.nextInt(X_RANGE), X_RANGE+ m_rand.nextInt(Y_RANGE));
             int r = getDotRadius();
@@ -174,15 +182,15 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             m_renderingConfigMap.put(e.getId(), rc);
         }
         
-        //Relationship Springs
+        //Relationship Springs: create a spring between entities for every relationship
         for (Entity e : allEntities) {
-            // Collect all relationships
+            // Collect all relationships for this entity
             EntityData pubData = e.getPublicData();
             EntityData secretData = e.getSecretData();
             Set<Relationship> relationships = pubData.getRelationships();
             relationships.addAll(secretData.getRelationships());
             
-            // Create a spring between for each relationship.
+            // Create a spring between the entity and what it is related to for each relationship.
             for (Relationship r : relationships) {
                 Particle a = m_renderingConfigMap.get(e.getId()).particle;
                 RenderingConfig otherRc = m_renderingConfigMap.get(r.getIdOfRelation());
@@ -196,9 +204,32 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             }
         }
     }
+    
+    /**
+     * Creates a particle at the given x and y coordinates that has the set repulsive force applied against all other particles.
+     * @param x the x coordinate.
+     * @param y the y coordinate.
+     * @return the created particle.
+     */
+    private Particle createParticle(int x, int y) {
+        // Z axis is always zero, as this is a 2D graph.
+        Particle newParticle = m_particleSystem.makeParticle(PARTICLE_MASS, x, y, 0);
+        
+        //Add repulsion against all other particles
+        for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+            Particle p = m_particleSystem.getParticle(i);
+            // Ignore "making attraction" on this particle against itself.
+            if (p.equals(newParticle)) {
+                continue;
+            }
+            m_particleSystem.makeAttraction(p, newParticle, REPULSIVE_FORCE, MIN_REPULSIVE_DISTANCE);
+        }
+        
+        return newParticle;
+    }
 
     /**
-     * Called to force the particle system to update.
+     * Called to tick the particle system processing by dt. (time delta currently ignored, system ticks by "1" unit)
      * @param dt the delta time since the last call to update.
      */
     private void update(long dt) {
@@ -229,29 +260,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             RenderingConfig rc = m_renderingConfigMap.get(id);
             drawRenderingConfig(rc, g2);
         }
-    }
-    
-    /**
-     * Creates a particle at the given x and y coordinates that has the set repulsive force applied against all other particles.
-     * @param x the x coordinate.
-     * @param y the y coordinate.
-     * @return the created particle.
-     */
-    private Particle createParticle(int x, int y) {
-        // Z axis is always zero, as this is a 2D graph.
-        Particle newParticle = m_particleSystem.makeParticle(PARTICLE_MASS, x, y, 0);
-        
-        //Add repulsion against all other particles
-        for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-            Particle p = m_particleSystem.getParticle(i);
-            // Ignore "making attraction" on this particle against itself.
-            if (p.equals(newParticle)) {
-                continue;
-            }
-            m_particleSystem.makeAttraction(p, newParticle, REPULSIVE_FORCE, MIN_REPULSIVE_DISTANCE);
-        }
-        
-        return newParticle;
     }
     
     /**
@@ -350,6 +358,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
 
             @Override
             public void keyPressed(KeyEvent e) {
+                //Zoom hotkeys
                 if (e.isControlDown()) {
                     if (e.getKeyCode() == KeyEvent.VK_PLUS ||
                         e.getKeyCode() == KeyEvent.VK_I ||
@@ -366,10 +375,16 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
                     }
                 }
                 
+                //Toggle lockdown
                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-//                    for () {
-//                        
-//                    }
+                    m_onLockdown = !m_onLockdown;
+                    for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+                        if (m_onLockdown) {
+                            m_particleSystem.getParticle(i).makeFixed();
+                        } else {
+                            m_particleSystem.getParticle(i).makeFree();
+                        }
+                    }
                 }
             }
 
@@ -412,7 +427,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             
             @Override
             public void mouseReleased(MouseEvent me) {
-                if (m_currentParticle != null) {
+                if (m_currentParticle != null && !m_onLockdown) {
                     m_currentParticle.makeFree();
                     m_currentParticle = null;
                 }
@@ -574,6 +589,9 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             LOGGER.info("Data added to graph display: " + entity.getId());
             //Initialize entity particle and rendering config
             Particle newParticle = createParticle(X_RANGE + m_rand.nextInt(X_RANGE), X_RANGE+ m_rand.nextInt(Y_RANGE));
+            if (m_onLockdown) {
+                newParticle.makeFixed();
+            }
             
             //Create an initial rendering config for the new entity
             int r = getDotRadius();
