@@ -97,9 +97,9 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     /** The current particle that has been clicked, used for dragging. */
     private Particle m_currentParticle = null;
     /** Value used to determine initial X position. */
-    private static final int X_RANGE = 400;
+    private static final int X_RANGE = 300;
     /** Value used to determine initial Y position. */
-    private static final int Y_RANGE = 400;
+    private static final int Y_RANGE = 300;
     /** The mass of the particle. */
     private static final int PARTICLE_MASS = 20;
     /** Whether or not the nodes are frozen */
@@ -109,6 +109,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     // GENERAL MEMBERS
     /** A map of Entity UUIDs to their rendering configurations. */
     private final Map<UUID, RenderingConfig> m_renderingConfigMap;
+    /** A map of relationships to their springs. */
     /** The entity currently hovered over. */
     private Entity m_hoveredEntity;
     /** The point currently hovered over. */
@@ -401,6 +402,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         addMouseListener(new MouseAdapter(){
             @Override
             public void mousePressed(MouseEvent me) {
+                //Get point coordinates
                 Point click = me.getPoint();
                 Vector3D clickVector = new Vector3D((click.x / m_scaleFactor - m_horizontalScrollTranslation),
                                                     (click.y / m_scaleFactor - m_verticalScrollTranslation),
@@ -409,26 +411,29 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
                 int r2 = r * r;
                 Particle clickedParticle = null;
                 
+                //Find if a particle was clicked on
                 for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-                    Particle p = m_particleSystem.getParticle(i);
-                    
+                    Particle p = m_particleSystem.getParticle(i);    
                     if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
                         clickedParticle = p;
                         break;
                     }
                 }
-                
+                //Fix clicked particle for dragging
                 if (clickedParticle != null) {
                     clickedParticle.makeFixed();
                     m_currentParticle = clickedParticle;
                 }
-                
             }
             
             @Override
             public void mouseReleased(MouseEvent me) {
-                if (m_currentParticle != null && !m_onLockdown) {
-                    m_currentParticle.makeFree();
+                //Unset the current particle being dragged when the mouse is released
+                if (m_currentParticle != null) {
+                    //Free the particle, unless the system is on lockdown
+                    if (!m_onLockdown) {
+                        m_currentParticle.makeFree();
+                    }
                     m_currentParticle = null;
                 }
             }
@@ -588,7 +593,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             //New entity for the display, initialize it
             LOGGER.info("Data added to graph display: " + entity.getId());
             //Initialize entity particle and rendering config
-            Particle newParticle = createParticle(X_RANGE + m_rand.nextInt(X_RANGE), X_RANGE+ m_rand.nextInt(Y_RANGE));
+            Particle newParticle = createParticle(m_rand.nextInt(X_RANGE), m_rand.nextInt(Y_RANGE));
             if (m_onLockdown) {
                 newParticle.makeFixed();
             }
@@ -612,12 +617,25 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         rc.color = Colors.getColor(entity.getType());
         
         //Update Relationship Springs
+        //Remove any linked springs first to catch removed relationships TODO: store relationships and springs somehow to prevent having to do this
+        int numSprings = m_particleSystem.numberOfSprings();
+        Set<Spring> springsToRemove = new HashSet<>();
+        for (int i = 0; i < numSprings; i++) {
+            Spring spring = m_particleSystem.getSpring(i);
+            if (spring.getOneEnd().equals(rc.particle) || spring.getTheOtherEnd().equals(rc.particle)) {
+                springsToRemove.add(spring);
+            }
+        }
+        for (Spring s : springsToRemove) {
+            m_particleSystem.removeSpring(s);
+        }
+        
         // Collect all relationships
         EntityData pubData = entity.getPublicData();
         EntityData secretData = entity.getSecretData();
         Set<Relationship> relationships = pubData.getRelationships();
-        relationships.addAll(secretData.getRelationships());
-
+        relationships.addAll(secretData.getRelationships());        
+        
         // Create a spring between the new entity's particle and the existing one for each relationship.
         for (Relationship relationship : relationships) {
             RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getIdOfRelation());
@@ -631,9 +649,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             m_particleSystem.makeSpring(rc.particle, particleForRelatedEntity, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
         }
     }
-
-
-
+    
     
     /** A data bag for holding the locations calculated for rendering data. */
     private class RenderingConfig {
