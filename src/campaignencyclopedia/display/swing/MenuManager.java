@@ -2,7 +2,6 @@ package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.ConfigureCampaignCalendarAction;
 import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;
@@ -210,6 +209,7 @@ public class MenuManager {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
+                m_cdm.addListener(viewer);
                 viewer.launch();
             }
         });

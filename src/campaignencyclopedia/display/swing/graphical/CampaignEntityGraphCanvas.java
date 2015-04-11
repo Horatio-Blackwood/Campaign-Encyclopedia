@@ -4,6 +4,7 @@ import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -26,6 +27,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -34,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.Scrollable;
@@ -44,11 +47,11 @@ import traer.physics.Spring;
 import traer.physics.Vector3D;
 
 /**
- *
+ * The canvas for the connected graph view of campaign entities.
  * @author keith
  * @author adam
  */
-public class CampaignEntityGraphCanvas extends JComponent implements Scrollable {
+public class CampaignEntityGraphCanvas extends JComponent implements Scrollable, CampaignDataManagerListener {
 
     // RENDERING PARAMETERS
     /** How long to draw the lines between the dots. */
@@ -78,7 +81,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     private static final float SPRING_STRENGTH = 0.3f;
     /** The amount of spring dampening. */
     private static final float SPRING_DAMPENING = 0.4f;
-    /** The current particle, I guess?  Keith */
+    /** The current particle that has been clicked, used for dragging. */
     private Particle m_currentParticle = null;
     /** Value used to determine initial X position. */
     private static final int X_RANGE = 400;
@@ -91,9 +94,9 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     
     
     // RENDERING & PHYSICS PARAMETERS
+    private final Random m_rand = new Random();
     private final ScheduledExecutorService m_ses = Executors.newSingleThreadScheduledExecutor();
     private long m_previousUpdateTime;
-    private final Random m_rand = new Random();
     private final int m_maxUnitIncrement = 5;
     private float m_verticalScrollTranslation = 0.0f;
     private float m_horizontalScrollTranslation = 0.0f;
@@ -131,7 +134,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         m_display = display;
         m_renderingConfigMap = new HashMap<>();
         
-        
         //Initialize physics
         m_particleSystem = new ParticleSystem(GRAVITY, DRAG);
         m_particleSystem.setIntegrator(ParticleSystem.RUNGE_KUTTA);
@@ -157,6 +159,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
 
     /** Load up all of the entity data for rendering. */
     public final void initializeEntities() {
+        
         List<Entity> allEntities = m_accessor.getAllEntities();
         
         //Entities
@@ -229,7 +232,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     }
     
     /**
-     * Creates a particle at the given x and y coordinates.
+     * Creates a particle at the given x and y coordinates that has the set repulsive force applied against all other particles.
      * @param x the x coordinate.
      * @param y the y coordinate.
      * @return the created particle.
@@ -237,6 +240,8 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     private Particle createParticle(int x, int y) {
         // Z axis is always zero, as this is a 2D graph.
         Particle newParticle = m_particleSystem.makeParticle(PARTICLE_MASS, x, y, 0);
+        
+        //Add repulsion against all other particles
         for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
             Particle p = m_particleSystem.getParticle(i);
             // Ignore "making attraction" on this particle against itself.
@@ -249,6 +254,11 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         return newParticle;
     }
     
+    /**
+     * Draws the given rendering configuration on the canvas
+     * @param rc The config to draw.
+     * @param g2 The graphics instance used to draw.
+     */
     private void drawRenderingConfig(RenderingConfig rc, Graphics2D g2) {
         g2.setColor(rc.color);
         drawParticle(rc.particle, g2);
@@ -300,6 +310,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     
     /**
      * Renders a the supplied particle with the supplied Graphics2D object.
+     * The particle's position will be in the center of the circle drawn with radius given by {@link #getDotRadius()}.
      * @param p the particle to render.
      * @param g2d the G2D to use.
      */
@@ -327,7 +338,9 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     }
 
 
-    
+    /**
+     * Initializes a key listener for the Canvas.  Sets up zoom and lockdown hotkeys.
+     */
     private void initializeKeyListener() {
         addKeyListener(new KeyListener() {
 
@@ -352,6 +365,12 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                         System.out.println("- : " + m_scaleFactor);
                     }
                 }
+                
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+//                    for () {
+//                        
+//                    }
+                }
             }
 
             @Override
@@ -360,6 +379,9 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         });
     }
     
+    /**
+     * Initializes the mouse listeners for grabbing and dragging nodes.
+     */
     private void initializeMouseListener() {
         addMouseListener(new MouseAdapter(){
             @Override
@@ -452,6 +474,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         int furthestTop = 0;
         int furthestBottom = 0;
         
+        //Find the furthest extents of the drawn graph
         for (RenderingConfig rc : m_renderingConfigMap.values()) {
             if (rc.particle.position().x() < furthestLeft) {
                 furthestLeft = (int)rc.particle.position().x();
@@ -465,6 +488,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
             }
         }
         
+        //Set the translation adjustment factors, including edge padding
         m_verticalScrollTranslation = (-furthestTop + SCROLL_PAD);
         m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
         
@@ -491,8 +515,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
             currentPosition = visibleRect.y;
         }
 
-        //Return the number of pixels between currentPosition
-        //and the nearest tick mark in the indicated direction.
+        //Return the number of pixels between currentPosition and the nearest tick mark in the indicated direction.
         if (direction < 0) {
             int newPosition = currentPosition - (currentPosition / m_maxUnitIncrement) * m_maxUnitIncrement;
             return (newPosition == 0) ? m_maxUnitIncrement : newPosition;
@@ -518,6 +541,77 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     @Override
     public boolean getScrollableTracksViewportHeight() {
         return false;
+    }
+
+    
+    @Override
+    public void dataRemoved(UUID id) {
+        LOGGER.log(Level.INFO, "Data removed from graph display: " + id);
+        
+        RenderingConfig r = m_renderingConfigMap.get(id);
+        
+        //Remove any linked springs first
+        int numSprings = m_particleSystem.numberOfSprings();
+        Set<Spring> springsToRemove = new HashSet<>();
+        for (int i = 0; i < numSprings; i++) {
+            Spring spring = m_particleSystem.getSpring(i);
+            if (spring.getOneEnd().equals(r.particle) || spring.getTheOtherEnd().equals(r.particle)) {
+                springsToRemove.add(spring);
+            }
+        }
+        for (Spring s : springsToRemove) {
+            m_particleSystem.removeSpring(s);
+        }
+        
+        //Remove particle
+        m_particleSystem.removeParticle(r.particle);
+    }
+
+    @Override
+    public void dataAddedOrUpdated(Entity entity) {
+        if (!m_renderingConfigMap.containsKey(entity.getId())) {
+            //New entity for the display, initialize it
+            LOGGER.info("Data added to graph display: " + entity.getId());
+            //Initialize entity particle and rendering config
+            Particle newParticle = createParticle(X_RANGE + m_rand.nextInt(X_RANGE), X_RANGE+ m_rand.nextInt(Y_RANGE));
+            
+            //Create an initial rendering config for the new entity
+            int r = getDotRadius();
+            RenderingConfig rc = new RenderingConfig();
+            rc.particle = newParticle;
+            rc.dot = new Ellipse2D.Double(-r, -r, 2 * r, 2 * r);
+            m_renderingConfigMap.put(entity.getId(), rc);
+        }
+        
+        //Update the entity's relationships.
+        LOGGER.info("Updating data in display in graph display: " + entity.getId());
+        
+        //Get RenderingConfig of the added or updated entity to update it
+        RenderingConfig rc = m_renderingConfigMap.get(entity.getId());
+        
+        //Update general entity data
+        rc.text = entity.getName();
+        rc.color = Colors.getColor(entity.getType());
+        
+        //Update Relationship Springs
+        // Collect all relationships
+        EntityData pubData = entity.getPublicData();
+        EntityData secretData = entity.getSecretData();
+        Set<Relationship> relationships = pubData.getRelationships();
+        relationships.addAll(secretData.getRelationships());
+
+        // Create a spring between the new entity's particle and the existing one for each relationship.
+        for (Relationship relationship : relationships) {
+            RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getIdOfRelation());
+            if (otherRenderingConfig == null) {
+                LOGGER.warning("Found a relationship pointing to a null entity on " + entity.getName() + 
+                        "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getIdOfRelation().toString() + ")");
+                continue; 
+            }
+            Particle particleForRelatedEntity = otherRenderingConfig.particle;
+
+            m_particleSystem.makeSpring(rc.particle, particleForRelatedEntity, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
+        }
     }
 
 

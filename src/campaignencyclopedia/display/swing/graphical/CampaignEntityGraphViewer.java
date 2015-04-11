@@ -1,11 +1,14 @@
 package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.DataAccessor;
+import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -18,7 +21,7 @@ import toolbox.display.DisplayUtilities;
  * @author adam
  * @author keith
  */
-public class CampaignEntityGraphViewer {
+public class CampaignEntityGraphViewer implements CampaignDataManagerListener {
 
     /** A logger. */
     private static final Logger LOGGER = Logger.getLogger(CampaignEntityGraphViewer.class.getName());
@@ -64,6 +67,16 @@ public class CampaignEntityGraphViewer {
         JScrollPane canvasScroller = new JScrollPane(m_canvas);
         
         m_frame.add(canvasScroller, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void dataRemoved(UUID id) {
+        m_canvas.dataRemoved(id);
+    }
+
+    @Override
+    public void dataAddedOrUpdated(Entity entity) {
+        m_canvas.dataAddedOrUpdated(entity);
     }
     
 }
