@@ -98,11 +98,11 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
     /** The last time the system ticked, in miliseconds. */
     private long m_previousUpdateTime;
     /** The gravity value. */
-    private static final float GRAVITY = 0.0f;
+    private static final float GRAVITY = -10.0f;
     /** Amount of drag. */
-    private static final float DRAG = 10.0f;
+    private static final float DRAG = 30.0f;
     /** The amount of repulsive force between graph nodes. */
-    private static final float REPULSIVE_FORCE = -1000;
+    private static final float REPULSIVE_FORCE = -400;
     /** The minimum repulsive distance. */
     private static final float MIN_REPULSIVE_DISTANCE = 30;
     /** The strength of the springs which hold the nodes together. */
@@ -121,6 +121,8 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
     // GENERAL MEMBERS
     /** A map of Entity UUIDs to their rendering configurations. */
     private final Map<UUID, RenderingConfig> m_renderingConfigMap;
+    /** A map of years to the particle representing that year. */
+    private final Map<Integer, Particle> m_yearParticleMap;
     /** The earliest year being displayed (i.e. the far left) */
     private int m_earliestYear;
     /** The latest year being displayed (i.e. the far right) */
@@ -156,6 +158,7 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
         m_accessor = accessor;
         m_display = display;
         m_renderingConfigMap = new HashMap<>();
+        m_yearParticleMap = new HashMap<>();
         
         //Initialize physics
         m_particleSystem = new ParticleSystem(GRAVITY, DRAG);
@@ -200,8 +203,8 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
                 m_latestYear = e.getYear();
             }
             
-            Particle p = createParticle(e.getYear() * m_yearScaleFactor, getTimelineVerticalPosition());
-            p.makeFixed();
+            Particle p = createParticle(e.getYear() * m_yearScaleFactor, getTimelineVerticalPosition() - 2 * getTickHeight());
+            //p.makeFixed();
             int r = getTickWidth();
             RenderingConfig rc = new RenderingConfig();
             rc.text = e.getTitle();
@@ -209,6 +212,15 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
             rc.particle = p;
             rc.color = Colors.EVENT;
             m_renderingConfigMap.put(e.getId(), rc);
+            
+            if (!m_yearParticleMap.containsKey(e.getYear())) {
+                //create year particle if one does not yet exist
+                Particle yearParticle = createParticle(e.getYear() * m_yearScaleFactor, getTimelineVerticalPosition());
+                yearParticle.makeFixed();
+                m_yearParticleMap.put(e.getYear(), yearParticle);
+            }
+            //Link particle to year particle with springs
+            m_particleSystem.makeSpring(p, m_yearParticleMap.get(e.getYear()), SPRING_STRENGTH, SPRING_DAMPENING, getEventLeaderLineLength());
         }
         
 //        //Relationship Springs: create a spring between entities for every relationship
@@ -288,16 +300,17 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
         g2.fillRect(timelineStart, getTimelineVerticalPosition() - (getTimelineThickness() / 2), timelineEnd, getTimelineThickness());
         //ticks
         for (int i = timelineStart; i <= timelineEnd; i += m_yearScaleFactor) {
-            g2.fillRect(i, getTimelineVerticalPosition() - (getTickHeight() / 2), getTickWidth(), getTickHeight());
+            g2.fillRect(i - getTickWidth() / 2, getTimelineVerticalPosition() - (getTickHeight() / 2), getTickWidth(), getTickHeight());
+            g2.drawString(String.valueOf(i / m_yearScaleFactor), i, getTimelineVerticalPosition() + (getTickHeight()));
         }
         
         
         //Draw Springs
-//        g2.setPaint(Colors.LINE);
-//        for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
-//            Spring s = m_particleSystem.getSpring(i);
-//            drawSpring(s, g2);
-//        }
+        g2.setPaint(Colors.LINE);
+        for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
+            Spring s = m_particleSystem.getSpring(i);
+            drawSpring(s, g2);
+        }
         
         //Draw entities
         for (UUID id : m_renderingConfigMap.keySet()) {
@@ -369,7 +382,7 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
      * @param g2d the G2D to use.
      */
     private void drawParticle(Particle p, Graphics2D g2d) {
-        float r = getTickWidth();
+        float r = getDotRadius();
         g2d.fillOval((int)(p.position().x() - r), (int)(p.position().y() - r), (int)(r * 2.0f), (int)(r * 2.0f));
     }
 
@@ -398,6 +411,15 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
      */
     private int getTimelineVerticalPosition() {
         return TIMELINE_VERTICAL_POSITION;
+    }
+
+    /**
+     * Returns the dot radius, this method is in place in case dynamic sizes are desired in the future this 
+     * method can be updated but reliant code can remain the same.
+     * @return the radius of the dots to be rendered.
+     */
+    private int getDotRadius() {
+        return getTickWidth() * 2;
     }
 
     /**
@@ -479,7 +501,7 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
                 Vector3D clickVector = new Vector3D((click.x / m_scaleFactor - m_horizontalScrollTranslation),
                                                     (click.y / m_scaleFactor - m_verticalScrollTranslation),
                                                     0);
-                int r = getTickWidth();
+                int r = getDotRadius();
                 int r2 = r * r;
                 Particle clickedParticle = null;
                 
@@ -520,8 +542,7 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
                 boolean found = false;
                 for (UUID id : m_renderingConfigMap.keySet()) {
                     RenderingConfig rc = m_renderingConfigMap.get(id);
-                    if (rc.tick
-.contains(me.getPoint())) {
+                    if (rc.tick.contains(me.getPoint())) {
                         found = true;
                         m_hoveredEntity = m_accessor.getEntity(id);
                         m_hoverPoint = new Point2D.Double(me.getX(), me.getY());
@@ -583,15 +604,18 @@ public class GraphicalTimelineCanvas extends JComponent implements Scrollable, C
             }
         }
         
+        furthestLeft = m_earliestYear * m_yearScaleFactor;
+        furthestRight = m_latestYear * m_yearScaleFactor;
+        
         //Set the translation adjustment factors, including edge padding
         m_verticalScrollTranslation = 0;    //(-furthestTop + SCROLL_PAD);
         m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
         
         float horizontalGraphSpan = (furthestRight - furthestLeft);
-        float verticalGraphSpan = getTimelineVerticalPosition();    //(furthestBottom - furthestTop);
+        float verticalGraphSpan = 2 * getTimelineVerticalPosition();    //(furthestBottom - furthestTop);
         
         int xDim = (int)((horizontalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
-        int yDim = (int)((verticalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
+        int yDim = (int)((verticalGraphSpan) * m_scaleFactor);
         
         System.out.println("width: " + xDim + "  height: " + yDim);
         System.out.println("fleft: " + furthestLeft + "  fright: " + furthestRight);
