@@ -109,7 +109,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     // GENERAL MEMBERS
     /** A map of Entity UUIDs to their rendering configurations. */
     private final Map<UUID, RenderingConfig> m_renderingConfigMap;
-    /** A map of relationships to their springs. */
     /** The entity currently hovered over. */
     private Entity m_hoveredEntity;
     /** The point currently hovered over. */
@@ -489,10 +488,10 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
 
     @Override
     public Dimension getPreferredSize() {
-        int furthestLeft = 0;
-        int furthestRight = 0;
-        int furthestTop = 0;
-        int furthestBottom = 0;
+        int furthestLeft = Integer.MAX_VALUE;
+        int furthestRight = Integer.MIN_VALUE;
+        int furthestTop = Integer.MAX_VALUE;
+        int furthestBottom = Integer.MIN_VALUE;
         
         //Find the furthest extents of the drawn graph
         for (RenderingConfig rc : m_renderingConfigMap.values()) {
