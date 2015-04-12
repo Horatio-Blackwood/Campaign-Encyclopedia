@@ -173,7 +173,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         
         //Entities: create a particle in the system and a configuration for rendering
         for (Entity e : allEntities) {
-            Particle p = createParticle(X_RANGE + m_rand.nextInt(X_RANGE), X_RANGE+ m_rand.nextInt(Y_RANGE));
+            Particle p = createParticle(m_rand.nextInt(X_RANGE), m_rand.nextInt(Y_RANGE));
             int r = getDotRadius();
             RenderingConfig rc = new RenderingConfig();
             rc.text = e.getName();
