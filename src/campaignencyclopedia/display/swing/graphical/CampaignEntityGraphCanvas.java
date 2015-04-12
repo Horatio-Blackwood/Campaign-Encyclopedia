@@ -497,12 +497,14 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         for (RenderingConfig rc : m_renderingConfigMap.values()) {
             if (rc.particle.position().x() < furthestLeft) {
                 furthestLeft = (int)rc.particle.position().x();
-            } else if (rc.particle.position().x() > furthestRight) {
+            }
+            if (rc.particle.position().x() > furthestRight) {
                 furthestRight = (int)rc.particle.position().x();
             }
             if (rc.particle.position().y() < furthestTop) {
                 furthestTop = (int)rc.particle.position().y();
-            } else if (rc.particle.position().y() > furthestBottom) {
+            }
+            if (rc.particle.position().y() > furthestBottom) {
                 furthestBottom = (int)rc.particle.position().y();
             }
         }

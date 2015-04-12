@@ -57,7 +57,7 @@ public class CampaignEntityGraphViewer implements CampaignDataManagerListener {
     }
     
     private void initialize() {
-        m_frame = new JFrame("Orbital Viewer");
+        m_frame = new JFrame("Campaign Graph Viewer");
         m_frame.setLayout(new BorderLayout());
         m_frame.setPreferredSize(m_windowSize);
         m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
