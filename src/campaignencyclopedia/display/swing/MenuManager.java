@@ -15,6 +15,7 @@ import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
 import campaignencyclopedia.display.swing.graphical.CampaignEntityGraphViewer;
+import campaignencyclopedia.display.swing.graphical.GraphicalTimelineViewer;
 import campaignencyclopedia.display.swing.graphical.OrbitalEntityViewer;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -205,6 +206,14 @@ public class MenuManager {
 
         dataMenu.add(editName);
         dataMenu.add(showTimeline);
+        dataMenu.add(new AbstractAction("Show Graphical Timeline") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                GraphicalTimelineViewer viewer = new GraphicalTimelineViewer(m_display, m_cdm);
+                m_cdm.addListener(viewer);
+                viewer.launch();
+            }
+        });
         dataMenu.add(new AbstractAction("Launch Campaign Graph Viewer") {
             @Override
             public void actionPerformed(ActionEvent ae) {
