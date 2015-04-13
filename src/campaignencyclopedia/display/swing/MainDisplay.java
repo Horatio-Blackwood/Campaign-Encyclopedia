@@ -124,7 +124,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.2.0-DEVELOPMENT-VERSION";
+    public static final String VERSION = "v1.2.0-Alpha";
 
     /** The date this release was created. */
     public static final String DATE = "April 9, 2015";
