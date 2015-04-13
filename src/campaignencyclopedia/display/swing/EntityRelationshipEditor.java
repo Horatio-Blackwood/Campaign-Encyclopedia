@@ -1,9 +1,9 @@
 package campaignencyclopedia.display.swing;
 
-import campaignencyclopedia.display.EntityDisplay;
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.display.EntityDisplay;
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -13,10 +13,13 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import toolbox.display.EditListener;
@@ -30,15 +33,12 @@ import toolbox.display.dialog.OkCancelCommitManager;
 public class EntityRelationshipEditor {
     /** The title label of this editor. */
     private final JLabel m_label;
-    
+
     /** Display for relationships associated with a given Entity. */
     private final JList<Relationship> m_list;
 
     /** The Add Relationship button. */
     private final JButton m_addButton;
-
-    /** The Delete Relationship button. */
-    private final JButton m_deleteButton;
 
     /** The List Model that backs the JList. */
     private final SortableListModel<Relationship> m_model;
@@ -62,48 +62,33 @@ public class EntityRelationshipEditor {
         m_editListener = editListener;
         m_entityDisplay = display;
         m_parent = parent;
-
         m_label = new JLabel(title);
 
         m_addButton = new JButton("Add Relationship");
         m_addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                List<Entity> entities = m_accessor.getAllEntities();
-                if (entities.size() > 0) {
-                    final AddRelationshipDialogContent dc = new AddRelationshipDialogContent(m_accessor);
-                    Runnable commit = new Runnable() {
-                        @Override
-                        public void run() {
-                            m_model.addElement(dc.getDisplayedRelationship());
-                        }
-                    };
-
-                    Runnable cancel = new Runnable() {
-                        @Override
-                        public void run() {
-                            // No-op
-                        }
-                    };
-
-                    DialogFactory.buildDialog(m_parent, "Add Relationship", true, dc, new OkCancelCommitManager(commit, cancel));
+                if (m_entityDisplay.getShownEntity() != null) {
+                    List<Entity> entities = m_accessor.getAllEntities();
+                    if (entities.size() > 0) {
+                        final RelationshipDialogContent dc = new RelationshipDialogContent(m_accessor, m_entityDisplay.getShownEntity());
+                        Runnable commit = new Runnable() {
+                            @Override
+                            public void run() {
+                                m_model.addElement(dc.getDisplayedRelationship());
+                            }
+                        };
+                        DialogFactory.buildDialog(m_parent, "Add Relationship", true, dc, new OkCancelCommitManager(commit));
+                    } else {
+                        JOptionPane.showMessageDialog(m_parent, "No entities exist in this campaign.", "No Entities to Relate To", JOptionPane.OK_OPTION);
+                    }
                 } else {
-                    JOptionPane.showMessageDialog(m_parent, "No entities exist in this campaign.", "No Entities to Relate To", JOptionPane.OK_OPTION);
+                    JOptionPane.showMessageDialog(m_parent, "Current item must be saved before adding relationships.", "Current Item Must be Saved", JOptionPane.OK_OPTION);
                 }
-
             }
         });
 
-        // Init the delete button.
-        m_deleteButton = new JButton("Delete Relationship");
-        m_deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                Relationship rel = m_model.getElementAt(m_list.getSelectedIndex());
-                m_model.removeElement(rel);
-            }
-        });
-
+        // Initialize the list model.
         m_model = new SortableListModel<>();
         m_model.addListDataListener(new ListDataListener() {
             @Override
@@ -119,16 +104,72 @@ public class EntityRelationshipEditor {
                 m_editListener.edited();
             }
         });
+        
+        // Initialize the JList.
         m_list = new JList<>();
         m_list.setCellRenderer(new RelationshipCellRenderer(accessor));
         m_list.setModel(m_model);
         m_list.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent me) {
+                m_list.setSelectedIndex(m_list.locationToIndex(me.getPoint()));
+                int selectedIndex = m_list.getSelectedIndex();
+                
+                // Double Click to Navigate
                 if (me.getClickCount() > 1) {
-                    Relationship selected = m_model.getElementAt(m_list.getSelectedIndex());
+                    Relationship selected = m_model.getElementAt(selectedIndex);
                     if (selected != null) {
-                        m_entityDisplay.showEntity(selected.getIdOfRelation());
+                        m_entityDisplay.showEntity(selected.getRelatedEntity());
+                    }
+                 
+                // Right-Click, Context Menu
+                } else if (SwingUtilities.isRightMouseButton(me)) {
+                    if (selectedIndex >= 0) {
+                        // Selected Relationship
+                        final Relationship relationship = m_model.getElementAt(m_list.getSelectedIndex());
+                        
+                        // Create Menu
+                        JPopupMenu menu = new JPopupMenu();
+                        
+                        // Remove Action
+                        menu.add(new AbstractAction("Delete") {
+                            @Override
+                            public void actionPerformed(ActionEvent ae) {
+                                m_model.removeElement(relationship);
+                            }
+                        });
+                        
+                        // Edit Action
+                        menu.add(new AbstractAction("Edit") {
+                            @Override
+                            public void actionPerformed(ActionEvent ae) {
+                                if (m_entityDisplay.getShownEntity() != null) {
+                                    List<Entity> entities = m_accessor.getAllEntities();
+                                    if (entities.size() > 0) {
+                                        // Create Dialog
+                                        final RelationshipDialogContent dc = new RelationshipDialogContent(m_accessor, m_entityDisplay.getShownEntity());
+                                        dc.setRelationship(relationship);
+                                        
+                                        // OK Runnable
+                                        Runnable commit = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                m_model.removeElement(relationship);
+                                                m_model.addElement(dc.getDisplayedRelationship());
+                                            }
+                                        };
+                                        
+                                        // Launch Dialog
+                                        DialogFactory.buildDialog(m_parent, "Edit Relationship", true, dc, new OkCancelCommitManager(commit));
+                                    } else {
+                                        JOptionPane.showMessageDialog(m_parent, "No entities exist in this campaign.", "No Entities to Relate To", JOptionPane.OK_OPTION);
+                                    }
+                                }
+                            }
+                        });   
+                        
+                        // Show the context menu
+                        menu.show(m_list, me.getX(), me.getY());
                     }
                 }
             }
@@ -142,10 +183,26 @@ public class EntityRelationshipEditor {
         }
     }
 
+    /** 
+     * Adds the supplied Relationship to this Editor.
+     * @param rel the Relationship to add.
+     */
+    public void addRelationship(Relationship rel) {
+        m_model.addElement(rel);
+    }
+
+    /**
+     * Returns the Relationship data displayed in this Editor.
+     * @return the Relationship data displayed in this Editor.
+     */
     public Set<Relationship> getData() {
         return new HashSet<>(m_model.getAllElements());
     }
 
+    /**
+     * Returns the Title Component of this editor.
+     * @return the Title Component of this editor.
+     */
     public Component getTitle() {
         return m_label;
     }
@@ -160,14 +217,6 @@ public class EntityRelationshipEditor {
      */
     public Component getAddRelationshipButton() {
         return m_addButton;
-    }
-
-    /**
-     * Returns the delete relationship button.
-     * @return the delete relationship button.
-     */
-    public Component getDeleteRelationshipButton() {
-        return m_deleteButton;
     }
 
     /** Clears the data from this display. */

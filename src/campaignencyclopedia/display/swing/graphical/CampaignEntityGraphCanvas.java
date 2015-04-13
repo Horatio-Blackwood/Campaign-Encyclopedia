@@ -61,8 +61,8 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     private static final int SCROLL_PAD = 100;
     /** The font to render entity names in. */
     private static final Font ENTITY_NAME_FONT = new Font("Arial", Font.PLAIN, 14);
-    
-    
+
+
     // PHYSICS PARAMETERS
     /** The particle physics system. */
     private ParticleSystem m_particleSystem;
@@ -87,9 +87,9 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     /** The mass of the particle. */
     private static final int PARTICLE_MASS = 20;
     private static final boolean ON_LOCKDOWN = false;
-    
-    
-    
+
+
+
     // RENDERING & PHYSICS PARAMETERS
     private final ScheduledExecutorService m_ses = Executors.newSingleThreadScheduledExecutor();
     private long m_previousUpdateTime;
@@ -113,7 +113,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     private final EntityDisplay m_display;
     /** A Logger. */
     private static final Logger LOGGER = Logger.getLogger(CampaignEntityGraphCanvas.class.getName());
-    
+
     /**
      * Creates a new instance of Orbital Entity Canvas.
      * @param display an entity display to show Entity data on.
@@ -130,14 +130,14 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         m_accessor = accessor;
         m_display = display;
         m_renderingConfigMap = new HashMap<>();
-        
-        
+
+
         //Initialize physics
         m_particleSystem = new ParticleSystem(GRAVITY, DRAG);
         m_particleSystem.setIntegrator(ParticleSystem.RUNGE_KUTTA);
-        
+
         initializeEntities();
-        
+
         //Set up rendering update loop
         m_previousUpdateTime = System.currentTimeMillis();
         m_ses.scheduleAtFixedRate(new Runnable() {
@@ -150,7 +150,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                 repaint();
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
-        
+
         initializeKeyListener();
         initializeMouseListener();
     }
@@ -158,7 +158,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     /** Load up all of the entity data for rendering. */
     public final void initializeEntities() {
         List<Entity> allEntities = m_accessor.getAllEntities();
-        
+
         //Entities
         for (Entity e : allEntities) {
             Particle p = createParticle(X_RANGE + m_rand.nextInt(X_RANGE), X_RANGE+ m_rand.nextInt(Y_RANGE));
@@ -170,25 +170,19 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
             rc.color = Colors.getColor(e.getType());
             m_renderingConfigMap.put(e.getId(), rc);
         }
-        
+
         //Relationship Springs
         for (Entity e : allEntities) {
-            // Collect all relationships
-            EntityData pubData = e.getPublicData();
-            EntityData secretData = e.getSecretData();
-            Set<Relationship> relationships = pubData.getRelationships();
-            relationships.addAll(secretData.getRelationships());
-            
             // Create a spring between for each relationship.
-            for (Relationship r : relationships) {
+            for (Relationship r : m_accessor.getRelationshipsForEntity(e.getId()).getAllRelationships()) {
                 Particle a = m_renderingConfigMap.get(e.getId()).particle;
-                RenderingConfig otherRc = m_renderingConfigMap.get(r.getIdOfRelation());
+                RenderingConfig otherRc = m_renderingConfigMap.get(r.getRelatedEntity());
                 if (otherRc == null) {
-                    LOGGER.warning("Found a relationship pointing to a null entity on " + e.getName() + 
-                            "(" + e.getId() + ") pointing to:  " + "(" + r.getIdOfRelation().toString() + ")");
-                    continue; 
+                    LOGGER.warning("Found a relationship pointing to a null entity on " + e.getName() +
+                            "(" + e.getId() + ") pointing to:  " + "(" + r.getRelatedEntity().toString() + ")");
+                    continue;
                 }
-                Particle b = m_renderingConfigMap.get(r.getIdOfRelation()).particle;
+                Particle b = m_renderingConfigMap.get(r.getRelatedEntity()).particle;
                 m_particleSystem.makeSpring(a, b, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
             }
         }
@@ -208,26 +202,26 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
 
         // Rendering stuff
         Graphics2D g2 = (Graphics2D)g;
-       
+
         //Translate by scroll amount
         g2.scale(m_scaleFactor, m_scaleFactor);
         g2.translate(m_horizontalScrollTranslation, m_verticalScrollTranslation);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);        
-        
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
         //Draw Springs
         g2.setPaint(Colors.LINE);
         for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
             Spring s = m_particleSystem.getSpring(i);
             drawSpring(s, g2);
         }
-        
+
         //Draw entities
         for (UUID id : m_renderingConfigMap.keySet()) {
             RenderingConfig rc = m_renderingConfigMap.get(id);
             drawRenderingConfig(rc, g2);
         }
     }
-    
+
     /**
      * Creates a particle at the given x and y coordinates.
      * @param x the x coordinate.
@@ -245,21 +239,21 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
             }
             m_particleSystem.makeAttraction(p, newParticle, REPULSIVE_FORCE, MIN_REPULSIVE_DISTANCE);
         }
-        
+
         return newParticle;
     }
-    
+
     private void drawRenderingConfig(RenderingConfig rc, Graphics2D g2) {
         g2.setColor(rc.color);
         drawParticle(rc.particle, g2);
         Point2D center = new Point2D.Double((int)rc.particle.position().x(), (int)rc.particle.position().y());
-        
+
         // Render Central Entity License Plate
         // - The background
         g2.setFont(ENTITY_NAME_FONT);
         FontMetrics bigFontMetrics = g2.getFontMetrics();
         g2.setPaint(Color.WHITE);
-        
+
         int licensePlateWidth = DOT_RADIUS * 3;
         boolean licensePlateUsedMinWidth = true;
         if (bigFontMetrics.stringWidth(rc.text) > licensePlateWidth) {
@@ -267,7 +261,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
             licensePlateUsedMinWidth = false;
         }
         int licensePlateHeight = bigFontMetrics.getHeight();
-        
+
         double anchorX = center.getX() - ((double)licensePlateWidth / 2.0) - PAD;
         double anchorY = center.getY() - ((double)licensePlateHeight / 2.0);
         g2.fill(new Rectangle2D.Double(anchorX, anchorY, (licensePlateWidth + PAD * 2.0f), licensePlateHeight));
@@ -279,14 +273,14 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         // Render Central Entity Text
         g2.setFont(ENTITY_NAME_FONT);
         //g2.drawString(rc.text, (int)anchorX + PAD, (int)anchorY + (licensePlateHeight) - PAD);
-        
+
         if (licensePlateUsedMinWidth) {
             anchorX += (licensePlateWidth - bigFontMetrics.stringWidth(rc.text)) / 2.0f;
         }
         g2.drawString(rc.text, (int)anchorX + PAD, (int)anchorY + (licensePlateHeight) - PAD);
-        
+
     }
-    
+
     /**
      * Draws the given spring using the supplied Graphics2D object.
      * @param s the Spring to draw.
@@ -297,7 +291,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         Particle b = s.getTheOtherEnd();
         g2d.drawLine((int)a.position().x(), (int)a.position().y(), (int)b.position().x(), (int)b.position().y());
     }
-    
+
     /**
      * Renders a the supplied particle with the supplied Graphics2D object.
      * @param p the particle to render.
@@ -309,7 +303,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     }
 
     /**
-     * Returns the line length, this method is in place in case dynamic line lengths are desired in the future this 
+     * Returns the line length, this method is in place in case dynamic line lengths are desired in the future this
      * method can be updated but reliant code can remain the same.
      * @return the length of the lines to render.
      */
@@ -318,7 +312,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     }
 
     /**
-     * Returns the dot radius, this method is in place in case dynamic sizes are desired in the future this 
+     * Returns the dot radius, this method is in place in case dynamic sizes are desired in the future this
      * method can be updated but reliant code can remain the same.
      * @return the radius of the dots to be rendered.
      */
@@ -327,7 +321,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     }
 
 
-    
+
     private void initializeKeyListener() {
         addKeyListener(new KeyListener() {
 
@@ -341,13 +335,13 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                     if (e.getKeyCode() == KeyEvent.VK_PLUS ||
                         e.getKeyCode() == KeyEvent.VK_I ||
                         e.getKeyCode() == KeyEvent.VK_EQUALS) {
-                        
+
                         m_scaleFactor += 0.1f;
                         System.out.println("+ : " + m_scaleFactor);
                     } else if (e.getKeyCode() == KeyEvent.VK_MINUS ||
                                e.getKeyCode() == KeyEvent.VK_K ||
                                e.getKeyCode() == KeyEvent.VK_UNDERSCORE) {
-                        
+
                         m_scaleFactor -= 0.1f;
                         System.out.println("- : " + m_scaleFactor);
                     }
@@ -359,7 +353,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
             }
         });
     }
-    
+
     private void initializeMouseListener() {
         addMouseListener(new MouseAdapter(){
             @Override
@@ -371,23 +365,23 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                 int r = getDotRadius();
                 int r2 = r * r;
                 Particle clickedParticle = null;
-                
+
                 for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
                     Particle p = m_particleSystem.getParticle(i);
-                    
+
                     if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
                         clickedParticle = p;
                         break;
                     }
                 }
-                
+
                 if (clickedParticle != null) {
                     clickedParticle.makeFixed();
                     m_currentParticle = clickedParticle;
                 }
-                
+
             }
-            
+
             @Override
             public void mouseReleased(MouseEvent me) {
                 if (m_currentParticle != null) {
@@ -396,12 +390,12 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                 }
             }
         });
-        
+
         // Mouse Wheel Listener
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent me) {
-                
+
                 // Find out if we're hovering over a given entity.
                 boolean found = false;
                 for (UUID id : m_renderingConfigMap.keySet()) {
@@ -414,7 +408,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                         break;
                     }
                 }
-                
+
                 // Clear out the hovered entity if none exists
                 if (found == false) {
                     m_hoveredEntity = null;
@@ -422,7 +416,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                     repaint();
                 }
             }
-            
+
             @Override
             public void mouseDragged(MouseEvent me) {
                 if (m_currentParticle != null) {
@@ -432,7 +426,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                 }
             }
         });
-        
+
         // Mouse Wheel Listener
         addMouseWheelListener(new MouseAdapter() {
             @Override
@@ -442,7 +436,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                 }
             }
         });
-        
+
     }
 
     @Override
@@ -451,7 +445,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
         int furthestRight = 0;
         int furthestTop = 0;
         int furthestBottom = 0;
-        
+
         for (RenderingConfig rc : m_renderingConfigMap.values()) {
             if (rc.particle.position().x() < furthestLeft) {
                 furthestLeft = (int)rc.particle.position().x();
@@ -464,13 +458,13 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
                 furthestBottom = (int)rc.particle.position().y();
             }
         }
-        
+
         m_verticalScrollTranslation = (-furthestTop + SCROLL_PAD);
         m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
-        
+
         float horizontalGraphSpan = (furthestRight - furthestLeft);
         float verticalGraphSpan = (furthestBottom - furthestTop);
-        
+
         int xDim = (int)((horizontalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
         int yDim = (int)((verticalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
         return new Dimension(xDim, yDim);
@@ -522,7 +516,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
 
 
 
-    
+
     /** A data bag for holding the locations calculated for rendering data. */
     private class RenderingConfig {
         private String text;

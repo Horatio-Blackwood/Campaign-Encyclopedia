@@ -6,7 +6,6 @@ import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
-import java.awt.Color;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -50,7 +49,7 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
     public void actionPerformed(ActionEvent ae) {
         Campaign campaign = m_cdm.getData();
         final Pdf pdf = new Pdf(PdfFont.HELVETICA, NORMAL);
-        
+
         try {
             // == TITLE PAGE ==========
             pdf.insertBlankLine(TITLE);
@@ -63,11 +62,11 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
                 pdf.renderLine("includes secret data");
             }
             pdf.insertPageBreak();
-            
-            
+
+
             // == TIMELINE ============
             exportTimeline(pdf);
-           
+
 
             // == ENTITY DATA =========
             // Get and Sort the Entities of this Campaign
@@ -93,10 +92,10 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
 
                 // Public & Secret Data
                 EntityData publicData = entity.getPublicData();
-                processEntityData(publicData, pdf, false);
+                processEntityData(publicData, campaign.getRelationships(entity.getId()), pdf, false);
                 if (m_includeSecrets) {
                     EntityData secretData = entity.getSecretData();
-                    processEntityData(secretData, pdf, true);
+                    processEntityData(secretData, campaign.getRelationships(entity.getId()), pdf, true);
                 }
                 pdf.insertBlankLine();
             }
@@ -139,7 +138,7 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
     /**
      * Exports the timeline of the campaign.
      * @param pdf PDF file to render the timeline data to.
-     * @throws IOException 
+     * @throws IOException
      */
     private void exportTimeline(Pdf pdf) throws IOException {
         pdf.renderLine("Campaign Timeline", PdfFont.HELVETICA_BOLD, SECTION);
@@ -179,12 +178,12 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
             pdf.insertBlankLine(6);
         }
     }
-    
+
     /** A Helper class for organizing timeline data for PDF rendering. */
     private class TimelineDate implements Comparable<TimelineDate> {
         private final Month month;
         private final int year;
-        
+
         private TimelineDate(Month m, int y) {
             month = m;
             year = y;

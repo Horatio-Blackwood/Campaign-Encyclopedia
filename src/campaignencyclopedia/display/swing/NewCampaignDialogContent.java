@@ -3,10 +3,13 @@ package campaignencyclopedia.display.swing;
 import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.CampaignCalendar;
 import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.data.TimelineEntry;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.UUID;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -40,7 +43,11 @@ public class NewCampaignDialogContent implements DialogContent {
      * @return the new campaign.
      */
     public Campaign getCampaign() {
-        return new Campaign(m_nameField.getText(), new HashSet<Entity>(), new HashSet<TimelineEntry>(), new CampaignCalendar());
+        return new Campaign(m_nameField.getText(),
+                            new HashSet<Entity>(),
+                            new HashMap<UUID, RelationshipManager>(),
+                            new HashSet<TimelineEntry>(),
+                            new CampaignCalendar());
     }
 
     /** Initialize the display components of this DialogContent. */

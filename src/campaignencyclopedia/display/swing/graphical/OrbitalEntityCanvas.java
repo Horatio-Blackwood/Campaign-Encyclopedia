@@ -3,6 +3,7 @@ package campaignencyclopedia.display.swing.graphical;
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
@@ -109,7 +110,7 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
         FontMetrics orignalFontMetrics = g2.getFontMetrics();
         Font originalFont = g2.getFont();
         Font boldFont = originalFont.deriveFont(Font.BOLD);
-        
+
         // RENDER ENTITY
         if (m_currentEntity != null) {
             Entity current = m_accessor.getEntity(m_currentEntity);
@@ -120,12 +121,12 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                 m_renderingConfigMap.clear();
 
                 // Fetch some required values
-                Set<Relationship> relationships = new HashSet<>(current.getPublicData().getRelationships());
-                relationships.addAll(current.getSecretData().getRelationships());
+                RelationshipManager currentRelMgr = m_accessor.getRelationshipsForEntity(m_currentEntity);
+                Set<Relationship> relationships = new HashSet<>(currentRelMgr.getAllRelationships());
 
                 Set<UUID> uniqueIds = new HashSet<>();
                 for (Relationship rel : relationships) {
-                    uniqueIds.add(rel.getIdOfRelation());
+                    uniqueIds.add(rel.getRelatedEntity());
                 }
                 int relationshipCount = uniqueIds.size();
 
@@ -216,9 +217,9 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                         int maxWidth = orignalFontMetrics.stringWidth(RELATIONSHIPS);
                         List<String> hoverRelationships = new ArrayList<>();
                         hoverRelationships.add(RELATIONSHIPS);
-                        for (Relationship rel : current.getPublicData().getRelationships()) {
-                            if (rel.getIdOfRelation().equals(hoveredEntityId)) {
-                                String line = "\n  - " + rel.getRelationship() + " " + m_accessor.getEntity(rel.getIdOfRelation()).getName();
+                        for (Relationship rel : currentRelMgr.getPublicRelationships()) {
+                            if (rel.getRelatedEntity().equals(hoveredEntityId)) {
+                                String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
                                 hoverRelationships.add(line);
                                 int stringWidth = orignalFontMetrics.stringWidth(line);
                                 if (maxWidth < stringWidth) {
@@ -226,9 +227,9 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                                 }
                             }
                         }
-                        for (Relationship rel : current.getSecretData().getRelationships()) {
-                            if (rel.getIdOfRelation().equals(hoveredEntityId)) {
-                                String line = "\n  - " + rel.getRelationship() + " " + m_accessor.getEntity(rel.getIdOfRelation()).getName() + " (Secret)";
+                        for (Relationship rel : currentRelMgr.getSecretRelationships()) {
+                            if (rel.getRelatedEntity().equals(hoveredEntityId)) {
+                                String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
                                 hoverRelationships.add(line);
                                 int stringWidth = orignalFontMetrics.stringWidth(line);
                                 if (maxWidth < stringWidth) {
@@ -264,7 +265,7 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
         } else {
             g2.drawString("No Data", this.getWidth() / 2, this.getHeight() / 2);
         }
-        
+
         // Re BACK / FWD Buttons
         g2.setFont(originalFont);
         g2.setPaint(Color.WHITE);

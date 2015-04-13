@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- *
+ * An interface that describes the methods that must be provided to access or update data.
  * @author adam
  */
 public interface DataAccessor {
@@ -25,19 +25,18 @@ public interface DataAccessor {
      */
     public List<Entity> getAllEntities();
 
-
-    /**
-     * Returns the TimelineEntry data for this Campaign.
-     * @return the TimelineEntry data for this Campaign.
-     */
-    public Set<TimelineEntry> getTimelineData();
-
     /**
      * Adds the supplied Entity to the system.  If an entity with a matching ID exists, that Entity is replaced by the
      * supplied one.
      * @param entity the Entity to add.
      */
     public void addOrUpdateEntity(Entity entity);
+
+    /**
+     * Removes the Entity associated with the supplied ID.
+     * @param id the ID of the Entity to remove.
+     */
+    public void removeEntity(UUID id);
 
     /**
      * Called to add or update the supplied TimelineEntry in the data model.
@@ -52,8 +51,36 @@ public interface DataAccessor {
     public void removeTimelineEntry(UUID id);
 
     /**
-     * Removes the Entity associated with the supplied ID.
-     * @param id the ID of the Entity to remove.
+     * Returns the TimelineEntry data for this Campaign.
+     * @return the TimelineEntry data for this Campaign.
      */
-    public void removeEntity(UUID id);
+    public Set<TimelineEntry> getTimelineData();
+
+    /**
+     * Adds the supplied relationship.
+     * @param entity the UUID of the Entity upon which to place this Relationship.
+     * @param rel the Relationship to add.
+     */
+    public void addRelationship(UUID entity, Relationship rel);
+
+    /**
+     * Removes the Relationship associated with the supplied ID.
+     * @param entity the UUID of the Entity to remove the Relationship.
+     * @param toRemove the relationship to remove.
+     */
+    public void removeRelationship(UUID entity, Relationship toRemove);
+
+    /**
+     * Replaces the RelationshipManager for the supplied entity with the provided one.
+     * @param entity the ID of the Entity to update the RelationshipManager for.
+     * @param relMgr the new RelationshipManager.
+     */
+    public void addOrUpdateAllRelationships(UUID entity, RelationshipManager relMgr);
+    
+    /**
+     * Returns the Relationships for the entity associated with the supplied ID.
+     * @param entity the ID of the entity to get relationships for.
+     * @return all of the Relationships for the Entity with the supplied ID.
+     */
+    public RelationshipManager getRelationshipsForEntity(UUID entity);
 }

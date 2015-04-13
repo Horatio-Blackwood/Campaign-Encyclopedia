@@ -5,6 +5,7 @@ import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityType;
+import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.display.EntityDisplayFilter;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.SaveHelper;
@@ -97,10 +98,13 @@ public class MainDisplay implements EditListener, UserDisplay {
     private JButton m_commitEntityButton;
 
     /** The EntityData Display for public data. */
-    private EntityDataDisplay m_public;
+    private EntityDataEditor m_public;
 
     /** An EntityDataDisplay for secret data. */
-    private EntityDataDisplay m_secret;
+    private EntityDataEditor m_secret;
+    
+    /** An editor for Entity Relationship data. */
+    private EntityRelationshipEditor m_relationshipEditor;
 
     /** The JCheckBox for making this Entity secret (or not). */
     private JCheckBox m_secretEntityCheckbox;
@@ -120,7 +124,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.1.0";
+    public static final String VERSION = "v1.2.0-DEVELOPMENT-VERSION";
 
     /** The date this release was created. */
     public static final String DATE = "April 9, 2015";
@@ -159,6 +163,10 @@ public class MainDisplay implements EditListener, UserDisplay {
     private void commitDisplayedDataToCdm() {
         // Get shown Entity
         Entity entity = getDisplayedEntity();
+        
+        // Get Displayed Relationships
+        RelationshipManager relMgr = new RelationshipManager();
+        relMgr.addAllRelationships(m_relationshipEditor.getData());
 
         // Check to see if the Entity is already in our data manager
         // If it is, remove it from the SortedListModel.
@@ -166,9 +174,12 @@ public class MainDisplay implements EditListener, UserDisplay {
         if (cdmEntity != null) {
             m_entityModel.removeElement(cdmEntity);
         }
+        
         // Add the new or updated Enitty to both the CDM and the SortedListModel
         m_cdm.addOrUpdateEntity(entity);
         m_entityModel.addElement(entity);
+        // Add/Update the Relationships
+        m_cdm.addOrUpdateAllRelationships(entity.getId(), relMgr);
         m_displayedEntityId = entity.getId();
     }
 
@@ -180,8 +191,8 @@ public class MainDisplay implements EditListener, UserDisplay {
         UUID id;
         String name = m_entityNameField.getText().trim();
         EntityType type = (EntityType)m_typeSelector.getSelectedItem();
-        EntityData publicData = m_public.getData();
-        EntityData secretData = m_secret.getData();
+        EntityData publicData = m_public.getEntityData();
+        EntityData secretData = m_secret.getEntityData();
         if (m_displayedEntityId == null) {
             id = UUID.randomUUID();
         } else {
@@ -191,7 +202,6 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         return new Entity(id, name, type, publicData, secretData, isSecret);
     }
-
 
 
     /** {@inheritDoc} */
@@ -236,8 +246,11 @@ public class MainDisplay implements EditListener, UserDisplay {
     @Override
     public void showEntity(UUID id) {
         if (!isCurrentDataSaved()) {
-            if (isSaveDesired()) {
+            int response = isSaveDesired();
+            if (response == JOptionPane.YES_OPTION) {
                 commitDisplayedDataToCdm();
+            } else if (response == JOptionPane.CANCEL_OPTION) {
+                return;
             }
         }
         Entity toShow = m_cdm.getEntity(id);
@@ -250,20 +263,26 @@ public class MainDisplay implements EditListener, UserDisplay {
      */
     private void displayEntity(Entity entity) {
         if (!isCurrentDataSaved()){
-            if (isSaveDesired()) {
+            int response = isSaveDesired();
+            if (response == JOptionPane.YES_OPTION) {
                 commitDisplayedDataToCdm();
                 SaveHelper.autosave(m_frame, m_cdm, true);
+            } else if (response == JOptionPane.CANCEL_OPTION) {
+                return;
             }
         }
+        // Clear out the old data first
+        clearDisplayedEntity();
+        
+        // If valid data was set, display it.
         if (entity != null) {
             m_displayedEntityId = entity.getId();
             m_entityNameField.setText(entity.getName());
             m_typeSelector.setSelectedItem(entity.getType());
-            m_public.setData(entity.getPublicData());
-            m_secret.setData(entity.getSecretData());
+            m_public.setEntityData(entity.getPublicData());
+            m_secret.setEntityData(entity.getSecretData());
+            m_relationshipEditor.setData(m_cdm.getRelationshipsForEntity(m_displayedEntityId).getAllRelationships());
             m_secretEntityCheckbox.setSelected(entity.isSecret());
-        } else {
-            clearDisplayedEntity();
         }
     }
 
@@ -336,8 +355,14 @@ public class MainDisplay implements EditListener, UserDisplay {
                 Entity cdmEntity = m_cdm.getEntity(m_displayedEntityId);
                 Entity displayedEntity = getDisplayedEntity();
 
-                // If the two are not equal, changes have been made -
+                // If the two are not equal, changes have been made...
                 if (!displayedEntity.equals(cdmEntity)) {
+                    return false;
+                }
+                
+                // Or if the Relationship Data has changed, return false...
+                RelationshipManager rm = m_cdm.getRelationshipsForEntity(m_displayedEntityId);
+                if (!rm.getAllRelationships().equals(m_relationshipEditor.getData())) {
                     return false;
                 }
             }
@@ -350,17 +375,12 @@ public class MainDisplay implements EditListener, UserDisplay {
      * and returns the user's choice (true if they desire to save, false otherwise).
      * @return true if save is desired, false otherwise.
      */
-    private boolean isSaveDesired() {
-        int response = JOptionPane.showConfirmDialog(m_frame,
+    private int isSaveDesired() {
+        return JOptionPane.showConfirmDialog(m_frame,
                                                      "The displayed data has changed, do\n" +
                                                      "you want to keep these changes?",
                                                      "Save Current Changes",
-                                                     JOptionPane.YES_NO_OPTION);
-        if (response == JOptionPane.OK_OPTION) {
-            return true;
-        } else {
-            return false;
-        }
+                                                     JOptionPane.YES_NO_CANCEL_OPTION);
     }
 
     /**
@@ -416,8 +436,12 @@ public class MainDisplay implements EditListener, UserDisplay {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 if (!isCurrentDataSaved()) {
-                    if (isSaveDesired()) {
+                    int response = isSaveDesired();
+                    if (response == JOptionPane.YES_OPTION) {
                         commitDisplayedDataToCdm();
+                    } else if (response == JOptionPane.CANCEL_OPTION) {
+                        // Do Nothing.
+                        return;
                     }
                 }
                 // Finally, clear the displayed contents.
@@ -438,8 +462,9 @@ public class MainDisplay implements EditListener, UserDisplay {
         }
         m_typeSelector.setRenderer(new DisplayableCellRenderer());
 
-        m_public = new EntityDataDisplay(m_frame, m_cdm, this, this, false);
-        m_secret = new EntityDataDisplay(m_frame, m_cdm, this, this, true);
+        m_public = new EntityDataEditor(this, false);
+        m_secret = new EntityDataEditor(this, true);
+        m_relationshipEditor = new EntityRelationshipEditor(m_frame, m_cdm, this, "Relationships", this);
 
         Insets insets = new Insets(3, 3, 3, 3);
 
@@ -475,20 +500,99 @@ public class MainDisplay implements EditListener, UserDisplay {
         mainGbc.gridx = 0;
         mainGbc.gridy = 0;
         mainGbc.fill = GridBagConstraints.HORIZONTAL;
-        mainGbc.gridwidth = 2;
+        mainGbc.gridwidth = 4;
         mainGbc.insets = insets;
         panel.add(topRow, mainGbc);
 
+        // FIRST COLUMN
+        // --- Public Description Label
         mainGbc.gridx = 0;
         mainGbc.gridy = 1;
-        mainGbc.gridwidth = 1;
-        mainGbc.weighty = 1.0f;
+        mainGbc.gridwidth = 2;
+        mainGbc.weighty = 0.0f;
         mainGbc.weightx = 1.0f;
         mainGbc.fill = GridBagConstraints.BOTH;
-        panel.add(m_public.getDisplayComponent(), mainGbc);
+        mainGbc.anchor = GridBagConstraints.PAGE_END;
+        panel.add(m_public.getDescriptionEditor().getTitle(), mainGbc);
+        
+        // --- Public Description Editor Component
+        mainGbc.gridy = 2;
+        mainGbc.weighty = 1.0f;
+        JScrollPane publicDescriptionScrollPane = new JScrollPane(m_public.getDescriptionEditor().getDescriptionComponent());
+        publicDescriptionScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        publicDescriptionScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        panel.add(publicDescriptionScrollPane, mainGbc);
+        
+        // --- Relationships Label
+        mainGbc.gridy = 3;
+        mainGbc.weighty = 0.0f;
+        panel.add(m_relationshipEditor.getTitle(), mainGbc);
+        
+        // --- Public Editor Component
+        mainGbc.gridy = 4;
+        mainGbc.gridheight = 4;
+        mainGbc.weighty = 1.0f;
+        mainGbc.fill = GridBagConstraints.BOTH;
+        JScrollPane relationShipScrollPane = new JScrollPane(m_relationshipEditor.getEditorComponent());
+        panel.add(relationShipScrollPane, mainGbc);
+        
+        // --- Add Relationship Button
+        mainGbc.gridy = 1;
+        mainGbc.gridy = 8;
+        mainGbc.weighty = 0.0f;
+        mainGbc.gridwidth = 1;
+        mainGbc.gridheight = 1;
+        mainGbc.fill = GridBagConstraints.NONE;
+        mainGbc.anchor = GridBagConstraints.LAST_LINE_START;
+        panel.add(m_relationshipEditor.getAddRelationshipButton(), mainGbc);
 
-        mainGbc.gridx = 1;
-        panel.add(m_secret.getDisplayComponent(), mainGbc);
+        // SECOND COLUMN
+        // --- Secret Description Label
+        mainGbc.gridx = 2;
+        mainGbc.gridy = 1;
+        mainGbc.gridwidth = 2;
+        mainGbc.weighty = 0.0f;
+        mainGbc.weightx = 1.0f;
+        mainGbc.fill = GridBagConstraints.BOTH;
+        panel.add(m_secret.getDescriptionEditor().getTitle(), mainGbc);
+        
+        // --- Secret Description Editor Component
+        mainGbc.gridy = 2;
+        mainGbc.weighty = 1.0f;
+        JScrollPane secretDescriptionScrollPane = new JScrollPane(m_secret.getDescriptionEditor().getDescriptionComponent());
+        secretDescriptionScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        secretDescriptionScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        panel.add(secretDescriptionScrollPane, mainGbc);
+        
+        // --- Public Tags Label
+        mainGbc.gridy = 3;
+        mainGbc.weighty = 0.0f;
+        panel.add(m_public.getTagsEditor().getTitle(), mainGbc);
+        
+        // --- Public Tags Editor
+        mainGbc.gridy = 4;
+        mainGbc.gridheight = 1;
+        mainGbc.weighty = 0.1f;
+        mainGbc.fill = GridBagConstraints.BOTH;
+        JScrollPane pubTagScrollPane = new JScrollPane(m_public.getTagsEditor().getEditorComponent());
+        pubTagScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        pubTagScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        panel.add(pubTagScrollPane, mainGbc);
+
+        // --- Secret Tags Label
+        mainGbc.gridy = 5;
+        mainGbc.gridheight = 1;
+        mainGbc.weighty = 0.0f;
+        panel.add(m_secret.getTagsEditor().getTitle(), mainGbc);
+
+        // --- Secret Tags Editor
+        mainGbc.gridy = 6;
+        mainGbc.gridheight = 2;
+        mainGbc.weighty = 0.1f;
+        JScrollPane secretTagScrollPane = new JScrollPane(m_secret.getTagsEditor().getEditorComponent());
+        secretTagScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        secretTagScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        panel.add(secretTagScrollPane, mainGbc);
 
         return panel;
     }

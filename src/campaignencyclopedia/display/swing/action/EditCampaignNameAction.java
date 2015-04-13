@@ -44,7 +44,7 @@ public class EditCampaignNameAction extends AbstractAction {
             @Override
             public void run() {
                 Campaign original = m_cdm.getData();
-                Campaign campaign = new Campaign(dc.getCampaignName(), original.getEntities(), original.getTimelineEntries(), original.getCalendar());
+                Campaign campaign = new Campaign(dc.getCampaignName(), original.getEntities(), original.getAllRelationships(), original.getTimelineEntries(), original.getCalendar());
                 DisplayCampaignHelper.displayCampaign(m_display, m_cdm, campaign);
                 SaveHelper.autosave(m_parent, m_cdm, true);
             }

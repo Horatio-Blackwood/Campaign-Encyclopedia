@@ -49,10 +49,10 @@ public class ExportEntityToPdf extends AbstractExtractToPdfAction {
 
             // Public & Secret Data
             EntityData publicData = m_entity.getPublicData();
-            processEntityData(publicData, pdf, false);
+            processEntityData(publicData, m_cdm.getRelationshipsForEntity(m_entity.getId()), pdf, false);
             if (m_includeSecrets) {
                 EntityData secretData = m_entity.getSecretData();
-                processEntityData(secretData, pdf, true);
+                processEntityData(secretData, m_cdm.getRelationshipsForEntity(m_entity.getId()), pdf, true);
             }
             pdf.insertBlankLine();
 

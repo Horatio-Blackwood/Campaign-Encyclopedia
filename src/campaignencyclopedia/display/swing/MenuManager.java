@@ -2,7 +2,7 @@ package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.data.TimelineEntry;
+import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.ConfigureCampaignCalendarAction;
 import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;

@@ -2,6 +2,9 @@ package campaignencyclopedia.display.swing.action;
 
 import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.CampaignDataManager;
+import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.data.persistence.CampaignTranslator;
 import campaignencyclopedia.display.UserDisplay;
 import java.awt.Frame;

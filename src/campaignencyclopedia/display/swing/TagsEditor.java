@@ -30,7 +30,7 @@ public class TagsEditor {
         m_label = new JLabel(title);
         m_editListener = editListener;
 
-        m_tagsArea = new JTextArea(3, 30);
+        m_tagsArea = new JTextArea(4, 30);
         m_tagsArea.setWrapStyleWord(true);
         m_tagsArea.setLineWrap(true);
         m_tagsArea.getDocument().addDocumentListener(new DocumentListener(){
