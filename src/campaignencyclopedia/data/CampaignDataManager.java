@@ -132,7 +132,7 @@ public class CampaignDataManager implements DataAccessor {
 
             // Check for any relationships that point to the removed Entity and remove them too.
             for (UUID entityId : m_relationships.keySet()) {
-                RelationshipManager relationshipManager = m_relationships.get(id);
+                RelationshipManager relationshipManager = m_relationships.get(entityId);
                 // Collect all of the relationships that point at the removed Entity
                 Set<Relationship> toRemove = new HashSet<>();
                 for (Relationship rel : relationshipManager.getAllRelationships()) {
