@@ -4,6 +4,7 @@ import campaignencyclopedia.display.DataFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.AbstractListModel;
 
@@ -26,10 +27,22 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
 
     /** True if this model should maintain sorting, false otherwise. */
     private final boolean m_sort;
+    
+    /** A comparator to use for sorting, null if unset. */
+    private Comparator<E> m_comparator;
 
     /** Creates a new instance of SortedListModel with sorting active. */
     public SortableListModel() {
         this(true);
+    }
+    
+    /**
+     * Creates a new SortableListModel with sorting active and a supplied comparator.
+     * @param comparator the Comparator to use.  If null, the Element type's default comparison methods will be used.
+     */
+    public SortableListModel(Comparator<E> comparator) {
+        this(true);
+        m_comparator = comparator;
     }
 
     /**
@@ -83,7 +96,11 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
             }
             // Then sort and fire the UI update event
             if (m_sort) {
-                Collections.sort(m_filteredItems);
+                if (m_comparator != null) {
+                    Collections.sort(m_filteredItems, m_comparator);
+                } else {
+                    Collections.sort(m_filteredItems);
+                }
             }
             fireContentsChanged(this, 0, m_filteredItems.size());
             // Then add all of the items to the 'rea' data list.
@@ -92,7 +109,11 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
             // If no filter is set, just add them all, sort them and update the UI.
             m_items.addAll(items);
             if (m_sort) {
-                Collections.sort(m_items);
+                if (m_comparator != null) {
+                    Collections.sort(m_items, m_comparator);
+                } else {
+                    Collections.sort(m_items);
+                }
             }
             fireContentsChanged(this, 0, m_items.size());
         }
@@ -111,7 +132,11 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
                 m_filteredItems.add(e);
                 // Then sort and fire the UI update event
                 if (m_sort) {
-                    Collections.sort(m_filteredItems);
+                    if (m_comparator != null) {
+                        Collections.sort(m_filteredItems, m_comparator);
+                    } else {
+                        Collections.sort(m_filteredItems);
+                    }
                 }
                 fireContentsChanged(this, m_filteredItems.indexOf(e), getSize());
             }
@@ -121,7 +146,11 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
             // If no filter is set, just update the 'real' data and fire the udpate event.
             m_items.add(e);
             if (m_sort) {
-                Collections.sort(m_items);
+                if (m_comparator != null) {
+                    Collections.sort(m_items, m_comparator);
+                } else {
+                    Collections.sort(m_items);
+                }
             }
             fireContentsChanged(this, m_items.indexOf(e), getSize());
         }
@@ -186,7 +215,11 @@ public class SortableListModel<E extends Comparable> extends AbstractListModel<E
         } else {
             m_filter = null;
             if (m_sort) {
-                Collections.sort(m_items);
+                if (m_comparator != null) {
+                    Collections.sort(m_items, m_comparator);
+                } else {
+                    Collections.sort(m_items);
+                }
             }
             fireContentsChanged(this, 0, m_items.size() - 1);
         }

@@ -36,11 +36,28 @@ public class CampaignTranslator {
     private static final String CAMPAIGN_CALENDAR = "calendar";
     /** The JSON key for the relationships. */
     private static final String RELATIONSHIPS = "relationships";
+    /** The JSON key for the version this file was created with. */
+    private static final String VERSION_TAG = "version";
+    /** The version value. */
+    private static final String VERSION = "1.2.0";
 
 
+    /**
+     * Translates the supplied Campaign to JSON for storage to file.
+     * 
+     * @param campaign the Campaign to translate.
+     * @param da a DataAccessor for accessing any required data.
+     * @param includeSecrets true if Secrets should be included in the save file.
+     * 
+     * @return a JSON string that represents the supplied Campaign.
+     * 
+     * @throws JsonException if an error occurs during translation.
+     */
     public static String toJson(Campaign campaign, DataAccessor da, boolean includeSecrets) throws JsonException {
         JsonObject json = new JsonObject();
-        json.put(NAME,campaign.getName());
+        json.put(NAME, campaign.getName());
+        
+        json.put(VERSION_TAG, VERSION);
 
         // Collect the secret entities for use later during translation.
         Set<UUID> secretEntities = new HashSet<>();

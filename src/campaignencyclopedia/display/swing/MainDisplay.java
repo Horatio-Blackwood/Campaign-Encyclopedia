@@ -5,6 +5,7 @@ import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityType;
+import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.display.EntityDisplayFilter;
 import campaignencyclopedia.display.UserDisplay;
@@ -26,6 +27,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -164,9 +167,33 @@ public class MainDisplay implements EditListener, UserDisplay {
         // Get shown Entity
         Entity entity = getDisplayedEntity();
         
-        // Get Displayed Relationships
+        // Get Displayed Relationships and add them.
         RelationshipManager relMgr = new RelationshipManager();
-        relMgr.addAllRelationships(m_relationshipEditor.getData());
+        for (Relationship rel : m_relationshipEditor.getData()) {
+            // If the entity is secret and it has any public relationships, they must now be secret, so update them.
+            if (entity.isSecret() && !rel.isSecret()) {
+                relMgr.addRelationship(new Relationship(rel.getEntityId(), rel.getRelatedEntity(), rel.getRelationshipText(), true));
+            } else {
+                relMgr.addRelationship(rel);
+            }
+        }
+        
+        // If entity is secret, relationships owned by other entities pointing to it must be secret, so update them.
+        if (entity.isSecret()) {
+            for (Entity otherEntity : m_cdm.getAllEntities()) {
+                RelationshipManager otherRelMgr = m_cdm.getRelationshipsForEntity(otherEntity.getId());
+                Set<Relationship> requireUpdate = new HashSet<>();
+                for (Relationship rel : new HashSet<>(otherRelMgr.getPublicRelationships())) {
+                    if (!rel.isSecret() && rel.getRelatedEntity().equals(entity.getId())) {
+                        otherRelMgr.remove(rel);
+                        requireUpdate.add(new Relationship(rel.getEntityId(), rel.getRelatedEntity(), rel.getRelationshipText(), true));
+                    }
+                }
+                // Clear the public data from the relationship manager and add in the newly updated stuff.
+                otherRelMgr.addAllRelationships(requireUpdate);
+                m_cdm.addOrUpdateAllRelationships(otherEntity.getId(), otherRelMgr);
+            }   
+        }
 
         // Check to see if the Entity is already in our data manager
         // If it is, remove it from the SortedListModel.
@@ -178,9 +205,14 @@ public class MainDisplay implements EditListener, UserDisplay {
         // Add the new or updated Enitty to both the CDM and the SortedListModel
         m_cdm.addOrUpdateEntity(entity);
         m_entityModel.addElement(entity);
+        m_entityList.setSelectedValue(entity, true);
         // Add/Update the Relationships
         m_cdm.addOrUpdateAllRelationships(entity.getId(), relMgr);
         m_displayedEntityId = entity.getId();
+
+        // Force Update of display for relationship changes.
+        m_relationshipEditor.clearData();
+        m_relationshipEditor.setData(relMgr.getAllRelationships());
     }
 
     /**
@@ -224,6 +256,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         m_public.clear();
         m_secret.clear();
         m_secretEntityCheckbox.setSelected(false);
+        m_relationshipEditor.clearData();
     }
 
     /** {@inheritDoc} */
@@ -232,6 +265,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         clearDisplayedEntity();
         m_entityModel.clear();
         m_campaignTitleLabel.setText("");
+        m_relationshipEditor.clearData();
     }
 
     /** {@inheritDoc} */

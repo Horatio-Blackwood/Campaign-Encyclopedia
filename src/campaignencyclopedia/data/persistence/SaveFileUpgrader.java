@@ -27,7 +27,7 @@ import toolbox.file.persistence.json.JsonException;
 import toolbox.file.persistence.json.JsonObject;
 
 /**
- * A class to upgrade old save files to new formats.
+ * A class to upgrade old save files from v1.1.0 to the new format, currently as defined in the 1.2.0 release.
  * @author adam
  */
 public class SaveFileUpgrader {

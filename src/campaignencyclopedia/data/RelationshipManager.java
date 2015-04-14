@@ -94,4 +94,14 @@ public class RelationshipManager {
         m_public.clear();
         m_secret.clear();
     }
+    
+    /** Clears all of the public data from this manager. */
+    public void clearPublicRelationships() {
+        m_public.clear();
+    }
+    
+    /** Clears all of the secret from this manager. */
+    public void clearSecretRelationships() {
+        m_secret.clear();
+    }
 }

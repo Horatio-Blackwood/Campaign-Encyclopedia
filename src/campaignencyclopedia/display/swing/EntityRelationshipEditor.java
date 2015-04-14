@@ -1,5 +1,6 @@
 package campaignencyclopedia.display.swing;
 
+import campaignencyclopedia.data.ComparisonTools;
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
@@ -10,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +48,8 @@ public class EntityRelationshipEditor {
     private final DataAccessor m_accessor;
     private final EditListener m_editListener;
     private final EntityDisplay m_entityDisplay;
+    
+    private final Comparator<Relationship> m_comparator;
 
     private Frame m_parent;
 
@@ -63,6 +67,19 @@ public class EntityRelationshipEditor {
         m_entityDisplay = display;
         m_parent = parent;
         m_label = new JLabel(title);
+        
+        m_comparator =  new Comparator<Relationship>() {
+            @Override
+            public int compare(Relationship relationship, Relationship otherRelationship) {
+                if (relationship.compareTo(otherRelationship) == 0) {
+                    String relationshipName = ComparisonTools.trimForSort(m_accessor.getEntity(relationship.getRelatedEntity()).getName());
+                    String otherName = ComparisonTools.trimForSort(m_accessor.getEntity(otherRelationship.getRelatedEntity()).getName());
+                    return (relationshipName.compareTo(otherName));
+                } else {
+                    return relationship.compareTo(otherRelationship);
+                }
+            }
+        };
 
         m_addButton = new JButton("Add Relationship");
         m_addButton.addActionListener(new ActionListener() {
@@ -89,7 +106,7 @@ public class EntityRelationshipEditor {
         });
 
         // Initialize the list model.
-        m_model = new SortableListModel<>();
+        m_model = new SortableListModel<>(m_comparator);
         m_model.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent lde) {
@@ -131,13 +148,26 @@ public class EntityRelationshipEditor {
                         // Create Menu
                         JPopupMenu menu = new JPopupMenu();
                         
-                        // Remove Action
-                        menu.add(new AbstractAction("Delete") {
-                            @Override
-                            public void actionPerformed(ActionEvent ae) {
-                                m_model.removeElement(relationship);
-                            }
-                        });
+                        // Make Public / Make Secret
+                        if (relationship.isSecret() && 
+                                !m_accessor.getEntity(relationship.getEntityId()).isSecret() && 
+                                !m_accessor.getEntity(relationship.getRelatedEntity()).isSecret()) {
+                            menu.add(new AbstractAction("Make Public") {
+                                @Override
+                                public void actionPerformed(ActionEvent ae) {
+                                    m_model.removeElement(relationship);
+                                    m_model.addElement(new Relationship(relationship.getEntityId(), relationship.getRelatedEntity(), relationship.getRelationshipText(), false));
+                                }
+                            });
+                        } else if (!relationship.isSecret()) {
+                            menu.add(new AbstractAction("Make Secret") {
+                                @Override
+                                public void actionPerformed(ActionEvent ae) {
+                                    m_model.removeElement(relationship);
+                                    m_model.addElement(new Relationship(relationship.getEntityId(), relationship.getRelatedEntity(), relationship.getRelationshipText(), true));
+                                }
+                            });                            
+                        }
                         
                         // Edit Action
                         menu.add(new AbstractAction("Edit") {
@@ -166,7 +196,15 @@ public class EntityRelationshipEditor {
                                     }
                                 }
                             }
-                        });   
+                        });
+                        
+                        // Remove Action
+                        menu.add(new AbstractAction("Delete") {
+                            @Override
+                            public void actionPerformed(ActionEvent ae) {
+                                m_model.removeElement(relationship);
+                            }
+                        });
                         
                         // Show the context menu
                         menu.show(m_list, me.getX(), me.getY());
