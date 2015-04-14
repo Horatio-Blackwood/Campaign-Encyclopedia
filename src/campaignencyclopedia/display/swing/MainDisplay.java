@@ -5,8 +5,10 @@ import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityType;
+import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.data.RelationshipManager;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplayFilter;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.SaveHelper;
@@ -178,7 +180,9 @@ public class MainDisplay implements EditListener, UserDisplay {
             }
         }
         
-        // If entity is secret, relationships owned by other entities pointing to it must be secret, so update them.
+        // If the entity is secret:  
+        //  - relationships owned by other entities pointing to it must be secret, so update them.
+        //  - Timeline events pointing to it must be secret, so update them.
         if (entity.isSecret()) {
             for (Entity otherEntity : m_cdm.getAllEntities()) {
                 RelationshipManager otherRelMgr = m_cdm.getRelationshipsForEntity(otherEntity.getId());
@@ -192,7 +196,15 @@ public class MainDisplay implements EditListener, UserDisplay {
                 // Clear the public data from the relationship manager and add in the newly updated stuff.
                 otherRelMgr.addAllRelationships(requireUpdate);
                 m_cdm.addOrUpdateAllRelationships(otherEntity.getId(), otherRelMgr);
-            }   
+            }
+            
+            // Make secret any Timeline Entries that now must be.
+            for (TimelineEntry tle : m_cdm.getTimelineData()) {
+                if (tle.getAssociatedId().equals(entity.getId())) {
+                    m_cdm.removeTimelineEntry(tle.getId());
+                    m_cdm.addOrUpdateTimelineEntry(new TimelineEntry(tle.getTitle(), tle.getMonth(), tle.getYear(), true, tle.getAssociatedId(), tle.getId()));
+                }
+            }
         }
 
         // Check to see if the Entity is already in our data manager
