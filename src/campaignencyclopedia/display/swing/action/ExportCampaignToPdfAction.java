@@ -157,6 +157,10 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
         pdf.insertBlankLine(SECTION);
         Map<TimelineDate, List<TimelineEntry>> timeline = new HashMap<>();
         for (TimelineEntry tle : m_cdm.getTimelineData()) {
+            // If secret and secrets not permitted, skip it.
+            if (tle.isSecret() && !m_includeSecrets) {
+                continue;
+            }
             TimelineDate tld = new TimelineDate(tle.getMonth(), tle.getYear());
             if (timeline.get(tld) == null) {
                 timeline.put(tld, new ArrayList<TimelineEntry>());
@@ -170,10 +174,6 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
             List<TimelineEntry> entries = timeline.get(date);
             Collections.sort(entries);
             for (TimelineEntry tle : entries) {
-                // If secret and secrets not permitted, skip it.
-                if (tle.isSecret() && !m_includeSecrets) {
-                    continue;
-                }
                 String msg;
                 if (tle.getTitle() == null || tle.getTitle().isEmpty()) {
                     msg = m_cdm.getEntity(tle.getAssociatedId()).getName();
