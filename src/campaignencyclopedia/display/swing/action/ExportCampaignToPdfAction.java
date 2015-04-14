@@ -66,13 +66,25 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
 
             // == TIMELINE ============
             exportTimeline(pdf);
+            
+            // == TABLE OF CONTENTS ===
+            // Get and Sort the Entities of this Campaign - these will also be used when we process each Entity.
+            List<Entity> entities = new ArrayList<>(campaign.getEntities());
+            Collections.sort(entities);
+            pdf.renderLine("Table of Contents", PdfFont.HELVETICA_BOLD, SECTION);
+            pdf.insertBlankLine(SECTION);
+            for (Entity entity : entities) {
+                if (entity.isSecret()) {
+                    if (m_includeSecrets) {
+                        pdf.renderLine(entity.getName(), SECRET_COLOR);
+                    }
+                } else {
+                    pdf.renderLine(entity.getName());
+                }
+            }
 
 
             // == ENTITY DATA =========
-            // Get and Sort the Entities of this Campaign
-            List<Entity> entities = new ArrayList<>(campaign.getEntities());
-            Collections.sort(entities);
-
             // For each entity
             for (Entity entity : entities) {
                 // If the entity is secret and we don't want to export secret data, skip it.
@@ -177,6 +189,7 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
             }
             pdf.insertBlankLine(6);
         }
+        pdf.insertPageBreak();
     }
 
     /** A Helper class for organizing timeline data for PDF rendering. */
