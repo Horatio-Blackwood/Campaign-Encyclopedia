@@ -72,9 +72,19 @@ public class TimelineEventCellRenderer implements ListCellRenderer<TimelineEntry
         gbc.anchor = GridBagConstraints.LINE_START;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(seasonYearLabel, gbc);
+        
         gbc.gridx = 1;
         panel.add(titleLabel, gbc);
-        gbc.gridx = 2;
+        
+        if (e.isSecret()) {
+            gbc.gridx = 2;
+            JLabel secretLabel = new JLabel("(Secret)");
+            secretLabel.setForeground(Color.RED);
+            secretLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
+            panel.add(secretLabel, gbc);            
+        }
+        
+        gbc.gridx = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0f;
         panel.add(new JLabel(), gbc);
