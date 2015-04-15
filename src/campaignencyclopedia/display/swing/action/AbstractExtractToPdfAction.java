@@ -58,15 +58,22 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
     /**
      * Renders the supplied EntityData to the supplied PDF document.
      * @param data the data to render.
+     * @param relManager a RelationshipManager for the Entity this EntityData is from.
      * @param pdf the PDF to render the data into.
      * @param secret true if this is secret data.
      * @throws IOException if an error occurs generating the PDF.
      */
     protected void processEntityData(EntityData data, RelationshipManager relManager, Pdf pdf, boolean secret) throws IOException {
         String description = data.getDescription().trim();
-        if (description.isEmpty() && relManager.getAllRelationships().isEmpty()) {
+        // If not secret and no public data exists, return
+        if (!secret && description.isEmpty() && relManager.getPublicRelationships().isEmpty()) {
             return;
         }
+        // If secret, and no secret relatinships exist, return
+        if (secret && description.isEmpty() && relManager.getSecretRelationships().isEmpty()) {
+            return;
+        }
+        
         // Render header
         if (secret) {
             pdf.renderLine("Secret Data", PdfFont.HELVETICA_BOLD, SUB_SECTION, SECRET_COLOR);
@@ -89,26 +96,27 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
             pdf.insertBlankLine();
         }
 
-        // Render relationships, if any exists
-        if (!relManager.getAllRelationships().isEmpty()) {
-            List<Relationship> relationships = new ArrayList<>();
-            if (secret) {
+        // Render relationships, if any exist
+        List<Relationship> relationships = new ArrayList<>();
+        if (secret) {
+            if (!relManager.getSecretRelationships().isEmpty()) {
+                pdf.renderLine("Secret Relationships", PdfFont.HELVETICA_BOLD, NORMAL, SECRET_COLOR);
                 relationships.addAll(relManager.getSecretRelationships());
                 Collections.sort(relationships);
-                pdf.renderLine("Secret Relationships", PdfFont.HELVETICA_BOLD, NORMAL, SECRET_COLOR);
-            } else {
+            }
+        } else {
+            if (!relManager.getPublicRelationships().isEmpty()) {
+                pdf.renderLine("Relationships", PdfFont.HELVETICA_BOLD, NORMAL);
                 relationships.addAll(relManager.getPublicRelationships());
                 Collections.sort(relationships);
-                pdf.renderLine("Relationships", PdfFont.HELVETICA_BOLD, NORMAL);
             }
-
-            for (Relationship rel : relationships) {
-                Entity linkedTo = m_cdm.getEntity(rel.getRelatedEntity());
-                if (linkedTo.isSecret() && !m_includeSecrets) {
-                    // Don't export secret data in this case.
-                } else {
-                    pdf.renderLine(rel.getRelationshipText() + " " + linkedTo.getName());
-                }
+        }
+        for (Relationship rel : relationships) {
+            Entity linkedTo = m_cdm.getEntity(rel.getRelatedEntity());
+            if (linkedTo.isSecret() && !m_includeSecrets) {
+                // Don't export secret data in this case.
+            } else {
+                pdf.renderLine(rel.getRelationshipText() + " " + linkedTo.getName());
             }
         }
         pdf.insertBlankLine();
