@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import traer.physics.Attraction;
 import traer.physics.Particle;
 import traer.physics.ParticleSystem;
 import traer.physics.Spring;
@@ -510,8 +511,12 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         }
         
         //Set the translation adjustment factors, including edge padding
-        m_verticalScrollTranslation = (-furthestTop + SCROLL_PAD);
-        m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
+        if (m_currentParticle == null) {
+            m_verticalScrollTranslation = (-furthestTop + SCROLL_PAD);
+            m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
+        } else {
+            //TODO figure out a way to not jerk the screen around
+        }
         
         float horizontalGraphSpan = (furthestRight - furthestLeft);
         float verticalGraphSpan = (furthestBottom - furthestTop);
@@ -584,8 +589,24 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             m_particleSystem.removeSpring(s);
         }
         
+        //Remove any linked attractions
+        int numAttractions = m_particleSystem.numberOfAttractions();
+        Set<Attraction> attractionsToRemove = new HashSet<>();
+        for (int i = 0; i < numAttractions; i++) {
+            Attraction attraction = m_particleSystem.getAttraction(i);
+            if (attraction.getOneEnd().equals(r.particle) || attraction.getTheOtherEnd().equals(r.particle)) {
+                attractionsToRemove.add(attraction);
+            }
+        }
+        for (Attraction a : attractionsToRemove) {
+            m_particleSystem.removeAttraction(a);
+        }
+        
         //Remove particle
         m_particleSystem.removeParticle(r.particle);
+        
+        //Remove the rendering configuration
+        m_renderingConfigMap.remove(id);
     }
 
     @Override
