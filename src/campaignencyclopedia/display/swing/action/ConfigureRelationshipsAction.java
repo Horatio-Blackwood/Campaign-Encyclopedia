@@ -38,6 +38,6 @@ public class ConfigureRelationshipsAction extends AbstractAction {
             }
         };
         DialogCommitManager dcm = new OkCancelCommitManager(commitRunnable);
-        DialogFactory.buildDialog(m_frame, "Configure Relationships", true, dc, dcm);
+        DialogFactory.buildDialog(m_frame, "Configure Relationships", false, dc, dcm);
     }
 }

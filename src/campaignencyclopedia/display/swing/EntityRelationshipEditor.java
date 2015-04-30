@@ -92,7 +92,10 @@ public class EntityRelationshipEditor {
                         Runnable commit = new Runnable() {
                             @Override
                             public void run() {
-                                m_model.addElement(dc.getDisplayedRelationship());
+                                Relationship rel = dc.getDisplayedRelationship();
+                                if (!m_model.contains(rel)) {
+                                    m_model.addElement(rel);
+                                }
                             }
                         };
                         DialogFactory.buildDialog(m_parent, "Add Relationship", true, dc, new OkCancelCommitManager(commit));

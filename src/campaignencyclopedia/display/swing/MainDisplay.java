@@ -141,7 +141,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final String VERSION = "v1.2.0-Alpha";
 
     /** The date this release was created. */
-    public static final String DATE = "April 9, 2015";
+    public static final String DATE = "In Development.";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
