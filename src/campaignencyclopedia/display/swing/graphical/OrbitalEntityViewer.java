@@ -15,7 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JScrollPane;
 import toolbox.display.DisplayUtilities;
 
 /**
@@ -32,7 +31,7 @@ public class OrbitalEntityViewer implements CampaignDataManagerListener {
 
     /** The JFrame of this display. */
     private JFrame m_frame;
-    
+
     /** A campaign data manager. */
     private final CampaignDataManager m_cdm;
 
@@ -87,5 +86,4 @@ public class OrbitalEntityViewer implements CampaignDataManagerListener {
     public void dataAddedOrUpdated(Entity entity) {
         m_canvas.dataAddedOrUpdated(entity);
     }
-
 }

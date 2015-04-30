@@ -5,13 +5,13 @@ import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityType;
-import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplayFilter;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.SaveHelper;
+import campaignencyclopedia.display.NavigationPath;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -88,6 +88,12 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** The quick search check box. */
     private JCheckBox m_filterCheckBox;
 
+    /** The nav forward button. */
+    private JButton m_forwardButton;
+
+    /** The nav backward button. */
+    private JButton m_backButton;
+
 
     // COMPONENTS FOR THE ENTITY VIEW/EDIT DISPLAY
     /** The text field for entering the name of an Entity. */
@@ -107,7 +113,7 @@ public class MainDisplay implements EditListener, UserDisplay {
 
     /** An EntityDataDisplay for secret data. */
     private EntityDataEditor m_secret;
-    
+
     /** An editor for Entity Relationship data. */
     private EntityRelationshipEditor m_relationshipEditor;
 
@@ -121,6 +127,9 @@ public class MainDisplay implements EditListener, UserDisplay {
 
     /** A campaign data manager, which keeps track of the current data. */
     private final CampaignDataManager m_cdm;
+
+    /** The navigation path for this display. */
+    private NavigationPath m_navPath;
 
     /** The blue Color used throughout this application. */
     public static final Color BLUE = new Color(96, 128, 192);
@@ -168,7 +177,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     private void commitDisplayedDataToCdm() {
         // Get shown Entity
         Entity entity = getDisplayedEntity();
-        
+
         // Get Displayed Relationships and add them.
         RelationshipManager relMgr = new RelationshipManager();
         for (Relationship rel : m_relationshipEditor.getData()) {
@@ -179,8 +188,8 @@ public class MainDisplay implements EditListener, UserDisplay {
                 relMgr.addRelationship(rel);
             }
         }
-        
-        // If the entity is secret:  
+
+        // If the entity is secret:
         //  - relationships owned by other entities pointing to it must be secret, so update them.
         //  - Timeline events pointing to it must be secret, so update them.
         if (entity.isSecret()) {
@@ -197,7 +206,7 @@ public class MainDisplay implements EditListener, UserDisplay {
                 otherRelMgr.addAllRelationships(requireUpdate);
                 m_cdm.addOrUpdateAllRelationships(otherEntity.getId(), otherRelMgr);
             }
-            
+
             // Make secret any Timeline Entries that now must be.
             for (TimelineEntry tle : m_cdm.getTimelineData()) {
                 if (tle.getAssociatedId().equals(entity.getId())) {
@@ -213,7 +222,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         if (cdmEntity != null) {
             m_entityModel.removeElement(cdmEntity);
         }
-        
+
         // Add the new or updated Enitty to both the CDM and the SortedListModel
         m_cdm.addOrUpdateEntity(entity);
         m_entityModel.addElement(entity);
@@ -257,6 +266,9 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** {@inheritDoc} */
     @Override
     public void removeEntity(Entity entity) {
+        if (entity.getId().equals(m_displayedEntityId)) {
+            clearDisplayedEntity();
+        }
         m_entityModel.removeElement(entity);
     }
 
@@ -291,14 +303,14 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** {@inheritDoc} */
     @Override
     public void showEntity(UUID id) {
-        if (!isCurrentDataSaved()) {
-            int response = isSaveDesired();
-            if (response == JOptionPane.YES_OPTION) {
-                commitDisplayedDataToCdm();
-            } else if (response == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-        }
+//        if (!isCurrentDataSaved()) {
+//            int response = isSaveDesired();
+//            if (response == JOptionPane.YES_OPTION) {
+//                commitDisplayedDataToCdm();
+//            } else if (response == JOptionPane.CANCEL_OPTION) {
+//                return;
+//            }
+//        }
         Entity toShow = m_cdm.getEntity(id);
         displayEntity(toShow);
     }
@@ -319,7 +331,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         }
         // Clear out the old data first
         clearDisplayedEntity();
-        
+
         // If valid data was set, display it.
         if (entity != null) {
             m_displayedEntityId = entity.getId();
@@ -329,6 +341,10 @@ public class MainDisplay implements EditListener, UserDisplay {
             m_secret.setEntityData(entity.getSecretData());
             m_relationshipEditor.setData(m_cdm.getRelationshipsForEntity(m_displayedEntityId).getAllRelationships());
             m_secretEntityCheckbox.setSelected(entity.isSecret());
+
+            // Update the nav history.
+            updateNavHistory(entity.getId());
+            updateNavButtons();
         }
     }
 
@@ -337,6 +353,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         m_frame.pack();
         DisplayUtilities.positionWindowInDisplayCenter(m_frame, m_windowSize);
         m_searchBox.requestFocus();
+        updateNavButtons();
         m_frame.setVisible(true);
     }
 
@@ -384,6 +401,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         menuBar.add(m_menuManager.getFileMenu());
         menuBar.add(m_menuManager.getExportMenu());
         menuBar.add(m_menuManager.getCampaignMenu());
+        menuBar.add(m_menuManager.getViewMenu());
         menuBar.add(m_menuManager.getHelpMenu());
 
         // Add Components to the Frame.
@@ -405,7 +423,7 @@ public class MainDisplay implements EditListener, UserDisplay {
                 if (!displayedEntity.equals(cdmEntity)) {
                     return false;
                 }
-                
+
                 // Or if the Relationship Data has changed, return false...
                 RelationshipManager rm = m_cdm.getRelationshipsForEntity(m_displayedEntityId);
                 if (!rm.getAllRelationships().equals(m_relationshipEditor.getData())) {
@@ -560,7 +578,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         mainGbc.fill = GridBagConstraints.BOTH;
         mainGbc.anchor = GridBagConstraints.PAGE_END;
         panel.add(m_public.getDescriptionEditor().getTitle(), mainGbc);
-        
+
         // --- Public Description Editor Component
         mainGbc.gridy = 2;
         mainGbc.weighty = 1.0f;
@@ -568,12 +586,12 @@ public class MainDisplay implements EditListener, UserDisplay {
         publicDescriptionScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         publicDescriptionScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         panel.add(publicDescriptionScrollPane, mainGbc);
-        
+
         // --- Relationships Label
         mainGbc.gridy = 3;
         mainGbc.weighty = 0.0f;
         panel.add(m_relationshipEditor.getTitle(), mainGbc);
-        
+
         // --- Public Editor Component
         mainGbc.gridy = 4;
         mainGbc.gridheight = 4;
@@ -581,7 +599,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         mainGbc.fill = GridBagConstraints.BOTH;
         JScrollPane relationShipScrollPane = new JScrollPane(m_relationshipEditor.getEditorComponent());
         panel.add(relationShipScrollPane, mainGbc);
-        
+
         // --- Add Relationship Button
         mainGbc.gridy = 1;
         mainGbc.gridy = 8;
@@ -601,7 +619,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         mainGbc.weightx = 1.0f;
         mainGbc.fill = GridBagConstraints.BOTH;
         panel.add(m_secret.getDescriptionEditor().getTitle(), mainGbc);
-        
+
         // --- Secret Description Editor Component
         mainGbc.gridy = 2;
         mainGbc.weighty = 1.0f;
@@ -609,12 +627,12 @@ public class MainDisplay implements EditListener, UserDisplay {
         secretDescriptionScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         secretDescriptionScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         panel.add(secretDescriptionScrollPane, mainGbc);
-        
+
         // --- Public Tags Label
         mainGbc.gridy = 3;
         mainGbc.weighty = 0.0f;
         panel.add(m_public.getTagsEditor().getTitle(), mainGbc);
-        
+
         // --- Public Tags Editor
         mainGbc.gridy = 4;
         mainGbc.gridheight = 1;
@@ -767,6 +785,26 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         });
 
+        // NAVIGATE BACKWARD BUTTON
+        m_backButton = new JButton("Last");
+        m_backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                navigateBackward();
+            }
+        });
+        m_backButton.setToolTipText("Click to go back");
+
+        // NAVIGATE FORWARD BUTTON
+        m_forwardButton = new JButton("Next");
+        m_forwardButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                navigateForward();
+            }
+        });
+        m_forwardButton.setToolTipText("Click to go forward");
+
         // Layout
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -791,10 +829,19 @@ public class MainDisplay implements EditListener, UserDisplay {
         gbc.weightx = 0.0f;
         panel.add(m_searchBox, gbc);
 
+        gbc.gridx = 4;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0f;
+        panel.add(m_backButton, gbc);
+
+        gbc.gridx = 5;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0f;
+        panel.add(m_forwardButton, gbc);
+
         // Return
         return panel;
     }
-
 
     /**
      * Returns a new EntityDisplayFilter or null if no valid filter is set.
@@ -806,6 +853,53 @@ public class MainDisplay implements EditListener, UserDisplay {
             m_entityModel.setFilter(null);
         } else {
             m_entityModel.setFilter(new EntityDisplayFilter(searchString, !m_filterCheckBox.isSelected()));
+        }
+    }
+
+    /**
+     * Given the supplied UUID, update the navigation history.
+     * @param id the ID to update.  If null, navigation history is cleared.
+     */
+    private void updateNavHistory(UUID id) {
+        if (id != null) {
+            if (m_navPath == null) {
+                m_navPath = new NavigationPath(id);
+            } else {
+                if (!m_navPath.getCurrentId().equals(id)) {
+                    m_navPath.add(id);
+                }
+            }
+        }
+    }
+
+    /** Called to update the navigation buttons. */
+    private void updateNavButtons() {
+        if (m_navPath != null) {
+            m_backButton.setEnabled(m_navPath.isBackPossible());
+            m_forwardButton.setEnabled(m_navPath.isForwardPossible());
+        } else {
+            m_backButton.setEnabled(false);
+            m_forwardButton.setEnabled(false);
+        }
+    }
+
+    @Override
+    public void navigateForward() {
+        if (m_navPath != null) {
+            if (m_navPath.forward()){
+               showEntity(m_navPath.getCurrentId());
+               updateNavButtons();
+            }
+        }
+    }
+
+    @Override
+    public void navigateBackward() {
+        if (m_navPath != null) {
+            if (m_navPath.back()){
+               showEntity(m_navPath.getCurrentId());
+               updateNavButtons();
+            }
         }
     }
 }

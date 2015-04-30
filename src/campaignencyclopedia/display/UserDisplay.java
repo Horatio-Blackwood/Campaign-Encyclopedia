@@ -23,4 +23,10 @@ public interface UserDisplay extends EntityDisplay {
      * @param campaign the data to set.
      */
     public void displayCampaign(Campaign campaign);
+    
+    /** Navigates to the forward to the next displayed Entity. */
+    public void navigateForward();
+    
+    /** Navigates to the forward to the previously displayed Entity. */
+    public void navigateBackward();
 }

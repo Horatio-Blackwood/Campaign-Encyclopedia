@@ -1,5 +1,7 @@
 package campaignencyclopedia.display.swing.graphical;
 
+import campaignencyclopedia.display.RecentHistory;
+import campaignencyclopedia.display.NavigationPath;
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
@@ -283,10 +285,10 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
         // Render Navigation History
         RecentHistory recentHistory = m_path.getRecentHistory();
         g2.setFont(boldFont);
-        float historyYpos = 20.0f + (recentHistory.m_recent.size() * orignalFontMetrics.getHeight());
-        for (int i = 0; i < recentHistory.m_recent.size(); i++) {
-            String name = m_accessor.getEntity(recentHistory.m_recent.get(i)).getName();
-            if (i == recentHistory.m_current) {
+        float historyYpos = 20.0f + (recentHistory.getRecentHistory().size() * orignalFontMetrics.getHeight());
+        for (int i = 0; i < recentHistory.getRecentHistory().size(); i++) {
+            String name = m_accessor.getEntity(recentHistory.getRecentHistory().get(i)).getName();
+            if (i == recentHistory.getCurrentIndex()) {
                 g2.setFont(boldFont);
                 g2.drawString(name, PAD, historyYpos);
                 historyYpos = historyYpos - g2.getFontMetrics().getHeight();
