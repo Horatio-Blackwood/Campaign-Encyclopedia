@@ -2,8 +2,8 @@ package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,7 +47,7 @@ import traer.physics.Vector3D;
  * @author keith
  * @author adam
  */
-public class CampaignEntityGraphCanvas extends JComponent implements Scrollable {
+public class CampaignEntityGraphCanvas extends JComponent implements Scrollable, CampaignDataManagerListener {
 
     // RENDERING PARAMETERS
     /** How long to draw the lines between the dots. */
@@ -512,6 +511,16 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable 
     @Override
     public boolean getScrollableTracksViewportHeight() {
         return false;
+    }
+
+    @Override
+    public void dataRemoved(UUID id) {
+        // Ignored.
+    }
+
+    @Override
+    public void dataAddedOrUpdated(Entity entity) {
+        // Ignored.
     }
 
 
