@@ -19,10 +19,10 @@ public class NavigationPath {
     private int m_cursor;
 
     /** The maximum number of elements to give back as recent history navigating forward. */
-    private static final int MAX_FORWARD_ELEMENTS = 2;
+    private static final int MAX_FORWARD_ELEMENTS = 3;
 
-/** The maximum number of elements to give back as recent history navigating backward. */
-    private static final int MAX_BACKWARD_ELEMENTS = 4;
+    /** The maximum number of elements to give back as recent history navigating backward. */
+    private static final int MAX_BACKWARD_ELEMENTS = 6;
 
     /** The maximum number of items that can be in the navigation history. */
     private static final int MAX_HISTORY_SIZE = 100;

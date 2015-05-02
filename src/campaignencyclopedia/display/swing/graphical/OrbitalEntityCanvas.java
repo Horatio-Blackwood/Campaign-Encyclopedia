@@ -274,17 +274,24 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
         g2.fill(BACK_BUTTON);
         g2.setPaint(Color.BLACK);
         g2.draw(BACK_BUTTON);
+        if (!m_path.isBackPossible()) {
+            g2.setPaint(Color.GRAY);
+        }
         g2.drawString("Back", 10.0f, 15.0f);
 
         g2.setPaint(Color.WHITE);
         g2.fill(FWD_BUTTON);
         g2.setPaint(Color.BLACK);
         g2.draw(FWD_BUTTON);
+        if (!m_path.isForwardPossible()) {
+            g2.setPaint(Color.GRAY);
+        }
         g2.drawString("Fwd", 50.0f, 15.0f);
 
         // Render Navigation History
         RecentHistory recentHistory = m_path.getRecentHistory();
         g2.setFont(boldFont);
+        g2.setPaint(Color.BLACK);
         float historyYpos = 20.0f + (recentHistory.getRecentHistory().size() * orignalFontMetrics.getHeight());
         for (int i = 0; i < recentHistory.getRecentHistory().size(); i++) {
             String name = m_accessor.getEntity(recentHistory.getRecentHistory().get(i)).getName();
