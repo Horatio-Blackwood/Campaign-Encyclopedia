@@ -246,7 +246,7 @@ public class CampaignStatisticsDialogContent implements DialogContent {
         m_content.add(buildLabel("Secret Timeline Entries:"), gbc);
 
         gbc.gridx = 1;
-        m_content.add(buildValueLabel(m_stats.timelineEntriesLinkingToSecretEntities), gbc);
+        m_content.add(buildValueLabel(m_stats.secretTimelineEntries), gbc);
 
         // Row 20 - Configured Months
         gbc.gridx = 0;
@@ -260,14 +260,12 @@ public class CampaignStatisticsDialogContent implements DialogContent {
     private CampaignStatistics processData() {
         CampaignStatistics cs = new CampaignStatistics();
         Campaign campaign = m_cdm.getData();
-        Set<UUID> secretEntityIds = new HashSet<>();
 
         for (Entity entity : campaign.getEntities()) {
             // Entities
             cs.entities += 1;
             if (entity.isSecret()) {
                 cs.secretEntities += 1;
-                secretEntityIds.add(entity.getId());
             }
 
             // Entity Types
@@ -324,8 +322,8 @@ public class CampaignStatisticsDialogContent implements DialogContent {
         Set<TimelineEntry> timelineEntries = campaign.getTimelineEntries();
         cs.timelineEntries = timelineEntries.size();
         for (TimelineEntry tle : timelineEntries) {
-            if (secretEntityIds.contains((tle.getAssociatedId()))) {
-                cs.timelineEntriesLinkingToSecretEntities += 1;
+            if (tle.isSecret()) {
+                cs.secretTimelineEntries += 1;
             }
         }
 
@@ -356,11 +354,12 @@ public class CampaignStatisticsDialogContent implements DialogContent {
         private int secretRelationships = 0;
 
         private int timelineEntries = 0;
-        private int timelineEntriesLinkingToSecretEntities = 0;
+        private int secretTimelineEntries = 0;
 
         private int configuredMonths = 0;
 
-        private DecimalFormat df = new DecimalFormat("0.00");
+        /** Decimal format for displaying fractional values. */
+        private final DecimalFormat df = new DecimalFormat("0.00");
 
         private String getDescriptionWordsPerEntity() {
             if (entities != 0) {
