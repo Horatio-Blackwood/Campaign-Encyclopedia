@@ -17,7 +17,6 @@ import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
 import campaignencyclopedia.display.swing.graphical.CampaignEntityGraphViewer;
-import campaignencyclopedia.display.NavigationPath;
 import campaignencyclopedia.display.swing.graphical.OrbitalEntityViewer;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
