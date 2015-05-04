@@ -270,6 +270,10 @@ public class MainDisplay implements EditListener, UserDisplay {
             clearDisplayedEntity();
         }
         m_entityModel.removeElement(entity);
+        if (m_navPath != null) {
+            m_navPath.removeAll(entity.getId());
+            updateNavButtons();
+        }
     }
 
     /** {@inheritDoc} */
