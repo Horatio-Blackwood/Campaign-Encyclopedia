@@ -138,10 +138,10 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.2.0-Alpha";
+    public static final String VERSION = "v1.2.0";
 
     /** The date this release was created. */
-    public static final String DATE = "In Development.";
+    public static final String DATE = "May 3, 2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
@@ -787,6 +787,7 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         // NAVIGATE BACKWARD BUTTON
         m_backButton = new JButton("Last");
+        m_backButton.setOpaque(false);
         m_backButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -797,6 +798,7 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         // NAVIGATE FORWARD BUTTON
         m_forwardButton = new JButton("Next");
+        m_forwardButton.setOpaque(false);
         m_forwardButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
