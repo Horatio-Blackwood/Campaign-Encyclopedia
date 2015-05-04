@@ -133,8 +133,8 @@ public class MenuManager {
                              "    CTRL+R - Open the relationships editor\n" +
                              "    CTRL+S - Save the changes to the currently displayed entity\n" +
                              "    CTRL+SHIFT+S - Save the campaign with a new filename\n" +
-                             "    CTRL+T - Open the timeline editor\n\n" +
-                             "    ALT+LEFT - Navigate to the previous item in viewing history\n\n" +
+                             "    CTRL+T - Open the timeline editor\n" +
+                             "    ALT+LEFT - Navigate to the previous item in viewing history\n" +
                              "    ALT+RIGHT - Navigate to the next item in viewing history\n\n" +
                              "Orbital View Controls:\n" +
                              "    Hover over an item to view relationship details\n" +
@@ -236,13 +236,14 @@ public class MenuManager {
 
         dataMenu.add(editName);
         dataMenu.add(showTimeline);
-        dataMenu.add(new AbstractAction("Launch Graph Viewer") {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
-                viewer.launch();
-            }
-        });
+        // Commented out until issues are resolved.
+//        dataMenu.add(new AbstractAction("Launch Graph Viewer") {
+//            @Override
+//            public void actionPerformed(ActionEvent ae) {
+//                CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
+//                viewer.launch();
+//            }
+//        });
         dataMenu.add(configureRelationships);
         dataMenu.add(configureCalendar);
         dataMenu.add(showStats);

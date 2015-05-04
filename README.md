@@ -14,5 +14,5 @@ Campaign Encyclopedia enables you to record a timeline for your world that shows
 Once written your campaign can be exported to both PDF and the native campaign file format (JSON) with or without any secret data.  This allows your players to use your world information as a reference.
 
 ## Screenshots
-![orbital-viewer](/screenshot3.png)
+![orbital-viewer](/screenshot.png)
 ![orbital-viewer](/screenshot2.png)
