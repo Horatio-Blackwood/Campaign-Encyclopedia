@@ -63,6 +63,9 @@ public class TimelineDialogContent implements DialogContent {
 
     /** A display for showing entities. */
     private EntityDisplay m_display;
+    
+    /** An edit listener. */
+    private EditListener m_ediListener;
 
     public TimelineDialogContent(Frame parent, Set<TimelineEntry> entries, EntityDisplay display, CampaignDataManager cdm) {
         if (entries == null) {
@@ -102,6 +105,7 @@ public class TimelineDialogContent implements DialogContent {
                 } else {
                     m_listModel.setFilter(null);
                 }
+                alertEditListener();
             }
         });
         
@@ -210,11 +214,12 @@ public class TimelineDialogContent implements DialogContent {
                     if (tle.getTitle() != null && !tle.getTitle().isEmpty()) {
                         msg = "Are you sure you want to remove '" + tle.getTitle() + "' from your campaign?";
                     }
-                    int result = JOptionPane.showConfirmDialog(m_content, msg, "Remove Timeline Entry", JOptionPane.YES_NO_OPTION);
+                    int result = JOptionPane.showConfirmDialog(m_parent, msg, "Remove Timeline Entry", JOptionPane.YES_NO_OPTION);
                     if (result == JOptionPane.YES_OPTION) {
                         m_listModel.removeElement(tle);
                         m_cdm.removeTimelineEntry(tle.getId());
                         SaveHelper.autosave(m_parent, m_cdm, true);
+                        alertEditListener();
                     }
                 }
             }
@@ -245,6 +250,7 @@ public class TimelineDialogContent implements DialogContent {
                         
                         // Save changes
                         SaveHelper.autosave(m_parent, m_cdm, true);
+                        alertEditListener();
                     }
                 };
 
@@ -264,7 +270,7 @@ public class TimelineDialogContent implements DialogContent {
     /** {@inheritDoc} */
     @Override
     public void setDialogEditListener(EditListener el) {
-        // Do nothing.
+        m_ediListener = el;
     }
 
     /** {@inheritDoc} */
@@ -277,5 +283,20 @@ public class TimelineDialogContent implements DialogContent {
     @Override
     public boolean isCommitPermitted() {
         return true;
+    }
+
+    /** If not null, this call alerts the edit listener of changes. */
+    private void alertEditListener() {
+        if (m_ediListener != null) {
+            m_ediListener.edited();
+        }
+    }
+    
+    /**
+     * Returns true if the dialog is currently showing secret TimelineEntries.
+     * @return true if the dialog is currently showing secret TimelineEntries, false otherwise.
+     */
+    public boolean isShowingSecretEntries() {
+        return !m_hideSecretEntriesCheckbox.isSelected();
     }
 }

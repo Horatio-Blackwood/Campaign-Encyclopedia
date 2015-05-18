@@ -10,8 +10,6 @@ public class Month implements Comparable<Month> {
 
     private final int m_index;
     private final String m_name;
-    private static final String UNSPECIFIED_TEXT = "Unspecified";
-    public static final Month UNSPECIFIED = new Month(UNSPECIFIED_TEXT);
 
     /**
      * Private constructor for internal use only.  DO NOT CHANGE THIS TO PUBLIC.
@@ -31,9 +29,6 @@ public class Month implements Comparable<Month> {
     public Month(String name, int index) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Parameter 'name' must not be null or empty was: '" + name + "'.");
-        }
-        if (index < 1) {
-            throw new IllegalArgumentException("Parameter 'index' must be 1 or greater, was:  " + index);
         }
         m_index = index;
         m_name = name;

@@ -46,12 +46,8 @@ public class TimelineEventCellRenderer implements ListCellRenderer<TimelineEntry
             titleLabel.setText(e.getTitle());
         }
 
-        // Set the year and season
-        if (Month.UNSPECIFIED.equals(e.getMonth())) {
-            seasonYearLabel.setText(String.valueOf(e.getYear()));
-        } else {
-            seasonYearLabel.setText(e.getMonth() + " " + e.getYear());
-        }
+        // Set the year and month
+        seasonYearLabel.setText(e.getMonth() + " " + e.getYear());
 
         // Set Opacity & Border
         seasonYearLabel.setOpaque(false);

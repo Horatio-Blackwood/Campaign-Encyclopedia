@@ -3,10 +3,11 @@ package campaignencyclopedia.display.swing.graphical;
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
-import campaignencyclopedia.display.CampaignDataManagerListener;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -47,7 +48,7 @@ import traer.physics.Vector3D;
  * @author keith
  * @author adam
  */
-public class CampaignEntityGraphCanvas extends JComponent implements Scrollable, CampaignDataManagerListener {
+public class CampaignEntityGraphCanvas extends JComponent implements Scrollable, CanvasDisplay {
 
     // RENDERING PARAMETERS
     /** How long to draw the lines between the dots. */
@@ -155,7 +156,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     }
 
     /** Load up all of the entity data for rendering. */
-    public final void initializeEntities() {
+    private void initializeEntities() {
         List<Entity> allEntities = m_accessor.getAllEntities();
 
         //Entities
@@ -523,8 +524,20 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         // Ignored.
     }
 
+    @Override
+    public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
+        // ignored
+    }
 
+    @Override
+    public void timelineEntryRemoved(UUID id) {
+        // ignored
+    }
 
+    @Override
+    public Component getComponent() {
+        return this;
+    }
 
     /** A data bag for holding the locations calculated for rendering data. */
     private class RenderingConfig {

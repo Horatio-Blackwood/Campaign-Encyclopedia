@@ -57,6 +57,12 @@ public interface DataAccessor {
     public Set<TimelineEntry> getTimelineData();
 
     /**
+     * Returns the configured Campaign Calendar.
+     * @return the configured Campaign Calendar.
+     */
+    public CampaignCalendar getCalendar();
+
+    /**
      * Adds the supplied relationship.
      * @param entity the UUID of the Entity upon which to place this Relationship.
      * @param rel the Relationship to add.
@@ -76,7 +82,7 @@ public interface DataAccessor {
      * @param relMgr the new RelationshipManager.
      */
     public void addOrUpdateAllRelationships(UUID entity, RelationshipManager relMgr);
-    
+
     /**
      * Returns the Relationships for the entity associated with the supplied ID.
      * @param entity the ID of the entity to get relationships for.

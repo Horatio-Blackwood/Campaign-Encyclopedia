@@ -22,11 +22,6 @@ public class MonthTranslator {
     public static Month fromJson(JsonObject json) {
         String name = json.getString(NAME);
         int index = json.getInt(INDEX);
-        
-        if (name.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
-            return Month.UNSPECIFIED;
-        } else {
-            return new Month(name, index);
-        }
+        return new Month(name, index);
     }
 }

@@ -109,7 +109,7 @@ public class MenuManager {
         m_exportWithoutSecretsAction = new SaveCampaignAction(m_frame, m_cdm, "Export Campaign w/o Secrets", false);
 
         m_editName = new EditCampaignNameAction(m_frame, m_cdm, m_display);
-        m_showTimelineAction = new ShowTimelineAction(m_frame, m_display, m_cdm);
+        m_showTimelineAction = new ShowTimelineAction(m_display, m_cdm);
         m_configureRelationships = new ConfigureRelationshipsAction(m_frame);
         m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, m_cdm);
         m_showStats = new ShowCampaignStatisticsAction(m_frame, m_cdm);
@@ -237,13 +237,13 @@ public class MenuManager {
         dataMenu.add(editName);
         dataMenu.add(showTimeline);
         // Commented out until issues are resolved.
-//        dataMenu.add(new AbstractAction("Launch Graph Viewer") {
-//            @Override
-//            public void actionPerformed(ActionEvent ae) {
-//                CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
-//                viewer.launch();
-//            }
-//        });
+        dataMenu.add(new AbstractAction("Launch Graph Viewer") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
+                viewer.launch();
+            }
+        });
         dataMenu.add(configureRelationships);
         dataMenu.add(configureCalendar);
         dataMenu.add(showStats);
@@ -275,7 +275,6 @@ public class MenuManager {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 OrbitalEntityViewer viewer = new OrbitalEntityViewer(m_display, m_cdm, entity.getId());
-                m_cdm.addListener(viewer);
                 viewer.launch();
             }
         });
