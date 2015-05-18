@@ -383,7 +383,9 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
      * @param dates the dates to use to calculate the segment count.
      */
     private void calculateSegmentCount(List<TimelineDate> dates) {
-        
+        if (dates.isEmpty()) {
+            return;
+        }
         switch (m_zoomLevel) {
             case CENTURY:
                 // If zoomed to Century Level, segment count is drastically reduced.  
