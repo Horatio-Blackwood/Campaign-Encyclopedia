@@ -16,7 +16,7 @@ public class CampaignEntityGraphViewer extends CanvasViewer {
      * @param cdm the data accessor to fetch data to view.
      */
     public CampaignEntityGraphViewer(EntityDisplay display, CampaignDataManager cdm) {
-        super(new CampaignEntityGraphCanvas(display, cdm), cdm, "Campaign Graph Viewer", new Dimension(900, 675));
+        super(new CampaignEntityGraphCanvas(display, cdm), cdm, "Campaign Graph Viewer", new Dimension(900, 675), true);
     }
     
     /** Closes this viewer frame. */

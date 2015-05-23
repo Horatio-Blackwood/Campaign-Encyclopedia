@@ -14,7 +14,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.InputEvent;
@@ -36,8 +35,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
-import javax.swing.Scrollable;
-import javax.swing.SwingConstants;
 import traer.physics.Particle;
 import traer.physics.ParticleSystem;
 import traer.physics.Spring;
@@ -48,7 +45,7 @@ import traer.physics.Vector3D;
  * @author keith
  * @author adam
  */
-public class CampaignEntityGraphCanvas extends JComponent implements Scrollable, CanvasDisplay {
+public class CampaignEntityGraphCanvas extends JComponent implements CanvasDisplay { //, Scrollable {
 
     // RENDERING PARAMETERS
     /** How long to draw the lines between the dots. */
@@ -465,63 +462,63 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         float horizontalGraphSpan = (furthestRight - furthestLeft);
         float verticalGraphSpan = (furthestBottom - furthestTop);
 
-        int xDim = (int)((horizontalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
-        int yDim = (int)((verticalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
+        int xDim = (int)((horizontalGraphSpan + 2 * SCROLL_PAD) * m_scaleFactor);
+        int yDim = (int)((verticalGraphSpan + 2 * SCROLL_PAD) * m_scaleFactor);
         return new Dimension(xDim, yDim);
     }
 
-    @Override
-    public Dimension getPreferredScrollableViewportSize() {
-        return getPreferredSize();
-    }
-
-    @Override
-    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-        //Get the current position.
-        int currentPosition = 0;
-        if (orientation == SwingConstants.HORIZONTAL) {
-            currentPosition = visibleRect.x;
-        } else {
-            currentPosition = visibleRect.y;
-        }
-
-        //Return the number of pixels between currentPosition
-        //and the nearest tick mark in the indicated direction.
-        if (direction < 0) {
-            int newPosition = currentPosition - (currentPosition / m_maxUnitIncrement) * m_maxUnitIncrement;
-            return (newPosition == 0) ? m_maxUnitIncrement : newPosition;
-        } else {
-            return ((currentPosition / m_maxUnitIncrement) + 1) * m_maxUnitIncrement - currentPosition;
-        }
-    }
-
-    @Override
-    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-        if (orientation == SwingConstants.HORIZONTAL) {
-            return visibleRect.width - m_maxUnitIncrement;
-        } else {
-            return visibleRect.height - m_maxUnitIncrement;
-        }
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportWidth() {
-        return false;
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportHeight() {
-        return false;
-    }
+//    @Override
+//    public Dimension getPreferredScrollableViewportSize() {
+//        return getPreferredSize();
+//    }
+//
+//    @Override
+//    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+//        //Get the current position.
+//        int currentPosition = 0;
+//        if (orientation == SwingConstants.HORIZONTAL) {
+//            currentPosition = visibleRect.x;
+//        } else {
+//            currentPosition = visibleRect.y;
+//        }
+//
+//        //Return the number of pixels between currentPosition
+//        //and the nearest tick mark in the indicated direction.
+//        if (direction < 0) {
+//            int newPosition = currentPosition - (currentPosition / m_maxUnitIncrement) * m_maxUnitIncrement;
+//            return (newPosition == 0) ? m_maxUnitIncrement : newPosition;
+//        } else {
+//            return ((currentPosition / m_maxUnitIncrement) + 1) * m_maxUnitIncrement - currentPosition;
+//        }
+//    }
+//
+//    @Override
+//    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+//        if (orientation == SwingConstants.HORIZONTAL) {
+//            return visibleRect.width - m_maxUnitIncrement;
+//        } else {
+//            return visibleRect.height - m_maxUnitIncrement;
+//        }
+//    }
+//
+//    @Override
+//    public boolean getScrollableTracksViewportWidth() {
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean getScrollableTracksViewportHeight() {
+//        return false;
+//    }
 
     @Override
     public void dataRemoved(UUID id) {
-        // Ignored.
+        // See Issue #27
     }
 
     @Override
     public void dataAddedOrUpdated(Entity entity) {
-        // Ignored.
+        // See Issue #27
     }
 
     @Override
@@ -541,7 +538,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
 
     @Override
     public void clearAllData() {
-        // Ignored.....for now.
+        // Ignored
     }
 
     /** A data bag for holding the locations calculated for rendering data. */

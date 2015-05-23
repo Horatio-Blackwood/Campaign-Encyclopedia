@@ -17,7 +17,7 @@ public class TimelineCanvasViewer extends CanvasViewer {
      * @param cdm the CampaignDataManager to get the data from.
      */
     public TimelineCanvasViewer(IntegratedTimelineCanvas canvas, EntityDisplay display, CampaignDataManager cdm) {
-       super(canvas, cdm, "Graphical Timeline", new Dimension(950, 650));        
+       super(canvas, cdm, "Graphical Timeline", new Dimension(950, 650), false);        
         
        canvas.setParent(m_frame);
     }

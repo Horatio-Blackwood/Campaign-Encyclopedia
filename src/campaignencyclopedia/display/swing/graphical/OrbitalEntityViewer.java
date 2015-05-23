@@ -18,7 +18,7 @@ public class OrbitalEntityViewer extends CanvasViewer {
      * @param toView the ID of the initial Entity to view.
      */
     public OrbitalEntityViewer(EntityDisplay display, CampaignDataManager cdm, UUID toView ) {
-        super(new OrbitalEntityCanvas(display, cdm, toView), cdm, "Orbital Viewer", new Dimension(900, 675));
+        super(new OrbitalEntityCanvas(display, cdm, toView), cdm, "Orbital Viewer", new Dimension(900, 675), false);
     }
     
     /** Closes this viewer frame.s */

@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import toolbox.display.DisplayUtilities;
 
 /**
@@ -40,6 +41,9 @@ public class CanvasViewer implements CampaignDataManagerListener {
 
     /** The dimension of this window. */
     private Dimension m_size;
+    
+    /** True if this CanvasViewer should put its canvas in a scroll pane, false otherwise. */
+    private boolean m_putCanvasInScrollPane;
 
     /**
      * Constructor.
@@ -47,8 +51,9 @@ public class CanvasViewer implements CampaignDataManagerListener {
      * @param cdm a campaign data manager for getting data.
      * @param title the title of the window.
      * @param size the size this viewer should be.
+     * @param putCanvasInScrollPane true if this CanvasViewer should put its canvas in a scroll pane.
      */
-    public CanvasViewer(CanvasDisplay canvas, CampaignDataManager cdm, String title, Dimension size) {
+    public CanvasViewer(CanvasDisplay canvas, CampaignDataManager cdm, String title, Dimension size, boolean putCanvasInScrollPane) {
         if (canvas == null) {
             throw new IllegalArgumentException("Parameter 'canvas' cannot be null.");
         }
@@ -65,6 +70,7 @@ public class CanvasViewer implements CampaignDataManagerListener {
         m_canvas = canvas;
         m_title = title;
         m_size = size;
+        m_putCanvasInScrollPane = putCanvasInScrollPane;
 
         initialize();
     }
@@ -88,7 +94,14 @@ public class CanvasViewer implements CampaignDataManagerListener {
         m_frame.setLayout(new BorderLayout());
         m_frame.setPreferredSize(m_size);
         m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        m_frame.add(m_canvas.getComponent(), BorderLayout.CENTER);
+        
+        if (m_putCanvasInScrollPane) {
+            m_frame.add(new JScrollPane(m_canvas.getComponent()), BorderLayout.CENTER);
+        } else {
+            m_frame.add(m_canvas.getComponent(), BorderLayout.CENTER);
+        }
+        
+        
         m_frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
