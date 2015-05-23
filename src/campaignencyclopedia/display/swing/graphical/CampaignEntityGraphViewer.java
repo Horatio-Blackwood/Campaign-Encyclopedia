@@ -18,4 +18,10 @@ public class CampaignEntityGraphViewer extends CanvasViewer {
     public CampaignEntityGraphViewer(EntityDisplay display, CampaignDataManager cdm) {
         super(new CampaignEntityGraphCanvas(display, cdm), cdm, "Campaign Graph Viewer", new Dimension(900, 675));
     }
+    
+    /** Closes this viewer frame. */
+    @Override
+    public void clearAllData() {
+        m_frame.dispose();
+    }
 }

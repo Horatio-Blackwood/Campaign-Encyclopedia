@@ -21,4 +21,9 @@ public class TimelineCanvasViewer extends CanvasViewer {
         
        canvas.setParent(m_frame);
     }
+    
+    @Override
+    public void clearAllData() {
+        m_frame.dispose();
+    }
 }

@@ -20,4 +20,10 @@ public class OrbitalEntityViewer extends CanvasViewer {
     public OrbitalEntityViewer(EntityDisplay display, CampaignDataManager cdm, UUID toView ) {
         super(new OrbitalEntityCanvas(display, cdm, toView), cdm, "Orbital Viewer", new Dimension(900, 675));
     }
+    
+    /** Closes this viewer frame.s */
+    @Override
+    public void clearAllData() {
+        m_frame.dispose();
+    }
 }

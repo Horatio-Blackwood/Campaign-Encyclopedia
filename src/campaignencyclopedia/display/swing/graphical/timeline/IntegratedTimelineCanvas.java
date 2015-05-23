@@ -123,4 +123,9 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
     public void setParent(Frame parent) {
         m_timelineListDialogContent.setParent(parent);
     }
+
+    @Override
+    public void clearAllData() {
+        m_canvas.clearAllData();
+    }
 }

@@ -539,6 +539,11 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         return this;
     }
 
+    @Override
+    public void clearAllData() {
+        // Ignored.....for now.
+    }
+
     /** A data bag for holding the locations calculated for rendering data. */
     private class RenderingConfig {
         private String text;

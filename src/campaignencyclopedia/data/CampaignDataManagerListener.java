@@ -31,4 +31,7 @@ public interface CampaignDataManagerListener {
      * @param id the id of the removed entry.
      */
     public void timelineEntryRemoved(UUID id);
+    
+    /** Called when all data from the campaign is cleared. */
+    public void clearAllData();
 }

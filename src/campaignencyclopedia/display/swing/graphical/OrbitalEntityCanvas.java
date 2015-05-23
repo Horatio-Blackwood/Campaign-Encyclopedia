@@ -427,10 +427,14 @@ public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
         // ignored
     }
 
-    /** {@inheritDoc} */
     @Override
     public Component getComponent() {
         return this;
+    }
+
+    @Override
+    public void clearAllData() {
+        // Do nothing.
     }
 
     /** A data bag for holding the locations calculated for rendering data. */

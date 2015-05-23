@@ -116,4 +116,9 @@ public class CanvasViewer implements CampaignDataManagerListener {
     public void timelineEntryRemoved(UUID id) {
         m_canvas.timelineEntryRemoved(id);
     }
+
+    @Override
+    public void clearAllData() {
+        m_canvas.clearAllData();
+    }
 }

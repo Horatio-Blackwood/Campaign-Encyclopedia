@@ -190,9 +190,14 @@ public class CampaignDataManager implements DataAccessor {
         m_entities.clear();
         m_timelineData.clear();
         m_relationships.clear();
+        
+        // Alert listeners of cleared data.
+        for (CampaignDataManagerListener cdml : m_listeners) {
+            cdml.clearAllData();
+        }
+        
         m_campaignName = campaign.getName();
         m_cal = campaign.getCalendar();
-
 
 
         // Set to collect all of the previously saved relationships.  This is used later to ensure that all established

@@ -487,6 +487,11 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
         m_dataChanged = true;
         repaint();
     }
+
+    @Override
+    public void clearAllData() {
+        // Do nothing.
+    }
     
     /** Helper Class for organizing Timeline Data. */
     private class TimelineDate implements Comparable<TimelineDate> {
