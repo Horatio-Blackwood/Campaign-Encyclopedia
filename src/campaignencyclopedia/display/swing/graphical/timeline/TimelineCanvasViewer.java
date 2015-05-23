@@ -10,7 +10,15 @@ import java.awt.Dimension;
  * @author adam
  */
 public class TimelineCanvasViewer extends CanvasViewer {
-    public TimelineCanvasViewer(EntityDisplay display, CampaignDataManager cdm) {
-        super(new IntegratedTimelineCanvas(null, display, cdm), cdm, "Graphical Timeline", new Dimension(900, 675));
+    
+    /**
+     * Creates a new instance of TimelineCanvasViewer.
+     * @param display the EntityDisplay for this viewer.
+     * @param cdm the CampaignDataManager to get the data from.
+     */
+    public TimelineCanvasViewer(IntegratedTimelineCanvas canvas, EntityDisplay display, CampaignDataManager cdm) {
+       super(canvas, cdm, "Graphical Timeline", new Dimension(950, 650));        
+        
+       canvas.setParent(m_frame);
     }
 }

@@ -2,12 +2,10 @@ package campaignencyclopedia.display.swing.action;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.display.EntityDisplay;
+import campaignencyclopedia.display.swing.graphical.timeline.IntegratedTimelineCanvas;
 import campaignencyclopedia.display.swing.graphical.timeline.TimelineCanvasViewer;
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import toolbox.display.dialog.DialogFactory;
-import toolbox.display.dialog.OkCommitManager;
 
 /**
  * An action for displaying the timeline of the Campaign.
@@ -36,7 +34,8 @@ public class ShowTimelineAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent ae) {
         // Build and Launch Dialaog
-        TimelineCanvasViewer tcv = new TimelineCanvasViewer(m_display, m_cdm);
+        IntegratedTimelineCanvas canvas = new IntegratedTimelineCanvas(m_display, m_cdm);
+        TimelineCanvasViewer tcv = new TimelineCanvasViewer(canvas, m_display, m_cdm);
         tcv.launch();
     }
 }

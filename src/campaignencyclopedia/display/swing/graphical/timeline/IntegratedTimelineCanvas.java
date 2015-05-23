@@ -4,7 +4,7 @@ import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
-import campaignencyclopedia.display.swing.TimelineDialogContent;
+import campaignencyclopedia.display.swing.TimelineListDisplay;
 import campaignencyclopedia.display.swing.graphical.CanvasDisplay;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -24,19 +24,19 @@ import javax.swing.ListCellRenderer;
 import toolbox.display.EditListener;
 
 /**
- *
+ * 
  * @author adam
  */
 public class IntegratedTimelineCanvas implements CanvasDisplay {
 
     private JPanel m_content;
     private final TimelineCanvas m_canvas;
-    private final TimelineDialogContent m_timelineListDialogContent;
+    private final TimelineListDisplay m_timelineListDialogContent;
     private boolean m_showSecretEntries = true;
     
-    public IntegratedTimelineCanvas(Frame parent, EntityDisplay display, CampaignDataManager cdm) {
+    public IntegratedTimelineCanvas(EntityDisplay display, CampaignDataManager cdm) {
         m_canvas = new TimelineCanvas(cdm);
-        m_timelineListDialogContent = new TimelineDialogContent(parent, cdm.getTimelineData(), display, cdm);
+        m_timelineListDialogContent = new TimelineListDisplay(cdm.getTimelineData(), display, cdm);
         initialize();
     }
     
@@ -118,5 +118,9 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
     @Override
     public void timelineEntryRemoved(UUID id) {
         m_canvas.timelineEntryRemoved(id);
+    }
+    
+    public void setParent(Frame parent) {
+        m_timelineListDialogContent.setParent(parent);
     }
 }

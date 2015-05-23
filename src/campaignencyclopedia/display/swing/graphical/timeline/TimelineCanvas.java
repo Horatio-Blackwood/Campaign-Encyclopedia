@@ -46,13 +46,11 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
     // RENDERING CONSTANTS
     /** A pad value for padding other values. */
     private static final int PAD = 50;
-    /** The number of pixels from the bottom of the display that the timeline should be rendered. */
-    private int m_timelineY = 550;
     /** The number of pixels up from the bottom of the display that the timeline should be rendered. */
     private static final int TIMELINE_BOTTOM_OFFSET = 100;
     /** The Distance between each Date rendered on the timeline (Segment). */
     private static final int SEGMENT_X_VALUES = 100;
-    /** The height of the timeline fenceposts at each date (before adding any leaders/events) */
+    /** The height of the timeline fencepost at each date (before adding any leaders/events) */
     private static final int FENCE_POST_HEIGHT = 30;
     /** The Default length of the leader lines (lines between the dots). */
     private static final int LEADER_LINE_LENGTH = 10;
@@ -295,7 +293,7 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
             // Clear out all previous yOffsets
             for (DateLocationData dld : m_dateLocationData.values()) {
                 dld.dateYOffset = 0;
-            }            
+            }
         }
         
         // Starting at the latest timeline event, work your 
@@ -347,7 +345,6 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
         m_renderingConfigs.clear();
         for (TimelineDate date : m_data.keySet()) {
             int currentFencepostHeight = getTimelineY() - FENCE_POST_HEIGHT;
-            
             int fencepostX = m_dateLocationData.get(date).dateXPos;
             
             // Sort the Entries for the supplied TimelineDate so that they'll be alphabetized from top to bottom.
@@ -481,14 +478,12 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
 
     @Override
     public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
-        System.out.println("add/update");
         m_dataChanged = true;
         repaint();
     }
 
     @Override
     public void timelineEntryRemoved(UUID id) {
-        System.out.println("removed");
         m_dataChanged = true;
         repaint();
     }
@@ -554,27 +549,39 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
             int newYear = this.year;
             for (int i = 0; i < n; i++) {
                 newMonth = cc.getMonthAfter(newMonth);
-                if (newMonth.getIndex() == 1) {
+                if (newMonth.getIndex() == 0) {
                     newYear += 1;
                 }
             }
             
             return new TimelineDate(newMonth, newYear);
         }
-        
+
+        /**
+         * Returns the first date for the year that this date is in.
+         * @return the first date for the year that this date is in.
+         */
         private TimelineDate getYearDate() {
             return new TimelineDate(m_da.getCalendar().getMonthForIndex(0), this.year);
         }
         
+        /**
+         * Returns the first date for the decade that this date is in.
+         * @return the first date for the decade that this date is in.
+         */
         private TimelineDate getDecadeDate() {
             int remainder = this.year % 10;
             return new TimelineDate(m_da.getCalendar().getMonthForIndex(0), this.year - remainder);
         }
         
+        /**
+         * Returns the first date for the century that this date is in.
+         * @return the first date for the century that this date is in.
+         */
         private TimelineDate getCenturyDate() {
             int remainder = this.year % 100;
             return new TimelineDate(m_da.getCalendar().getMonthForIndex(0), this.year - remainder);
-        }        
+        }
         
         @Override
         public String toString() {
@@ -619,6 +626,7 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
         }
     }
     
+    /** A data bag helper class for managing the position and label of a given date on the timeline. */
     private class DateLocationData {
         private int dateXPos;
         private int dateYOffset;
@@ -626,20 +634,36 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
     }
     
     
-    /** A data bag for holding the locations calculated for rendering data. */
+    /** A data bag for holding the locations calculated for rendering data for rendering a TimelineEntry. */
     private class RenderingConfig {
+        /** The color to render the dot. */
         private Color color;
+        /** The Dot to be rendered for this timeline entry. */
         private Ellipse2D dot;
+        /** The title text. */
         private String text;
+        /** The starting point for the leader (the line from the date fencepost to the dot.) This point is lower on the screen than the end point.*/
         private Point leaderStart;
+        /** The ending point for the leader (the line from the date fencepost to the dot.) This point is higher on the screen than the start point.*/
         private Point leaderEnd;
+        /** The position where the text is to be rendered. */
         private Point textPoint;
+        /** The date where this dot, text, and leader line should be rendered. */
         private TimelineDate date;
     }
     
+    /** A helper class that represents a position on the canvas. */
     private class Point {
+        /** The X position. */
         private final int x;
+        /** The Y position. */
         private final int y;
+        
+        /**
+         * Constructor.
+         * @param xPoint The X position.
+         * @param yPoint The Y position.
+         */
         private Point(int xPoint, int yPoint) {
             x = xPoint;
             y = yPoint;

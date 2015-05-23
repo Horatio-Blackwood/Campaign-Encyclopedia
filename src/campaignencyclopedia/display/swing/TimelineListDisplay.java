@@ -6,7 +6,6 @@ import campaignencyclopedia.display.DataFilter;
 import campaignencyclopedia.display.EntityDisplay;
 import campaignencyclopedia.display.swing.action.SaveHelper;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -33,15 +32,14 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import toolbox.display.EditListener;
 import toolbox.display.dialog.DialogCommitManager;
-import toolbox.display.dialog.DialogContent;
 import toolbox.display.dialog.DialogFactory;
 import toolbox.display.dialog.OkCancelCommitManager;
 
 /**
- * The dialog content for viewing the Timeline.
+ * A display that shows TimelineEntry objects in a list, and provides for editing them.
  * @author adam
  */
-public class TimelineDialogContent implements DialogContent {
+public class TimelineListDisplay {
 
     /** The parent dialog of this dialog content.  Used to position dialogs launched by user actions taken in this display. */
     private Frame m_parent;
@@ -67,7 +65,7 @@ public class TimelineDialogContent implements DialogContent {
     /** An edit listener. */
     private EditListener m_ediListener;
 
-    public TimelineDialogContent(Frame parent, Set<TimelineEntry> entries, EntityDisplay display, CampaignDataManager cdm) {
+    public TimelineListDisplay(Set<TimelineEntry> entries, EntityDisplay display, CampaignDataManager cdm) {
         if (entries == null) {
             throw new IllegalArgumentException("Parameter 'events' cannot be null.");
         }
@@ -75,7 +73,6 @@ public class TimelineDialogContent implements DialogContent {
             throw new IllegalArgumentException("Parameter 'cdm' cannot be null.");
         }
 
-        m_parent = parent;
         m_listModel = new SortableListModel<>();
         m_listModel.addAllElements(entries);
         m_cdm = cdm;
@@ -85,7 +82,6 @@ public class TimelineDialogContent implements DialogContent {
 
     private void initialize() {
         m_content = new JPanel(new GridBagLayout());
-        m_content.setPreferredSize(new Dimension(400, 500));
         
         m_eventList = new JList<>();
         m_eventList.setModel(m_listModel);
@@ -201,10 +197,16 @@ public class TimelineDialogContent implements DialogContent {
         m_content.add(new JScrollPane(m_eventList), gbc);
     }
     
+    /**
+     * Sets the parent for this display.
+     * @param parent the new parent window for this display.
+     */
+    public void setParent(Frame parent) {
+        m_parent = parent;
+    }    
     
     public JPopupMenu getTimelineEntryContextMenu(final TimelineEntry entry) {
         JPopupMenu menu = new JPopupMenu();
-
         menu.add(new AbstractAction("Remove") {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -261,28 +263,20 @@ public class TimelineDialogContent implements DialogContent {
         return menu;
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /**
+     * Returns the primary display component of this class.
+     * @return the primary display component of this class.
+     */
     public Component getContent() {
         return m_content;
     }
 
-    /** {@inheritDoc} */
-    @Override
+    /**
+     * Sets an edit listener on this display.
+     * @param el the edit listener to set.
+     */
     public void setDialogEditListener(EditListener el) {
         m_ediListener = el;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean isDataCommittable() {
-        return true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean isCommitPermitted() {
-        return true;
     }
 
     /** If not null, this call alerts the edit listener of changes. */
