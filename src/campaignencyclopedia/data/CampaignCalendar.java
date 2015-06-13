@@ -41,7 +41,7 @@ public class CampaignCalendar {
     public List<Month> getMonths() {
         return Collections.unmodifiableList(m_months);
     }
-    
+
     /**
      * Returns the number of months in this calendar.
      * @return the number of months in this calendar.
@@ -49,7 +49,7 @@ public class CampaignCalendar {
     public int getMonthCount() {
         return m_months.size();
     }
-    
+
     /**
      * Returns the month at the given index.  If the index is out of range, exceptions will be thrown.
      * @param index the index of the month to retrieve.
@@ -58,7 +58,7 @@ public class CampaignCalendar {
     public Month getMonthForIndex(int index) {
         return m_months.get(index);
     }
-    
+
     /**
      * Returns the month after the supplied one.
      * @param month the month to get the following month for.
@@ -68,6 +68,9 @@ public class CampaignCalendar {
         if (hasMonth(month)) {
             // if not the last month...
             if (month.getIndex() != m_months.size() - 1) {
+                System.out.println(month.getName());
+                System.out.println(month.getIndex());
+                System.out.println("---");
                 // return the one after this one.
                 return m_months.get(month.getIndex() + 1);
             } else {
@@ -78,7 +81,7 @@ public class CampaignCalendar {
             throw new IllegalStateException("Supplied month does not exist in calendar.");
         }
     }
-    
+
     /**
      * Returns the month before the supplied one.
      * @param month the month to get the previous month for.
@@ -159,6 +162,6 @@ public class CampaignCalendar {
         }
         return true;
     }
-    
-    
+
+
 }
