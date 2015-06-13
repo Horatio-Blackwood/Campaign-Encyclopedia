@@ -1,7 +1,7 @@
 package campaignencyclopedia.display.swing;
 
-import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.display.swing.graphical.Colors;
+import campaignencyclopedia.data.ColoredDisplayable;
+import static com.sun.management.jmx.Trace.isSelected;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -15,18 +15,20 @@ import javax.swing.ListCellRenderer;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
 /**
- * A renderer for Entities in a JList.
+ * A renderer for Displayables that also have a Color associated with them.  In this renderer, a simple colored
+ * dot will be rendered to the left of the text.
  * @author adam
  */
-public class EntityListCellRenderer implements ListCellRenderer<Entity> {
+public class ColoredDisplayableCellRenderer implements ListCellRenderer<ColoredDisplayable>{
 
     private static final Insets INSETS = new Insets(3, 1, 3, 1);
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends Entity> jlist, Entity e, int i, boolean isSelected, boolean hasFocus) {
-        JPanel cell = new JPanel(new GridBagLayout());
+    public Component getListCellRendererComponent(JList<? extends ColoredDisplayable> jlist, ColoredDisplayable e, int i, boolean isSelected, boolean hasFocus) {
 
-        JLabel label = new JLabel(e.getName());
+    JPanel cell = new JPanel(new GridBagLayout());
+
+        JLabel label = new JLabel(e.getDisplayString());
         label.setOpaque(false);
         label.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
         label.setHorizontalAlignment(JLabel.LEFT);
@@ -43,7 +45,7 @@ public class EntityListCellRenderer implements ListCellRenderer<Entity> {
         gbc.anchor = GridBagConstraints.LINE_START;
         gbc.weightx = 0.0f;
         gbc.fill = GridBagConstraints.NONE;
-        cell.add(new Dot(Colors.getColor(e.getType())), gbc);
+        cell.add(new Dot(e.getColor()), gbc);
 
         // Label
         gbc.gridx = 1;

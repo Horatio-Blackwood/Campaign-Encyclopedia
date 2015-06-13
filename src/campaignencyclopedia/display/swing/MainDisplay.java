@@ -528,7 +528,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         for (EntityType type : EntityType.values()) {
             m_typeSelector.addItem(type);
         }
-        m_typeSelector.setRenderer(new DisplayableCellRenderer());
+        m_typeSelector.setRenderer(new ColoredDisplayableCellRenderer());
 
         m_public = new EntityDataEditor(this, false);
         m_secret = new EntityDataEditor(this, true);
@@ -674,7 +674,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         m_entityModel.addAllElements(m_cdm.getAllEntities());
 
         m_entityList = new JList<>();
-        m_entityList.setCellRenderer(new EntityListCellRenderer());
+        m_entityList.setCellRenderer(new ColoredDisplayableCellRenderer());
         m_entityList.setModel(m_entityModel);
 
         // Define reusable showEntity runnable (for both key and mouse listeners)

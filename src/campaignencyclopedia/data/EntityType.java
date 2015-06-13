@@ -1,10 +1,13 @@
 package campaignencyclopedia.data;
 
+import campaignencyclopedia.display.swing.graphical.Colors;
+import java.awt.Color;
+
 /**
  * An enumeration of EntityTypes.
  * @author adam
  */
-public enum EntityType implements Displayable {
+public enum EntityType implements ColoredDisplayable {
     NON_PLAYER_CHARACTER("NPC"),
     PLAYER_CHARACTER("PC"),
     PLACE("Place"),
@@ -27,5 +30,10 @@ public enum EntityType implements Displayable {
     @Override
     public String getDisplayString() {
         return m_displayString;
+    }
+
+    @Override
+    public Color getColor() {
+        return Colors.getColor(this);
     }
 }

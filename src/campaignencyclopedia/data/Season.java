@@ -30,7 +30,7 @@ public enum Season implements Displayable, Comparable<Season> {
      */
     public static List<Month> getAsMonths() {
         List<Month> months = new ArrayList<>();
-        int i = 1;
+        int i = 0;
         for (Season season : values()) {
             months.add(new Month(season.getDisplayString(), i));
             i++;

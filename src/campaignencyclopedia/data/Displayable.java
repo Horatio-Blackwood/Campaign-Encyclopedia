@@ -1,7 +1,8 @@
 package campaignencyclopedia.data;
 
 /**
- *
+ * An interface for data objects that are displayable as a String.  This interface allows for a toSring
+ * to be different than its user DisplayString.
  * @author adam
  */
 public interface Displayable {
@@ -11,5 +12,5 @@ public interface Displayable {
      * @return a displayable string for this object.
      */
     public String getDisplayString();
-    
+
 }
