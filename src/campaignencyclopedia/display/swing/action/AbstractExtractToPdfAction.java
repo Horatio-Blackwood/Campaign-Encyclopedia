@@ -33,6 +33,9 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
     /** The paragraph body font size. */
     protected static final int NORMAL = 12;
 
+    /** The font size for fine print. */
+    protected static final int FINE_PRINT = 10;
+
     /** The Color used to render secret data / headers. */
     protected static final Color SECRET_COLOR = Color.RED;
 
@@ -73,7 +76,7 @@ public abstract class AbstractExtractToPdfAction extends AbstractAction {
         if (secret && description.isEmpty() && relManager.getSecretRelationships().isEmpty()) {
             return;
         }
-        
+
         // Render header
         if (secret) {
             pdf.renderLine("Secret Data", PdfFont.HELVETICA_BOLD, SUB_SECTION, SECRET_COLOR);
