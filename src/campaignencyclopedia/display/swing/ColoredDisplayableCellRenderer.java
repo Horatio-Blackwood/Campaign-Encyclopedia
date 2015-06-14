@@ -1,7 +1,6 @@
 package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.ColoredDisplayable;
-import static com.sun.management.jmx.Trace.isSelected;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -26,11 +25,12 @@ public class ColoredDisplayableCellRenderer implements ListCellRenderer<ColoredD
     @Override
     public Component getListCellRendererComponent(JList<? extends ColoredDisplayable> jlist, ColoredDisplayable e, int i, boolean isSelected, boolean hasFocus) {
 
-    JPanel cell = new JPanel(new GridBagLayout());
+        JPanel cell = new JPanel(new GridBagLayout());
+        cell.setOpaque(false);
 
         JLabel label = new JLabel(e.getDisplayString());
         label.setOpaque(false);
-        label.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
+        label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
         label.setHorizontalAlignment(JLabel.LEFT);
 
         Color deselectedBackground = cell.getBackground();
@@ -61,7 +61,7 @@ public class ColoredDisplayableCellRenderer implements ListCellRenderer<ColoredD
             cell.setBackground(deselectedBackground);
             cell.setForeground(deselectedTextColor);
         }
-
+        
         return cell;
     }
 }

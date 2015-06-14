@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -54,6 +55,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import toolbox.display.DisplayUtilities;
 import toolbox.display.EditListener;
 
@@ -138,10 +140,10 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.3.0";
+    public static final String VERSION = "v1.4.0 beta";
 
     /** The date this release was created. */
-    public static final String DATE = "May 17, 2015";
+    public static final String DATE = "June 13, 2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
@@ -177,63 +179,66 @@ public class MainDisplay implements EditListener, UserDisplay {
     private void commitDisplayedDataToCdm() {
         // Get shown Entity
         Entity entity = getDisplayedEntity();
-
-        // Get Displayed Relationships and add them.
-        RelationshipManager relMgr = new RelationshipManager();
-        for (Relationship rel : m_relationshipEditor.getData()) {
-            // If the entity is secret and it has any public relationships, they must now be secret, so update them.
-            if (entity.isSecret() && !rel.isSecret()) {
-                relMgr.addRelationship(new Relationship(rel.getEntityId(), rel.getRelatedEntity(), rel.getRelationshipText(), true));
-            } else {
-                relMgr.addRelationship(rel);
+        
+        // If the entity is new (CDM's entity is null) or the entity is not new, but has been modified, then go ahead with the save - otherwise don't bother.
+        if (m_cdm.getEntity(entity.getId()) == null || (m_cdm.getEntity(entity.getId()) != null && !m_cdm.getEntity(entity.getId()).equals(entity))) {
+            // Get Displayed Relationships and add them.
+            RelationshipManager relMgr = new RelationshipManager();
+            for (Relationship rel : m_relationshipEditor.getData()) {
+                // If the entity is secret and it has any public relationships, they must now be secret, so update them.
+                if (entity.isSecret() && !rel.isSecret()) {
+                    relMgr.addRelationship(new Relationship(rel.getEntityId(), rel.getRelatedEntity(), rel.getRelationshipText(), true));
+                } else {
+                    relMgr.addRelationship(rel);
+                }
             }
-        }
 
-        // If the entity is secret:
-        //  - relationships owned by other entities pointing to it must be secret, so update them.
-        //  - Timeline events pointing to it must be secret, so update them.
-        if (entity.isSecret()) {
-            for (Entity otherEntity : m_cdm.getAllEntities()) {
-                RelationshipManager otherRelMgr = m_cdm.getRelationshipsForEntity(otherEntity.getId());
-                Set<Relationship> requireUpdate = new HashSet<>();
-                for (Relationship rel : new HashSet<>(otherRelMgr.getPublicRelationships())) {
-                    if (!rel.isSecret() && rel.getRelatedEntity().equals(entity.getId())) {
-                        otherRelMgr.remove(rel);
-                        requireUpdate.add(new Relationship(rel.getEntityId(), rel.getRelatedEntity(), rel.getRelationshipText(), true));
+            // If the entity is secret:
+            //  - relationships owned by other entities pointing to it must be secret, so update them.
+            //  - Timeline events pointing to it must be secret, so update them.
+            if (entity.isSecret()) {
+                for (Entity otherEntity : m_cdm.getAllEntities()) {
+                    RelationshipManager otherRelMgr = m_cdm.getRelationshipsForEntity(otherEntity.getId());
+                    Set<Relationship> requireUpdate = new HashSet<>();
+                    for (Relationship rel : new HashSet<>(otherRelMgr.getPublicRelationships())) {
+                        if (!rel.isSecret() && rel.getRelatedEntity().equals(entity.getId())) {
+                            otherRelMgr.remove(rel);
+                            requireUpdate.add(new Relationship(rel.getEntityId(), rel.getRelatedEntity(), rel.getRelationshipText(), true));
+                        }
+                    }
+                    // Clear the public data from the relationship manager and add in the newly updated stuff.
+                    otherRelMgr.addAllRelationships(requireUpdate);
+                    m_cdm.addOrUpdateAllRelationships(otherEntity.getId(), otherRelMgr);
+                }
+
+                // Make secret any Timeline Entries that now must be.
+                for (TimelineEntry tle : m_cdm.getTimelineData()) {
+                    if (tle.getAssociatedId().equals(entity.getId())) {
+                        m_cdm.removeTimelineEntry(tle.getId());
+                        m_cdm.addOrUpdateTimelineEntry(new TimelineEntry(tle.getTitle(), tle.getMonth(), tle.getYear(), true, tle.getAssociatedId(), tle.getId()));
                     }
                 }
-                // Clear the public data from the relationship manager and add in the newly updated stuff.
-                otherRelMgr.addAllRelationships(requireUpdate);
-                m_cdm.addOrUpdateAllRelationships(otherEntity.getId(), otherRelMgr);
             }
 
-            // Make secret any Timeline Entries that now must be.
-            for (TimelineEntry tle : m_cdm.getTimelineData()) {
-                if (tle.getAssociatedId().equals(entity.getId())) {
-                    m_cdm.removeTimelineEntry(tle.getId());
-                    m_cdm.addOrUpdateTimelineEntry(new TimelineEntry(tle.getTitle(), tle.getMonth(), tle.getYear(), true, tle.getAssociatedId(), tle.getId()));
-                }
+            // Check to see if the Entity is already in our data manager
+            // If it is, remove it from the SortedListModel.
+            Entity cdmEntity = m_cdm.getEntity(entity.getId());
+            if (cdmEntity != null) {
+                m_entityModel.removeElement(cdmEntity);
             }
+
+            // Add the new or updated Enitty to both the CDM and the SortedListModel
+            m_cdm.addOrUpdateEntity(entity);
+            m_entityModel.addElement(entity);
+            m_entityList.setSelectedValue(entity, true);
+            // Add/Update the Relationships
+            m_cdm.addOrUpdateAllRelationships(entity.getId(), relMgr);
+            m_displayedEntityId = entity.getId();
+
+            // Force Update of display for relationship changes.
+            m_relationshipEditor.clearData();
+            m_relationshipEditor.setData(relMgr.getAllRelationships());            
         }
-
-        // Check to see if the Entity is already in our data manager
-        // If it is, remove it from the SortedListModel.
-        Entity cdmEntity = m_cdm.getEntity(entity.getId());
-        if (cdmEntity != null) {
-            m_entityModel.removeElement(cdmEntity);
-        }
-
-        // Add the new or updated Enitty to both the CDM and the SortedListModel
-        m_cdm.addOrUpdateEntity(entity);
-        m_entityModel.addElement(entity);
-        m_entityList.setSelectedValue(entity, true);
-        // Add/Update the Relationships
-        m_cdm.addOrUpdateAllRelationships(entity.getId(), relMgr);
-        m_displayedEntityId = entity.getId();
-
-        // Force Update of display for relationship changes.
-        m_relationshipEditor.clearData();
-        m_relationshipEditor.setData(relMgr.getAllRelationships());
     }
 
     /**
@@ -307,14 +312,6 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** {@inheritDoc} */
     @Override
     public void showEntity(UUID id) {
-//        if (!isCurrentDataSaved()) {
-//            int response = isSaveDesired();
-//            if (response == JOptionPane.YES_OPTION) {
-//                commitDisplayedDataToCdm();
-//            } else if (response == JOptionPane.CANCEL_OPTION) {
-//                return;
-//            }
-//        }
         Entity toShow = m_cdm.getEntity(id);
         displayEntity(toShow);
     }
@@ -528,7 +525,11 @@ public class MainDisplay implements EditListener, UserDisplay {
         for (EntityType type : EntityType.values()) {
             m_typeSelector.addItem(type);
         }
+        m_typeSelector.setEditable(true);
         m_typeSelector.setRenderer(new ColoredDisplayableCellRenderer());
+        m_typeSelector.setEditor(new ColoredDisplayableComboBoxEditor());
+        m_typeSelector.setBorder(BorderFactory.createLineBorder(MetalLookAndFeel.getTextHighlightColor()));
+        
 
         m_public = new EntityDataEditor(this, false);
         m_secret = new EntityDataEditor(this, true);

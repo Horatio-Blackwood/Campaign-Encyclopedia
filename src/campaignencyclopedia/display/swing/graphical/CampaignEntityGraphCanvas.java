@@ -41,7 +41,7 @@ import traer.physics.Spring;
 import traer.physics.Vector3D;
 
 /**
- *
+ * A JComponent for viewing a connected graph of Campaign Entities.
  * @author keith
  * @author adam
  */

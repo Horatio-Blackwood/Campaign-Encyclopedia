@@ -29,7 +29,7 @@ public class Dot extends JComponent {
     private static final Dimension DIM = new Dimension(SIZE + PAD, SIZE + PAD);
 
     /** The Color to render the dot. */
-    private final Color m_color;
+    private Color m_color;
 
     /** The Dot itself. */
     private static final Ellipse2D.Double DOT = new Ellipse2D.Double(PAD / 2, PAD / 2, SIZE, SIZE);
@@ -53,5 +53,11 @@ public class Dot extends JComponent {
     @Override
     public Dimension getPreferredSize() {
         return DIM;
+    }
+    
+    public void setColor(Color color) {
+        if (color != null) {
+            m_color = color;
+        }
     }
 }
