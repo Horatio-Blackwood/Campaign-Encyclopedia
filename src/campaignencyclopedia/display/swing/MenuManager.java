@@ -104,9 +104,9 @@ public class MenuManager {
         m_openAction = new OpenCampaignAction(parent, m_display, cdm);
         m_newAction  = new NewCampaignAction(m_frame, m_display, cdm);
 
-        m_pdfWithSecretsAction = new ExportCampaignToPdfAction(m_frame, m_cdm, "Export to PDF w/Secrets", true);
-        m_pdfWithoutSecretsAction = new ExportCampaignToPdfAction(m_frame, m_cdm, "Export to PDF w/o Secrets", false);
-        m_exportWithoutSecretsAction = new SaveCampaignAction(m_frame, m_cdm, "Export Campaign w/o Secrets", false);
+        m_pdfWithSecretsAction = new ExportCampaignToPdfAction(m_frame, m_cdm, "Export to PDF w/Secrets...", true);
+        m_pdfWithoutSecretsAction = new ExportCampaignToPdfAction(m_frame, m_cdm, "Export to PDF w/o Secrets...", false);
+        m_exportWithoutSecretsAction = new SaveCampaignAction(m_frame, m_cdm, "Export Campaign w/o Secrets...", false);
 
         m_editName = new EditCampaignNameAction(m_frame, m_cdm, m_display);
         m_showTimelineAction = new ShowTimelineAction(m_display, m_cdm);
@@ -125,8 +125,10 @@ public class MenuManager {
                              "    After all data transactions (deletes, adds etc), your campaign is auto-saved.\n" +
                              "    Search only searches on item name, item type and tags.\n\n" +
                              "Hotkeys:\n" +
+                             "    ALT+C - Edit the campaign calendar.\n" +
                              "    CTRL+E - Export the campaign to PDF, with secret data\n" +
                              "    CTRL+F - put the cursor in the quick search box\n" +
+                             "    CTRL+G - view campaign as a graph\n" +
                              "    CTRL+N - Clear the currently displayed item to create a new one\n" +
                              "    CTRL+SHIFT+N - create a new camapign\n" +
                              "    CTRL+O - Open a new campaign file\n" +
@@ -162,7 +164,7 @@ public class MenuManager {
      * @return the campaign menu for the application menu bar.
      */
     public JMenu getFileMenu() {
-        JMenu campaignMenu = new JMenu("File");
+        JMenu fileMenu = new JMenu("File");
 
         // Create Actions
         JMenuItem newCampaign  = new JMenuItem(m_newAction);
@@ -171,13 +173,16 @@ public class MenuManager {
         openCampaign.setAccelerator(KeyStroke.getKeyStroke('O', InputEvent.CTRL_DOWN_MASK));
         JMenuItem saveCampaign = new JMenuItem(m_saveAction);
         saveCampaign.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+        JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
+        configureRelationships.setAccelerator(KeyStroke.getKeyStroke('R', InputEvent.CTRL_DOWN_MASK));
 
         // Add Actions
-        campaignMenu.add(newCampaign);
-        campaignMenu.add(openCampaign);
-        campaignMenu.add(saveCampaign);
+        fileMenu.add(newCampaign);
+        fileMenu.add(openCampaign);
+        fileMenu.add(saveCampaign);
+        fileMenu.add(configureRelationships);
 
-        return campaignMenu;
+        return fileMenu;
     }
     
     /**
@@ -224,31 +229,33 @@ public class MenuManager {
      * @return the Data menu for the application.
      */
     public JMenu getCampaignMenu() {
-        JMenu dataMenu = new JMenu("Campaign");
+        JMenu campaignMenu = new JMenu("Campaign");
 
         JMenuItem editName = new JMenuItem(m_editName);
         JMenuItem showTimeline = new JMenuItem(m_showTimelineAction);
         showTimeline.setAccelerator(KeyStroke.getKeyStroke('T', InputEvent.CTRL_DOWN_MASK));
-        JMenuItem configureRelationships = new JMenuItem(m_configureRelationships);
-        configureRelationships.setAccelerator(KeyStroke.getKeyStroke('R', InputEvent.CTRL_DOWN_MASK));
+        
         JMenuItem configureCalendar = new JMenuItem(m_configureCalendar);
+        configureCalendar.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.ALT_DOWN_MASK));
+        
         JMenuItem showStats = new JMenuItem(m_showStats);
-
-        dataMenu.add(editName);
-        dataMenu.add(showTimeline);
-        // Commented out until issues are resolved.
-        dataMenu.add(new AbstractAction("Launch Graph Viewer") {
+        
+        JMenuItem viewGraph = new JMenuItem(new AbstractAction("View Graph...") {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
                 viewer.launch();
             }
         });
-        dataMenu.add(configureRelationships);
-        dataMenu.add(configureCalendar);
-        dataMenu.add(showStats);
+        viewGraph.setAccelerator(KeyStroke.getKeyStroke('G', InputEvent.CTRL_DOWN_MASK));
 
-        return dataMenu;
+        campaignMenu.add(editName);
+        campaignMenu.add(showTimeline);
+        campaignMenu.add(viewGraph);
+        campaignMenu.add(configureCalendar);
+        campaignMenu.add(showStats);
+
+        return campaignMenu;
     }
 
     public JMenu getHelpMenu() {
