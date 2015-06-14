@@ -68,9 +68,6 @@ public class CampaignCalendar {
         if (hasMonth(month)) {
             // if not the last month...
             if (month.getIndex() != m_months.size() - 1) {
-                System.out.println(month.getName());
-                System.out.println(month.getIndex());
-                System.out.println("---");
                 // return the one after this one.
                 return m_months.get(month.getIndex() + 1);
             } else {

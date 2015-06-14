@@ -217,12 +217,11 @@ public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
                 if (m_hoveredEntity != null) {
                     Entity hovered = m_accessor.getEntity(m_hoveredEntity);
                     if (hovered != null) {
-                        UUID hoveredEntityId = hovered.getId();
                         int maxWidth = orignalFontMetrics.stringWidth(RELATIONSHIPS);
                         List<String> hoverRelationships = new ArrayList<>();
                         hoverRelationships.add(RELATIONSHIPS);
                         for (Relationship rel : currentRelMgr.getPublicRelationships()) {
-                            if (rel.getRelatedEntity().equals(hoveredEntityId)) {
+                            if (rel.getRelatedEntity().equals(m_hoveredEntity)) {
                                 String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
                                 hoverRelationships.add(line);
                                 int stringWidth = orignalFontMetrics.stringWidth(line);
@@ -232,7 +231,7 @@ public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
                             }
                         }
                         for (Relationship rel : currentRelMgr.getSecretRelationships()) {
-                            if (rel.getRelatedEntity().equals(hoveredEntityId)) {
+                            if (rel.getRelatedEntity().equals(m_hoveredEntity)) {
                                 String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
                                 hoverRelationships.add(line);
                                 int stringWidth = orignalFontMetrics.stringWidth(line);

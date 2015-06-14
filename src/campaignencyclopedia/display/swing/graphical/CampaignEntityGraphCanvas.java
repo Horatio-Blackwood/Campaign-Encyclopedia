@@ -3,6 +3,7 @@ package campaignencyclopedia.display.swing.graphical;
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
@@ -15,7 +16,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -25,6 +25,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,8 +84,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     private static final int Y_RANGE = 400;
     /** The mass of the particle. */
     private static final int PARTICLE_MASS = 20;
-    private static final boolean ON_LOCKDOWN = false;
-
 
 
     // RENDERING & PHYSICS PARAMETERS
@@ -101,10 +100,13 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     /** A map of Entity UUIDs to their rendering configurations. */
     private final Map<UUID, RenderingConfig> m_renderingConfigMap;
     /** The entity currently hovered over. */
-    private Entity m_hoveredEntity;
+    private UUID m_hoveredEntity;
+    private static final String RELATIONSHIPS = "Relationships:";
+    private static final int BIG_PAD = 25;
     /** The point currently hovered over. */
     private Point2D.Double m_hoverPoint;
     /** A data accessor for fetching data. */
+    
     private final DataAccessor m_accessor;
     /** An EntityDisplay to show/edit Entity data on/with. */
     private final EntityDisplay m_display;
@@ -162,7 +164,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             int r = getDotRadius();
             RenderingConfig rc = new RenderingConfig();
             rc.text = e.getName();
-            rc.dot = new Ellipse2D.Double(-r, -r, 2 * r, 2 * r);
+            //rc.dot = new Ellipse2D.Double(-r, -r, 2 * r, 2 * r);
             rc.particle = p;
             rc.color = Colors.getColor(e.getType());
             m_renderingConfigMap.put(e.getId(), rc);
@@ -217,6 +219,55 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             RenderingConfig rc = m_renderingConfigMap.get(id);
             drawRenderingConfig(rc, g2);
         }
+        
+        if (m_hoveredEntity != null) {
+                // RENDER RELATIONSHIP HOVER DATA (IF VALID TO DO SO)
+                if (m_hoveredEntity != null) {
+                    Entity hovered = m_accessor.getEntity(m_hoveredEntity);
+                    if (hovered != null) {
+                        String title = hovered.getName() + " - " + RELATIONSHIPS;
+                        int maxWidth = g2.getFontMetrics().stringWidth(title);
+                        List<String> hoverRelationships = new ArrayList<>();
+                        hoverRelationships.add(title);
+                        RelationshipManager relMgr = m_accessor.getRelationshipsForEntity(m_hoveredEntity);
+                        for (Relationship rel : relMgr.getPublicRelationships()) {
+                            String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
+                            hoverRelationships.add(line);
+                            int stringWidth = g2.getFontMetrics().stringWidth(line);
+                            if (maxWidth < stringWidth) {
+                                maxWidth = stringWidth;
+                            }
+                        }
+                        for (Relationship rel : relMgr.getSecretRelationships()) {
+                                String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
+                                hoverRelationships.add(line);
+                                int stringWidth = g2.getFontMetrics().stringWidth(line);
+                                if (maxWidth < stringWidth) {
+                                    maxWidth = stringWidth;
+                                }
+                        }
+
+                        // Background
+                        int hoverWidth = maxWidth + BIG_PAD * 2;
+                        int hoverHeight = hoverRelationships.size() * g2.getFontMetrics().getHeight() + BIG_PAD;
+                        g2.setPaint(Color.WHITE);
+                        g2.fill(new Rectangle2D.Double(m_hoverPoint.x, m_hoverPoint.y + BIG_PAD, hoverWidth, hoverHeight));
+
+                        // Border
+                        g2.setPaint(Color.BLACK);
+                        g2.draw(new Rectangle2D.Double(m_hoverPoint.x, m_hoverPoint.y + BIG_PAD, hoverWidth, hoverHeight));
+
+                        // Text
+                        float hoverRelTextY = (float)m_hoverPoint.y + BIG_PAD + PAD;
+                        for (String relString : hoverRelationships) {
+                            hoverRelTextY += g2.getFontMetrics().getHeight();
+                            g2.drawString(relString, (float)m_hoverPoint.x + BIG_PAD, hoverRelTextY);
+                        }
+                    } else{
+                        m_hoveredEntity = null;
+                    }
+                }
+        }
     }
 
     /**
@@ -240,6 +291,11 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         return newParticle;
     }
 
+    /**
+     * Given a RenderingConfiguration object and a Graphics2D, this method renders the relevant information on the screen.
+     * @param rc the Rendering Configuration to render.
+     * @param g2 the Graphics2D object to use to render the data.
+     */
     private void drawRenderingConfig(RenderingConfig rc, Graphics2D g2) {
         g2.setColor(rc.color);
         drawParticle(rc.particle, g2);
@@ -397,10 +453,31 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
                 boolean found = false;
                 for (UUID id : m_renderingConfigMap.keySet()) {
                     RenderingConfig rc = m_renderingConfigMap.get(id);
-                    if (rc.dot.contains(me.getPoint())) {
+                    Particle p = rc.particle;
+                    float r = (DOT_RADIUS * 2.0f) / m_scaleFactor;
+                    float x = ((p.position().x() - (r / 2))) / m_scaleFactor;
+                    float y = ((p.position().y() - (r / 2))) / m_scaleFactor;
+                    Ellipse2D.Float dot = new Ellipse2D.Float(x, y, r, r);
+                    
+                    double translatedMouseX = (me.getX() / m_scaleFactor) - m_horizontalScrollTranslation;
+                    double translatedMouseY =  (me.getY() / m_scaleFactor) - m_verticalScrollTranslation;
+                    
+                    // If dot in Particle system coords contains hovered point (from Component coordinate system)...
+                    if (dot.contains(new Point2D.Double(translatedMouseX, translatedMouseY))) {
+//                        System.out.println("\nContains mouse pointer!  \n"
+//                                + "   scaleFactor:   " + m_scaleFactor + "\n"
+//                                + "   Dot/HoverPoint:" + (int)x + "," + (int)y + "\n"
+//                                + "   transl-mouse:  " + (int)translatedMouseX + "," + (int)translatedMouseY + "\n"
+//                                + "   mouse:         " + (int)me.getPoint().getX() + "," + (int)me.getPoint().getY() + "\n"
+//                                + "   hor-scr-trans: " + m_horizontalScrollTranslation + "\n"
+//                                + "   vert-scr-trans:" + m_verticalScrollTranslation);
                         found = true;
-                        m_hoveredEntity = m_accessor.getEntity(id);
-                        m_hoverPoint = new Point2D.Double(me.getX(), me.getY());
+                        m_hoveredEntity = id;
+                        if (m_hoverPoint == null) {
+                            m_hoverPoint = new Point2D.Double(x, y);
+                        } else {
+                            m_hoverPoint.setLocation(x, y);
+                        }
                         repaint();
                         break;
                     }
@@ -429,7 +506,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             @Override
             public void mouseWheelMoved(MouseWheelEvent mwe) {
                 if ((mwe.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK)) == InputEvent.SHIFT_DOWN_MASK) {
-                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 100.0f;
+                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 25.0f;
                 }
             }
         });
@@ -438,10 +515,10 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
     @Override
     public Dimension getPreferredSize() {
-        int furthestLeft = 0;
-        int furthestRight = 0;
-        int furthestTop = 0;
-        int furthestBottom = 0;
+        int furthestLeft = Integer.MAX_VALUE;
+        int furthestRight = Integer.MIN_VALUE;
+        int furthestTop = Integer.MAX_VALUE;
+        int furthestBottom = Integer.MIN_VALUE;
 
         for (RenderingConfig rc : m_renderingConfigMap.values()) {
             if (rc.particle.position().x() < furthestLeft) {
@@ -544,7 +621,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     /** A data bag for holding the locations calculated for rendering data. */
     private class RenderingConfig {
         private String text;
-        private Shape dot;
+        //private Shape dot;
         private Color color;
         private Particle particle;
     }

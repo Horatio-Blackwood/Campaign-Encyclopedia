@@ -68,17 +68,14 @@ public class ColoredDisplayableComboBoxEditor extends BasicComboBoxEditor {
     
     @Override
     public Object getItem() {
-        System.out.println("getting item.");
         return m_cd;
     }
     
     @Override
     public void setItem(Object item) {
-        System.out.println("setting item.");
         if (item instanceof ColoredDisplayable) {
             ColoredDisplayable cd = (ColoredDisplayable)item;
             if (!cd.equals(m_cd)) {
-                System.out.println("--item actually set.");
                 m_cd = cd;
                 m_label.setText(m_cd.getDisplayString());
                 m_dot.setColor(m_cd.getColor());
