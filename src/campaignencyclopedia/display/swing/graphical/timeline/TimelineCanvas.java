@@ -221,11 +221,20 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D)g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+        
         FontMetrics fontMetrics = g2d.getFontMetrics();
         
         // PREPARE BASIC VALUES FOR RENDERING
         List<TimelineDate> dates = new ArrayList<>(m_data.keySet());
         Collections.sort(dates);
+        
+        // Color Background
+        g2d.setColor(Color.WHITE);
+        g2d.fillRect(0, 0, this.getWidth(), this.getHeight());
+        
         
         // UPDATE FOR ZOOM CHANGES, OR ANY CHANGED DATA
         // --- If data has changed since last update, recalcualte some key values.
@@ -242,6 +251,7 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
             // --- LONG HORIZONTAL LINE
             // --- --- Get First and Last, and figure out how long the line should be.
             g2d.setStroke(LINE_STROKE);
+            g2d.setColor(Color.BLACK);
             g2d.drawLine(PAD, getTimelineY(), (SEGMENT_X_VALUES * m_segmentCount) - PAD, getTimelineY());
 
             // --- DRAW ALL VERTICAL FENCEPOSTS
@@ -272,7 +282,7 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
                 g2d.draw(newDot);
                 
                 // --- --- TEXT
-                g2d.setColor(this.getBackground());
+                g2d.setColor(Color.WHITE);
                 // Sorry for the magic number, but it seemed about right to help put the text background in place.
                 g2d.fillRect(rc.textPoint.x, rc.textPoint.y - yOffset - fontMetrics.getHeight() - 1, fontMetrics.stringWidth(rc.text), fontMetrics.getHeight() + 8);
                 g2d.setColor(LINE_COLOR);

@@ -6,21 +6,32 @@ import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import campaignencyclopedia.display.swing.TimelineListDisplay;
 import campaignencyclopedia.display.swing.graphical.CanvasDisplay;
+import campaignencyclopedia.display.swing.graphical.ScreenshotToolbox;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import toolbox.display.EditListener;
 
 /**
@@ -33,6 +44,8 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
     private final TimelineCanvas m_canvas;
     private final TimelineListDisplay m_timelineListDialogContent;
     private boolean m_showSecretEntries = true;
+    
+    private static final Logger LOGGER = Logger.getLogger(IntegratedTimelineCanvas.class.getName());
     
     public IntegratedTimelineCanvas(EntityDisplay display, CampaignDataManager cdm) {
         m_canvas = new TimelineCanvas(cdm);
@@ -59,6 +72,28 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEtchedBorder());
+        
+        // Screenshot Button
+        JButton screenshotButton = new JButton("Save Screenshot");
+        screenshotButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                BufferedImage screenshot = ScreenshotToolbox.getScreenShot(m_canvas);
+                // Save the image
+                JFileChooser chooser = new JFileChooser("./screenshots");
+                int result = chooser.showSaveDialog(m_content);
+                chooser.setFileFilter(new FileNameExtensionFilter("PNG Images", "png"));
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        ImageIO.write(screenshot, "png", chooser.getSelectedFile());
+                    } catch (IOException ex) {
+                        LOGGER.log(Level.SEVERE, "Error writing screenshot to file:  " + chooser.getSelectedFile(), ex);
+                    }
+                }
+            }
+        });
+        
+        // Zoom Selector
         final JComboBox<ZoomLevel> selector = new JComboBox<>(ZoomLevel.values());
         selector.addItemListener(new ItemListener() {
             @Override
@@ -91,6 +126,9 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
         gbc.weightx = 0.0f;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(selector, gbc);
+        
+        gbc.gridx = 2;
+        panel.add(screenshotButton, gbc);
         
         return panel;
     }

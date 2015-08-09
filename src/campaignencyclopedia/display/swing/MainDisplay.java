@@ -733,6 +733,7 @@ public class MainDisplay implements EditListener, UserDisplay {
                 // Ignored
             }
         });
+        
         return new JScrollPane(m_entityList);
     }
 
