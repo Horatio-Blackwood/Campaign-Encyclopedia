@@ -20,7 +20,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  */
 public class ColoredDisplayableCellRenderer implements ListCellRenderer<ColoredDisplayable>{
 
-    private static final Insets INSETS = new Insets(3, 1, 3, 1);
+    /** An Insets instance. */
+    private static final Insets INSETS = new Insets(3, 0, 3, 0);
 
     @Override
     public Component getListCellRendererComponent(JList<? extends ColoredDisplayable> jlist, ColoredDisplayable e, int i, boolean isSelected, boolean hasFocus) {

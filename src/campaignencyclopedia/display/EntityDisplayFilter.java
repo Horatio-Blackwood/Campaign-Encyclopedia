@@ -1,6 +1,7 @@
 package campaignencyclopedia.display;
 
 import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.EntityType;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,11 +17,23 @@ public class EntityDisplayFilter implements DataFilter<Entity> {
     /** The search string. */
     private final String m_searchString;
     
-    public EntityDisplayFilter(String searchString, boolean includeSecret) {
+    /** The accepted EntityType for this filter. */
+    private final EntityType m_entityType;
+    
+    /**
+     * Creates a new instance of EntityDisplayFilter.
+     * 
+     * @param searchString the text to search for, must not be null.  This string searches the Entity name, type and tags only.
+     * @param typeAllowed the EntityType that is accepted by this filter.  Perhaps odd to some, if this value is null, all types 
+     * are accepted by this filter.
+     * @param includeSecret true if secret Entities should be returned for display.
+     */
+    public EntityDisplayFilter(String searchString, EntityType typeAllowed, boolean includeSecret) {
         if (searchString == null) {
             throw new IllegalArgumentException("Parameter 'searchString' must not be null.");
         }
         m_includeSecretData = includeSecret;
+        m_entityType = typeAllowed;
         m_searchString = searchString.trim().toLowerCase();
     }
     
@@ -39,6 +52,11 @@ public class EntityDisplayFilter implements DataFilter<Entity> {
         
         // If secret data is not to be included, and this Entity is secret, return false.
         if (!m_includeSecretData && entity.isSecret()) {
+            return false;
+        }
+        
+        // If the entity type filter is set and the types don't match, return false.
+        if (m_entityType != null && entity.getType() != m_entityType) {
             return false;
         }
 

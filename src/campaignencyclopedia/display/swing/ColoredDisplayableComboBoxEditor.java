@@ -23,7 +23,10 @@ import javax.swing.plaf.basic.BasicComboBoxEditor;
 public class ColoredDisplayableComboBoxEditor extends BasicComboBoxEditor {
     
     private ColoredDisplayable m_cd = null;
-    private static final Insets INSETS = new Insets(3, 1, 3, 1);
+    
+    /** An Insets instance. */
+    private static final Insets INSETS = new Insets(3, 0, 3, 0);
+    
     private final JPanel m_cell;
     private final JLabel m_label;
     private final Dot m_dot;
