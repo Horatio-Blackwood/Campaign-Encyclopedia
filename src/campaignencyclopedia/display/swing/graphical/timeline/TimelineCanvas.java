@@ -82,10 +82,17 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
     private boolean m_zoomChanged = true;
     /** A flag set to true to indicate that the preferred size has been recalculated. */
     private boolean m_viewChanged = true;
+    
+    // RENDERING FILTER/FORMAT DATA
     /** A flag set to indicate if secret entries should also be rendered on this display. */
     private boolean m_includeSecretEntries = true;
+    /** */
+    private int m_earliestYear;
+    /** */
+    private int m_latestYear;
     /** The current zoom level.  The default is YEAR. */
     private ZoomLevel m_zoomLevel = ZoomLevel.YEAR;
+    
     /** A comparator that sorts TimelineEntry objects by title. */
     private static final Comparator<TimelineEntry> ENTRY_COMPARATOR = new Comparator<TimelineEntry>() {
         @Override
@@ -147,6 +154,13 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
             if (!m_includeSecretEntries && tle.isSecret()) {
                 continue;
             }
+            if (tle.getYear() < m_earliestYear) {
+                continue;
+            }
+            if (tle.getYear() > m_latestYear) {
+                continue;
+            }
+            
             TimelineDate date = new TimelineDate(tle.getMonth(), tle.getYear());
             switch (m_zoomLevel) {
                 case CENTURY:
@@ -501,6 +515,12 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
     @Override
     public void clearAllData() {
         // Do nothing.
+    }
+
+    void setYearRange(Integer earliestYear, Integer latestYear) {
+        m_earliestYear = earliestYear;
+        m_latestYear = latestYear;
+        m_dataChanged = true;
     }
     
     /** Helper Class for organizing Timeline Data. */

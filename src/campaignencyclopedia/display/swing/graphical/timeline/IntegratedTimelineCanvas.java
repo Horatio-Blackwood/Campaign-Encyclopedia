@@ -7,6 +7,7 @@ import campaignencyclopedia.display.EntityDisplay;
 import campaignencyclopedia.display.swing.TimelineListDisplay;
 import campaignencyclopedia.display.swing.graphical.CanvasDisplay;
 import campaignencyclopedia.display.swing.graphical.ScreenshotToolbox;
+import core.display.text.LimitedLengthIntegerDocument;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Frame;
@@ -30,7 +31,10 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.ListCellRenderer;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import toolbox.display.EditListener;
 
@@ -44,6 +48,8 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
     private final TimelineCanvas m_canvas;
     private final TimelineListDisplay m_timelineListDialogContent;
     private boolean m_showSecretEntries = true;
+    private JTextField m_earliestYear;
+    private JTextField m_latestYear;
     
     private static final Logger LOGGER = Logger.getLogger(IntegratedTimelineCanvas.class.getName());
     
@@ -92,6 +98,43 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
                 }
             }
         });
+
+        // Year Range Filtering
+        m_earliestYear = new JTextField(8);
+        m_earliestYear.setDocument(new LimitedLengthIntegerDocument(6));
+        m_latestYear = new JTextField(8);
+        m_latestYear.setDocument(new LimitedLengthIntegerDocument(6));
+        DocumentListener yearDocListener = new DocumentListener() {
+            void setYearRange() {
+                int earliest = Integer.MIN_VALUE;
+                int latest = Integer.MAX_VALUE;
+                if (!m_earliestYear.getText().isEmpty()) {
+                    earliest = Integer.valueOf(m_earliestYear.getText());
+                }
+                if (!m_latestYear.getText().isEmpty()) {
+                    latest = Integer.valueOf(m_latestYear.getText());
+                }                
+                m_canvas.setYearRange(earliest, latest);
+            }
+            
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                setYearRange();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                setYearRange();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                setYearRange();
+            }
+        };
+        m_earliestYear.getDocument().addDocumentListener(yearDocListener);
+        m_latestYear.getDocument().addDocumentListener(yearDocListener);
+        m_earliestYear.setText("0");
+        m_latestYear.setText("999999");
+        
         
         // Zoom Selector
         final JComboBox<ZoomLevel> selector = new JComboBox<>(ZoomLevel.values());
@@ -111,23 +154,34 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
         });
         selector.setSelectedItem(ZoomLevel.YEAR);
         
-        JLabel label = new JLabel("Zoom Level:");
-        label.setHorizontalAlignment(JLabel.RIGHT);
-        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0f;
         gbc.insets = new Insets(3, 3, 3, 3);
+        JLabel label = new JLabel("Earliest Year:");
+        label.setHorizontalAlignment(JLabel.RIGHT);
         panel.add(label, gbc);
         
         gbc.gridx = 1;
         gbc.weightx = 0.0f;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(selector, gbc);
+        panel.add(m_earliestYear, gbc);
         
         gbc.gridx = 2;
+        panel.add(new JLabel("Latest  Year:"), gbc);
+        
+        gbc.gridx = 3;
+        panel.add(m_latestYear, gbc);
+        
+        gbc.gridx = 4;
+        panel.add(new JLabel("Zoom Level:"), gbc);
+        
+        gbc.gridx = 5;
+        panel.add(selector, gbc);
+        
+        gbc.gridx = 6;
         panel.add(screenshotButton, gbc);
         
         return panel;
