@@ -23,6 +23,8 @@ You can also export your campaign to both PDF with or without any secret data.  
 Its also possible to export Campaign Encyclopedia's native campaign file format (JSON) without secrets if your players want to give Campaign Encyclopedia a try.
 ![export](/screenshot-pdf.png)
 
+## Download
+If you aren't interested in the code, but just want to download and use Campaign Encyclopedia, that's cool too.  Check it out at www.criticaleyerpg.com here:  http://www.criticaleyerpg.com/p/campaign-encyclopedia_22.html
 
 ## More Screenshots
 ![orbital-viewer](/screenshot.png)
