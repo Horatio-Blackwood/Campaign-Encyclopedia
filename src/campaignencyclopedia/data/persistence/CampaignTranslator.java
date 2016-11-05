@@ -98,9 +98,7 @@ public class CampaignTranslator {
         Collections.sort(months);
         List<JsonObject> calendarMonths = new ArrayList<>();
         for (Month month : months) {
-            if (!month.equals(Month.UNSPECIFIED)) {
-                calendarMonths.add(MonthTranslator.toJson(month));
-            }
+            calendarMonths.add(MonthTranslator.toJson(month));
         }
         json.put(CAMPAIGN_CALENDAR, calendarMonths);
 

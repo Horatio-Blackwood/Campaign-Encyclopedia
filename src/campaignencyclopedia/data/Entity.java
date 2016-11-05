@@ -1,5 +1,7 @@
 package campaignencyclopedia.data;
 
+import campaignencyclopedia.display.swing.graphical.Colors;
+import java.awt.Color;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -8,7 +10,7 @@ import java.util.UUID;
  * or important game items.
  * @author adam
  */
-public class Entity implements Comparable<Entity> {
+public class Entity implements Comparable<Entity>, ColoredDisplayable {
 
     private final UUID m_id;
     private final EntityType m_type;
@@ -123,5 +125,15 @@ public class Entity implements Comparable<Entity> {
     @Override
     public String toString() {
         return getName();
+    }
+
+    @Override
+    public Color getColor() {
+        return Colors.getColor(m_type);
+    }
+
+    @Override
+    public String getDisplayString() {
+        return m_name;
     }
 }

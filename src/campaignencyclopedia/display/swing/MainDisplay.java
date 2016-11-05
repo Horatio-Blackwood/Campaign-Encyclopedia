@@ -2,6 +2,7 @@ package campaignencyclopedia.display.swing;
 
 import campaignencyclopedia.data.Campaign;
 import campaignencyclopedia.data.CampaignDataManager;
+import campaignencyclopedia.data.ColoredDisplayable;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityType;
@@ -23,6 +24,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -36,6 +39,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -54,6 +58,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import toolbox.display.DisplayUtilities;
 import toolbox.display.EditListener;
 
@@ -87,6 +92,9 @@ public class MainDisplay implements EditListener, UserDisplay {
 
     /** The quick search check box. */
     private JCheckBox m_filterCheckBox;
+    
+    /** A ComboBox for selecting which types to filter by. */
+    private JComboBox<ColoredDisplayable> m_entityTypeFilterComboBox;
 
     /** The nav forward button. */
     private JButton m_forwardButton;
@@ -138,10 +146,10 @@ public class MainDisplay implements EditListener, UserDisplay {
     public static final Color SILVER = new Color(248, 248, 248);
 
     /** The current release version number. */
-    public static final String VERSION = "v1.2.0-Alpha";
+    public static final String VERSION = "v1.5.0";
 
     /** The date this release was created. */
-    public static final String DATE = "In Development.";
+    public static final String DATE = "September 22, 2015";
 
     /** Logger. */
     private static final Logger LOGGER = Logger.getLogger(MainDisplay.class.getName());
@@ -177,7 +185,7 @@ public class MainDisplay implements EditListener, UserDisplay {
     private void commitDisplayedDataToCdm() {
         // Get shown Entity
         Entity entity = getDisplayedEntity();
-
+        
         // Get Displayed Relationships and add them.
         RelationshipManager relMgr = new RelationshipManager();
         for (Relationship rel : m_relationshipEditor.getData()) {
@@ -233,7 +241,7 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         // Force Update of display for relationship changes.
         m_relationshipEditor.clearData();
-        m_relationshipEditor.setData(relMgr.getAllRelationships());
+        m_relationshipEditor.setData(relMgr.getAllRelationships());            
     }
 
     /**
@@ -270,6 +278,10 @@ public class MainDisplay implements EditListener, UserDisplay {
             clearDisplayedEntity();
         }
         m_entityModel.removeElement(entity);
+        if (m_navPath != null) {
+            m_navPath.removeAll(entity.getId());
+            updateNavButtons();
+        }
     }
 
     /** {@inheritDoc} */
@@ -303,14 +315,6 @@ public class MainDisplay implements EditListener, UserDisplay {
     /** {@inheritDoc} */
     @Override
     public void showEntity(UUID id) {
-//        if (!isCurrentDataSaved()) {
-//            int response = isSaveDesired();
-//            if (response == JOptionPane.YES_OPTION) {
-//                commitDisplayedDataToCdm();
-//            } else if (response == JOptionPane.CANCEL_OPTION) {
-//                return;
-//            }
-//        }
         Entity toShow = m_cdm.getEntity(id);
         displayEntity(toShow);
     }
@@ -524,7 +528,11 @@ public class MainDisplay implements EditListener, UserDisplay {
         for (EntityType type : EntityType.values()) {
             m_typeSelector.addItem(type);
         }
-        m_typeSelector.setRenderer(new DisplayableCellRenderer());
+        m_typeSelector.setEditable(true);
+        m_typeSelector.setRenderer(new ColoredDisplayableCellRenderer());
+        m_typeSelector.setEditor(new ColoredDisplayableComboBoxEditor());
+        m_typeSelector.setBorder(BorderFactory.createLineBorder(MetalLookAndFeel.getTextHighlightColor()));
+        
 
         m_public = new EntityDataEditor(this, false);
         m_secret = new EntityDataEditor(this, true);
@@ -670,7 +678,7 @@ public class MainDisplay implements EditListener, UserDisplay {
         m_entityModel.addAllElements(m_cdm.getAllEntities());
 
         m_entityList = new JList<>();
-        m_entityList.setCellRenderer(new EntityListCellRenderer());
+        m_entityList.setCellRenderer(new ColoredDisplayableCellRenderer());
         m_entityList.setModel(m_entityModel);
 
         // Define reusable showEntity runnable (for both key and mouse listeners)
@@ -725,6 +733,7 @@ public class MainDisplay implements EditListener, UserDisplay {
                 // Ignored
             }
         });
+        
         return new JScrollPane(m_entityList);
     }
 
@@ -751,6 +760,32 @@ public class MainDisplay implements EditListener, UserDisplay {
                 updateEntityFilter();
             }
         });
+        
+        m_entityTypeFilterComboBox = new JComboBox();
+        m_entityTypeFilterComboBox.addItem(new ColoredDisplayable() {
+            @Override
+            public Color getColor() {
+                return Color.BLACK;
+            }
+            @Override
+            public String getDisplayString() {
+                return "All";
+            }
+        });
+        for (EntityType type : EntityType.values()) {
+            m_entityTypeFilterComboBox.addItem(type);
+        }
+        m_entityTypeFilterComboBox.setEditable(true);
+        m_entityTypeFilterComboBox.setRenderer(new ColoredDisplayableCellRenderer());
+        m_entityTypeFilterComboBox.setEditor(new ColoredDisplayableComboBoxEditor());
+        m_entityTypeFilterComboBox.setBorder(BorderFactory.createLineBorder(MetalLookAndFeel.getTextHighlightColor()));
+        m_entityTypeFilterComboBox.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent ie) {
+                updateEntityFilter();
+            }
+        });
+        
         m_searchBox = new JTextField(18);
         m_searchBox.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -787,6 +822,7 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         // NAVIGATE BACKWARD BUTTON
         m_backButton = new JButton("Last");
+        m_backButton.setOpaque(false);
         m_backButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -797,6 +833,7 @@ public class MainDisplay implements EditListener, UserDisplay {
 
         // NAVIGATE FORWARD BUTTON
         m_forwardButton = new JButton("Next");
+        m_forwardButton.setOpaque(false);
         m_forwardButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -827,14 +864,19 @@ public class MainDisplay implements EditListener, UserDisplay {
         gbc.gridx = 3;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0f;
+        panel.add(m_entityTypeFilterComboBox, gbc);
+        
+        gbc.gridx = 4;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0f;
         panel.add(m_searchBox, gbc);
 
-        gbc.gridx = 4;
+        gbc.gridx = 5;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0f;
         panel.add(m_backButton, gbc);
 
-        gbc.gridx = 5;
+        gbc.gridx = 6;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0f;
         panel.add(m_forwardButton, gbc);
@@ -849,10 +891,11 @@ public class MainDisplay implements EditListener, UserDisplay {
      */
     private void updateEntityFilter() {
         String searchString = m_searchBox.getText().trim();
-        if (searchString.isEmpty() && !m_filterCheckBox.isSelected()) {
-            m_entityModel.setFilter(null);
+        Object type = m_entityTypeFilterComboBox.getSelectedItem();
+        if (type instanceof EntityType) {
+            m_entityModel.setFilter(new EntityDisplayFilter(searchString, (EntityType)type, !m_filterCheckBox.isSelected()));
         } else {
-            m_entityModel.setFilter(new EntityDisplayFilter(searchString, !m_filterCheckBox.isSelected()));
+            m_entityModel.setFilter(new EntityDisplayFilter(searchString, null, !m_filterCheckBox.isSelected()));
         }
     }
 

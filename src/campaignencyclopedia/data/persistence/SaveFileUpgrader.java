@@ -243,12 +243,7 @@ public class SaveFileUpgrader {
     private static Month monthFromJson(JsonObject json) {
         String name = json.getString(NAME);
         int index = json.getInt(INDEX);
-
-        if (name.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
-            return Month.UNSPECIFIED;
-        } else {
-            return new Month(name, index);
-        }
+        return new Month(name, index);
     }
 
 

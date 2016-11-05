@@ -1,6 +1,5 @@
 package campaignencyclopedia.data;
 
-import campaignencyclopedia.display.CampaignDataManagerListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,7 +21,7 @@ public class CampaignDataManager implements DataAccessor {
 
     /** A Logger. */
     private static final Logger LOGGER = Logger.getLogger(CampaignDataManager.class.getName());
-    
+
     /** The name of the campaign.  */
     private String m_campaignName;
 
@@ -110,6 +109,9 @@ public class CampaignDataManager implements DataAccessor {
         if (entry != null) {
             m_timelineData.put(entry.getId(), entry);
         }
+        for (CampaignDataManagerListener cdml : m_listeners) {
+            cdml.timelineEntryAddedOrUpdated(entry);
+        }
     }
 
     /** {@inheritDoc} */
@@ -117,6 +119,9 @@ public class CampaignDataManager implements DataAccessor {
     public void removeTimelineEntry(UUID id) {
         if (id != null) {
             m_timelineData.remove(id);
+        }
+        for (CampaignDataManagerListener cdml : m_listeners) {
+            cdml.timelineEntryRemoved(id);
         }
     }
 
@@ -161,7 +166,7 @@ public class CampaignDataManager implements DataAccessor {
         for (UUID id : m_timelineData.keySet()) {
             TimelineEntry entry = m_timelineData.get(id);
             if (!m_cal.hasMonth(entry.getMonth())) {
-                TimelineEntry updated = new TimelineEntry(entry.getTitle(), Month.UNSPECIFIED, entry.getYear(), entry.isSecret(), entry.getAssociatedId(), entry.getId());
+                TimelineEntry updated = new TimelineEntry(entry.getTitle(), m_cal.getMonthForIndex(0), entry.getYear(), entry.isSecret(), entry.getAssociatedId(), entry.getId());
                 m_timelineData.put(id, updated);
             }
         }
@@ -185,10 +190,15 @@ public class CampaignDataManager implements DataAccessor {
         m_entities.clear();
         m_timelineData.clear();
         m_relationships.clear();
+        
+        // Alert listeners of cleared data.
+        for (CampaignDataManagerListener cdml : m_listeners) {
+            cdml.clearAllData();
+        }
+        
         m_campaignName = campaign.getName();
         m_cal = campaign.getCalendar();
-        
-        
+
 
         // Set to collect all of the previously saved relationships.  This is used later to ensure that all established
         // Relationships are in the RelationshipOptionManager.
@@ -198,7 +208,7 @@ public class CampaignDataManager implements DataAccessor {
         for (Entity e : campaign.getEntities()) {
             UUID entityId = e.getId();
             m_entities.put(entityId, e);
-            
+
             // Create a RelationshipManager for all Entities in the Campaign
             m_relationships.put(entityId, new RelationshipManager());
 
@@ -207,10 +217,10 @@ public class CampaignDataManager implements DataAccessor {
             if (entityRelMgr != null) {
                 for (Relationship r : entityRelMgr.getAllRelationships()) {
                     relationships.add(r.getRelationshipText());
-                }   
+                }
             }
         }
-        
+
         // Add all of the Relationships.
         m_relationships.putAll(campaign.getAllRelationships());
 
@@ -269,6 +279,12 @@ public class CampaignDataManager implements DataAccessor {
 
     /** {@inheritDoc} */
     @Override
+    public CampaignCalendar getCalendar() {
+        return m_cal;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void addRelationship(UUID entity, Relationship rel) {
         if (m_relationships.get(entity) == null) {
             m_relationships.put(entity, new RelationshipManager());
@@ -288,14 +304,14 @@ public class CampaignDataManager implements DataAccessor {
     public RelationshipManager getRelationshipsForEntity(UUID entity) {
         return m_relationships.get(entity);
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void addOrUpdateAllRelationships(UUID entity, RelationshipManager relMgr) {
         if (entity != null && relMgr != null) {
             m_relationships.put(entity, relMgr);
         } else {
-            LOGGER.warning("Attempted to store a null Entity or RelationshipManager.  Entity was:  " + 
+            LOGGER.warning("Attempted to store a null Entity or RelationshipManager.  Entity was:  " +
                     entity + ", RelationshipManager was:  " + relMgr);
         }
     }

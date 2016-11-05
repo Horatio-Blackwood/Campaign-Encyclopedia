@@ -35,7 +35,7 @@ public class Colors {
      * @param type the Entity Type you want the color for.
      * @return the color for a given Entity Type.
      */
-    static Color getColor(EntityType type) {
+    public static Color getColor(EntityType type) {
         switch (type) {
             case PLAYER_CHARACTER:
                 return PC;

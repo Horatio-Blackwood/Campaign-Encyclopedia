@@ -6,10 +6,11 @@ import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.data.RelationshipManager;
-import campaignencyclopedia.display.CampaignDataManagerListener;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -33,11 +34,12 @@ import java.util.UUID;
 import javax.swing.JComponent;
 
 /**
- *
+ * A custom component that implements CanvasDisplay for displaying an entity and its adjacent relationships.
  * @author adam
  */
-public class OrbitalEntityCanvas extends JComponent implements CampaignDataManagerListener  {
+public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
 
+    // RENDERING VALUES
     private static final int DOT_LINE_LENGTH = 225;
     private static final int TEXT_LINE_LENGTH = 265;
     private static final int CIRCLE_RADIUS = 40;
@@ -215,12 +217,11 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                 if (m_hoveredEntity != null) {
                     Entity hovered = m_accessor.getEntity(m_hoveredEntity);
                     if (hovered != null) {
-                        UUID hoveredEntityId = hovered.getId();
                         int maxWidth = orignalFontMetrics.stringWidth(RELATIONSHIPS);
                         List<String> hoverRelationships = new ArrayList<>();
                         hoverRelationships.add(RELATIONSHIPS);
                         for (Relationship rel : currentRelMgr.getPublicRelationships()) {
-                            if (rel.getRelatedEntity().equals(hoveredEntityId)) {
+                            if (rel.getRelatedEntity().equals(m_hoveredEntity)) {
                                 String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
                                 hoverRelationships.add(line);
                                 int stringWidth = orignalFontMetrics.stringWidth(line);
@@ -230,7 +231,7 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
                             }
                         }
                         for (Relationship rel : currentRelMgr.getSecretRelationships()) {
-                            if (rel.getRelatedEntity().equals(hoveredEntityId)) {
+                            if (rel.getRelatedEntity().equals(m_hoveredEntity)) {
                                 String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
                                 hoverRelationships.add(line);
                                 int stringWidth = orignalFontMetrics.stringWidth(line);
@@ -413,6 +414,26 @@ public class OrbitalEntityCanvas extends JComponent implements CampaignDataManag
     @Override
     public void dataAddedOrUpdated(Entity entity) {
         repaint();
+    }
+    
+    @Override
+    public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
+        // ignored
+    }
+
+    @Override
+    public void timelineEntryRemoved(UUID id) {
+        // ignored
+    }
+
+    @Override
+    public JComponent getComponent() {
+        return this;
+    }
+
+    @Override
+    public void clearAllData() {
+        // Do nothing.
     }
 
     /** A data bag for holding the locations calculated for rendering data. */

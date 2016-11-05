@@ -2,9 +2,9 @@ package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
-import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
-import campaignencyclopedia.display.CampaignDataManagerListener;
+import campaignencyclopedia.data.RelationshipManager;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -14,7 +14,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.InputEvent;
@@ -26,6 +25,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,8 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
-import javax.swing.Scrollable;
-import javax.swing.SwingConstants;
 import traer.physics.Attraction;
 import traer.physics.Particle;
 import traer.physics.ParticleSystem;
@@ -52,7 +50,7 @@ import traer.physics.Vector3D;
  * @author keith
  * @author adam
  */
-public class CampaignEntityGraphCanvas extends JComponent implements Scrollable, CampaignDataManagerListener {
+public class CampaignEntityGraphCanvas extends JComponent implements CanvasDisplay { //, Scrollable {
 
     // RENDERING PARAMETERS
     /** How long to draw the lines between the dots. */
@@ -113,10 +111,13 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
     /** A map of Entity UUIDs to their rendering configurations. */
     private final Map<UUID, RenderingConfig> m_renderingConfigMap;
     /** The entity currently hovered over. */
-    private Entity m_hoveredEntity;
+    private UUID m_hoveredEntity;
+    private static final String RELATIONSHIPS = "Relationships:";
+    private static final int BIG_PAD = 25;
     /** The point currently hovered over. */
     private Point2D.Double m_hoverPoint;
     /** A data accessor for fetching data. */
+    
     private final DataAccessor m_accessor;
     /** An EntityDisplay to show/edit Entity data on/with. */
     private final EntityDisplay m_display;
@@ -179,7 +180,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             int r = getDotRadius();
             RenderingConfig rc = new RenderingConfig();
             rc.text = e.getName();
-            rc.dot = new Ellipse2D.Double(-r, -r, 2 * r, 2 * r);
+            //rc.dot = new Ellipse2D.Double(-r, -r, 2 * r, 2 * r);
             rc.particle = p;
             rc.color = Colors.getColor(e.getType());
             m_renderingConfigMap.put(e.getId(), rc);
@@ -257,6 +258,55 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         for (UUID id : m_renderingConfigMap.keySet()) {
             RenderingConfig rc = m_renderingConfigMap.get(id);
             drawRenderingConfig(rc, g2);
+        }
+        
+        if (m_hoveredEntity != null) {
+                // RENDER RELATIONSHIP HOVER DATA (IF VALID TO DO SO)
+                if (m_hoveredEntity != null) {
+                    Entity hovered = m_accessor.getEntity(m_hoveredEntity);
+                    if (hovered != null) {
+                        String title = hovered.getName() + " - " + RELATIONSHIPS;
+                        int maxWidth = g2.getFontMetrics().stringWidth(title);
+                        List<String> hoverRelationships = new ArrayList<>();
+                        hoverRelationships.add(title);
+                        RelationshipManager relMgr = m_accessor.getRelationshipsForEntity(m_hoveredEntity);
+                        for (Relationship rel : relMgr.getPublicRelationships()) {
+                            String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
+                            hoverRelationships.add(line);
+                            int stringWidth = g2.getFontMetrics().stringWidth(line);
+                            if (maxWidth < stringWidth) {
+                                maxWidth = stringWidth;
+                            }
+                        }
+                        for (Relationship rel : relMgr.getSecretRelationships()) {
+                                String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
+                                hoverRelationships.add(line);
+                                int stringWidth = g2.getFontMetrics().stringWidth(line);
+                                if (maxWidth < stringWidth) {
+                                    maxWidth = stringWidth;
+                                }
+                        }
+
+                        // Background
+                        int hoverWidth = maxWidth + BIG_PAD * 2;
+                        int hoverHeight = hoverRelationships.size() * g2.getFontMetrics().getHeight() + BIG_PAD;
+                        g2.setPaint(Color.WHITE);
+                        g2.fill(new Rectangle2D.Double(m_hoverPoint.x, m_hoverPoint.y + BIG_PAD, hoverWidth, hoverHeight));
+
+                        // Border
+                        g2.setPaint(Color.BLACK);
+                        g2.draw(new Rectangle2D.Double(m_hoverPoint.x, m_hoverPoint.y + BIG_PAD, hoverWidth, hoverHeight));
+
+                        // Text
+                        float hoverRelTextY = (float)m_hoverPoint.y + BIG_PAD + PAD;
+                        for (String relString : hoverRelationships) {
+                            hoverRelTextY += g2.getFontMetrics().getHeight();
+                            g2.drawString(relString, (float)m_hoverPoint.x + BIG_PAD, hoverRelTextY);
+                        }
+                    } else{
+                        m_hoveredEntity = null;
+                    }
+                }
         }
     }
 
@@ -444,20 +494,34 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent me) {
-
-                // Find out if we're hovering over a given entity.
+                
+                //Get point coordinates
+                Point click = me.getPoint();
+                Vector3D hoverVector = new Vector3D((click.x / m_scaleFactor - m_horizontalScrollTranslation),
+                                                    (click.y / m_scaleFactor - m_verticalScrollTranslation),
+                                                    0);
+                int r = getDotRadius();
+                int r2 = r * r;
                 boolean found = false;
+                
+                //Find if a particle was hovered on
                 for (UUID id : m_renderingConfigMap.keySet()) {
                     RenderingConfig rc = m_renderingConfigMap.get(id);
-                    if (rc.dot.contains(me.getPoint())) {
+                    Particle p = rc.particle;
+
+                    if (p.position().distanceSquaredTo(hoverVector) <= (r2)) {
                         found = true;
-                        m_hoveredEntity = m_accessor.getEntity(id);
-                        m_hoverPoint = new Point2D.Double(me.getX(), me.getY());
+                        m_hoveredEntity = id;
+                        if (m_hoverPoint == null) {
+                            m_hoverPoint = new Point2D.Double(hoverVector.x(), hoverVector.y());
+                        } else {
+                            m_hoverPoint.setLocation(hoverVector.x(), hoverVector.y());
+                        }
                         repaint();
                         break;
                     }
                 }
-
+                
                 // Clear out the hovered entity if none exists
                 if (found == false) {
                     m_hoveredEntity = null;
@@ -481,7 +545,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             @Override
             public void mouseWheelMoved(MouseWheelEvent mwe) {
                 if ((mwe.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK)) == InputEvent.SHIFT_DOWN_MASK) {
-                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 100.0f;
+                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 25.0f;
                 }
             }
         });
@@ -522,56 +586,75 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
         float horizontalGraphSpan = (furthestRight - furthestLeft);
         float verticalGraphSpan = (furthestBottom - furthestTop);
 
-        int xDim = (int)((horizontalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
-        int yDim = (int)((verticalGraphSpan + 2*SCROLL_PAD) * m_scaleFactor);
+        int xDim = (int)((horizontalGraphSpan + 2 * SCROLL_PAD) * m_scaleFactor);
+        int yDim = (int)((verticalGraphSpan + 2 * SCROLL_PAD) * m_scaleFactor);
         return new Dimension(xDim, yDim);
     }
 
+//    @Override
+//    public Dimension getPreferredScrollableViewportSize() {
+//        return getPreferredSize();
+//    }
+//
+//    @Override
+//    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+//        //Get the current position.
+//        int currentPosition = 0;
+//        if (orientation == SwingConstants.HORIZONTAL) {
+//            currentPosition = visibleRect.x;
+//        } else {
+//            currentPosition = visibleRect.y;
+//        }
+//
+//        //Return the number of pixels between currentPosition
+//        //and the nearest tick mark in the indicated direction.
+//        if (direction < 0) {
+//            int newPosition = currentPosition - (currentPosition / m_maxUnitIncrement) * m_maxUnitIncrement;
+//            return (newPosition == 0) ? m_maxUnitIncrement : newPosition;
+//        } else {
+//            return ((currentPosition / m_maxUnitIncrement) + 1) * m_maxUnitIncrement - currentPosition;
+//        }
+//    }
+//
+//    @Override
+//    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+//        if (orientation == SwingConstants.HORIZONTAL) {
+//            return visibleRect.width - m_maxUnitIncrement;
+//        } else {
+//            return visibleRect.height - m_maxUnitIncrement;
+//        }
+//    }
+//
+//    @Override
+//    public boolean getScrollableTracksViewportWidth() {
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean getScrollableTracksViewportHeight() {
+//        return false;
+//    }
+
     @Override
-    public Dimension getPreferredScrollableViewportSize() {
-        return getPreferredSize();
+    public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
+        // ignored
     }
 
     @Override
-    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-        //Get the current position.
-        int currentPosition = 0;
-        if (orientation == SwingConstants.HORIZONTAL) {
-            currentPosition = visibleRect.x;
-        } else {
-            currentPosition = visibleRect.y;
-        }
-
-        //Return the number of pixels between currentPosition and the nearest tick mark in the indicated direction.
-        if (direction < 0) {
-            int newPosition = currentPosition - (currentPosition / MAX_UNIT_SCROLL_INCREMENT) * MAX_UNIT_SCROLL_INCREMENT;
-            return (newPosition == 0) ? MAX_UNIT_SCROLL_INCREMENT : newPosition;
-        } else {
-            return ((currentPosition / MAX_UNIT_SCROLL_INCREMENT) + 1) * MAX_UNIT_SCROLL_INCREMENT - currentPosition;
-        }
-    }
-
-    @Override
-    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-        if (orientation == SwingConstants.HORIZONTAL) {
-            return visibleRect.width - MAX_UNIT_SCROLL_INCREMENT;
-        } else {
-            return visibleRect.height - MAX_UNIT_SCROLL_INCREMENT;
-        }
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportWidth() {
-        return false;
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportHeight() {
-        return false;
+    public void timelineEntryRemoved(UUID id) {
+        // ignored
     }
 
     
     @Override
+    public JComponent getComponent() {
+        return this;
+    }
+
+    @Override
+    public void clearAllData() {
+        // Ignored
+    }
     public void dataRemoved(UUID id) {
         LOGGER.log(Level.INFO, "Data removed from graph display: " + id);
         

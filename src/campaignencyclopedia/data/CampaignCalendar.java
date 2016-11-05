@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- *
+ * A class to represent the Campaign's calendar.
  * @author adam
  */
 public class CampaignCalendar {
@@ -34,8 +34,69 @@ public class CampaignCalendar {
         processNewMonths(months);
     }
 
+    /**
+     * Returns an unmodifiable list of the months in this calendar.
+     * @return an unmodifiable list of the months in this calendar.
+     */
     public List<Month> getMonths() {
-        return m_months;
+        return Collections.unmodifiableList(m_months);
+    }
+
+    /**
+     * Returns the number of months in this calendar.
+     * @return the number of months in this calendar.
+     */
+    public int getMonthCount() {
+        return m_months.size();
+    }
+
+    /**
+     * Returns the month at the given index.  If the index is out of range, exceptions will be thrown.
+     * @param index the index of the month to retrieve.
+     * @return the month at the given index.
+     */
+    public Month getMonthForIndex(int index) {
+        return m_months.get(index);
+    }
+
+    /**
+     * Returns the month after the supplied one.
+     * @param month the month to get the following month for.
+     * @return the month after the supplied one.
+     */
+    public Month getMonthAfter(Month month) {
+        if (hasMonth(month)) {
+            // if not the last month...
+            if (month.getIndex() != m_months.size() - 1) {
+                // return the one after this one.
+                return m_months.get(month.getIndex() + 1);
+            } else {
+                // return the first month,.
+                return m_months.get(0);
+            }
+        } else {
+            throw new IllegalStateException("Supplied month does not exist in calendar.");
+        }
+    }
+
+    /**
+     * Returns the month before the supplied one.
+     * @param month the month to get the previous month for.
+     * @return the month before the supplied one.
+     */
+    public Month getMonthBefore(Month month) {
+        if (hasMonth(month)) {
+            // If not the first month...
+            if (month.getIndex() != 0) {
+                // Return the month previous to this one
+                return m_months.get(month.getIndex() - 1);
+            } else {
+                // Return the last month
+                return m_months.get(m_months.size() - 1);
+            }
+        } else {
+            throw new IllegalStateException("Supplied month does not exist in calendar.");
+        }
     }
 
     public void update(List<Month> months) {
@@ -44,9 +105,6 @@ public class CampaignCalendar {
 
     public void updateMonths(List<Month> months) {
         m_months.clear();
-        if (!months.contains(Month.UNSPECIFIED)) {
-            m_months.add(Month.UNSPECIFIED);
-        }
         m_months.addAll(months);
         Collections.sort(m_months);
     }
@@ -75,11 +133,6 @@ public class CampaignCalendar {
      */
     private void processNewMonths(List<Month> months) {
         m_months.clear();
-        // If the Unspecified month is already in this calendar remove it and re-add it to ensure it is at index '0'
-        while (months.contains(Month.UNSPECIFIED)) {
-            months.remove(Month.UNSPECIFIED);
-        }
-        m_months.add(Month.UNSPECIFIED);
         m_months.addAll(months);
     }
 
@@ -106,6 +159,6 @@ public class CampaignCalendar {
         }
         return true;
     }
-    
-    
+
+
 }

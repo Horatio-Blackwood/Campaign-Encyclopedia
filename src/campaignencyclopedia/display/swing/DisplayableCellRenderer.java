@@ -15,7 +15,6 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  */
 public class DisplayableCellRenderer implements ListCellRenderer<Displayable> {
 
-
     @Override
     public Component getListCellRendererComponent(JList<? extends Displayable> jlist, Displayable e, int i, boolean isSelected, boolean hasFocus) {
         JLabel cell = new JLabel(e.getDisplayString());

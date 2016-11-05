@@ -93,8 +93,7 @@ public class ConfigureCalendarDialogContent implements DialogContent {
                 m_list.setSelectedIndex(m_list.locationToIndex(me.getPoint()));
                 int selectedIndex = m_list.getSelectedIndex();
                 if (SwingUtilities.isRightMouseButton(me) && selectedIndex >= 0) {
-                    String month = m_list.getSelectedValue();
-                    if (SwingUtilities.isRightMouseButton(me) && !month.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
+                    if (SwingUtilities.isRightMouseButton(me)) {
                         JPopupMenu menu = new JPopupMenu();
                         menu.add(new AbstractAction("Remove") {
                             @Override
@@ -256,11 +255,8 @@ public class ConfigureCalendarDialogContent implements DialogContent {
         String value = m_addTextField.getText().trim();
         // False if:
         //      - supplied value is empty
-        //      - value is 'Unspecified'
         //      - value is any existing value.
-        if (value.isEmpty() ||
-                value.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase()) ||
-                m_model.contains(value)) {
+        if (value.isEmpty() || m_model.contains(value)) {
             m_addButton.setEnabled(false);
         } else {
             m_addButton.setEnabled(true);
@@ -275,12 +271,8 @@ public class ConfigureCalendarDialogContent implements DialogContent {
         CampaignCalendar cal = new CampaignCalendar();
         List<Month> newCalendar = new ArrayList<>();
         for (int i = 0; i < m_model.getSize(); i++) {
-            String monthName = m_model.get(i);
-            // If not The Unspecified Month
-            if (!monthName.toLowerCase().equals(Month.UNSPECIFIED.getName().toLowerCase())) {
-                Month month = new Month(m_model.get(i), i);
-                newCalendar.add(month);
-            }
+            Month month = new Month(m_model.get(i), i);
+            newCalendar.add(month);
         }
         cal.update(newCalendar);
         return cal;
