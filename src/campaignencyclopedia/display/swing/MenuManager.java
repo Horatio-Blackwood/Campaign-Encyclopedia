@@ -9,17 +9,21 @@ import campaignencyclopedia.display.swing.action.DeleteEntityAction;
 import campaignencyclopedia.display.swing.action.EditCampaignNameAction;
 import campaignencyclopedia.display.swing.action.ExportCampaignToPdfAction;
 import campaignencyclopedia.display.swing.action.ExportEntityToPdf;
+import campaignencyclopedia.display.swing.action.NavigateBackwardAction;
+import campaignencyclopedia.display.swing.action.NavigateForwardAction;
 import campaignencyclopedia.display.swing.action.NewCampaignAction;
 import campaignencyclopedia.display.swing.action.OpenCampaignAction;
 import campaignencyclopedia.display.swing.action.SaveCampaignAction;
 import campaignencyclopedia.display.swing.action.ShowCampaignStatisticsAction;
 import campaignencyclopedia.display.swing.action.ShowTimelineAction;
 import campaignencyclopedia.display.swing.graphical.CampaignEntityGraphViewer;
-import campaignencyclopedia.display.swing.graphical.GraphicalTimelineViewer;
+
+
 import campaignencyclopedia.display.swing.graphical.OrbitalEntityViewer;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -65,6 +69,12 @@ public class MenuManager {
 
     /** The action for editing the name of the Campaign. */
     private final EditCampaignNameAction m_editName;
+    
+    /** The action for navigating forward. */
+    private final NavigateForwardAction m_navForward;
+    
+    /** The action for navigating backward. */
+    private final NavigateBackwardAction m_navBack;
 
     /** The action for showing the application help. */
     private final AbstractAction m_helpAction;
@@ -106,6 +116,9 @@ public class MenuManager {
         m_configureCalendar = new ConfigureCampaignCalendarAction(m_frame, m_cdm);
         m_showStats = new ShowCampaignStatisticsAction(m_frame, m_cdm);
 
+        m_navBack = new NavigateBackwardAction(m_display);
+        m_navForward = new NavigateForwardAction(m_display);
+        
         // Help Menu
         m_helpAction = new AbstractAction("Help") {
             @Override
@@ -123,17 +136,16 @@ public class MenuManager {
                              "    CTRL+S - Save the changes to the currently displayed entity\n" +
                              "    CTRL+SHIFT+S - Save the campaign with a new filename\n" +
                              "    CTRL+T - Open the timeline editor\n\n" +
+                             "    ALT+LEFT - Navigate to the previous item in viewing history\n\n" +
+                             "    ALT+RIGHT - Navigate to the next item in viewing history\n\n" +
                              "Orbital View Controls:\n" +
                              "    Hover over an item to view relationship details\n" +
                              "    Click on any outer node to navigate to that node\n" +
                              "    or use the Back and Fwd buttons\n" +
                              "    CTRL+Click on any item to display it in the editort";
-
-                        ;
                 JOptionPane.showMessageDialog(m_frame, msg, "Help", JOptionPane.PLAIN_MESSAGE);
             }
         };
-
         m_aboutAction = new AbstractAction("About") {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -168,6 +180,26 @@ public class MenuManager {
         campaignMenu.add(saveCampaign);
 
         return campaignMenu;
+    }
+    
+    /**
+     * Returns the 'View' menu.
+     * @return the 'View' menu.
+     */
+    public JMenu getViewMenu() {
+        JMenu view = new JMenu("View");
+
+        // Items and Accelerators
+        JMenuItem forward = new JMenuItem(m_navForward);
+        forward.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK));
+        JMenuItem backward = new JMenuItem(m_navBack);
+        backward.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK));
+        
+        view.add(backward);
+        view.add(forward);
+        
+        
+        return view;
     }
 
     /**
@@ -206,15 +238,8 @@ public class MenuManager {
 
         dataMenu.add(editName);
         dataMenu.add(showTimeline);
-        dataMenu.add(new AbstractAction("Show Graphical Timeline") {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                GraphicalTimelineViewer viewer = new GraphicalTimelineViewer(m_display, m_cdm);
-                m_cdm.addListener(viewer);
-                viewer.launch();
-            }
-        });
-        dataMenu.add(new AbstractAction("Launch Campaign Graph Viewer") {
+
+        dataMenu.add(new AbstractAction("Launch Graph Viewer") {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);

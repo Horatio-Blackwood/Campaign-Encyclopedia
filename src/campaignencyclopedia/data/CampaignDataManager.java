@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -19,18 +20,24 @@ import javax.swing.JOptionPane;
  */
 public class CampaignDataManager implements DataAccessor {
 
+    /** A Logger. */
+    private static final Logger LOGGER = Logger.getLogger(CampaignDataManager.class.getName());
+    
     /** The name of the campaign.  */
     private String m_campaignName;
 
     /** A map of UUIDs to their associated Entities. */
     private final Map<UUID, Entity> m_entities;
 
+    /** A map of UUIDs of Entities to Sets of Relationships. */
+    private final Map<UUID, RelationshipManager> m_relationships;
+
     /** A map of UUIDs to their associated Timeline Entries. */
     private final Map<UUID, TimelineEntry> m_timelineData;
-    
+
     /** The path to the file where the current campaign is stored, or null if no path exists. */
     private String m_filename;
-    
+
     /** The currently configured campaign calendar. */
     private CampaignCalendar m_cal;
 
@@ -39,9 +46,11 @@ public class CampaignDataManager implements DataAccessor {
 
     public CampaignDataManager() {
         m_campaignName = "New Campaign";
-        m_entities = new HashMap<>();
-        m_timelineData = new HashMap<>();
         m_filename = null;
+
+        m_entities = new HashMap<>();
+        m_relationships = new HashMap<>();
+        m_timelineData = new HashMap<>();
         m_cal = new CampaignCalendar();
         m_listeners = new HashSet<>();
     }
@@ -115,7 +124,26 @@ public class CampaignDataManager implements DataAccessor {
     @Override
     public void removeEntity(UUID id) {
         if (id != null) {
+            // Remove the Entity
             m_entities.remove(id);
+
+            // Remove relationships for the removed Entity
+            m_relationships.remove(id);
+
+            // Check for any relationships that point to the removed Entity and remove them too.
+            for (UUID entityId : m_relationships.keySet()) {
+                RelationshipManager relationshipManager = m_relationships.get(entityId);
+                // Collect all of the relationships that point at the removed Entity
+                Set<Relationship> toRemove = new HashSet<>();
+                for (Relationship rel : relationshipManager.getAllRelationships()) {
+                    if (rel.getRelatedEntity().equals(id)) {
+                        toRemove.add(rel);
+                    }
+                }
+                // Remove the bad relations, and set the updated Set back into the map.
+                relationshipManager.removeAll(toRemove);
+                m_relationships.put(entityId, relationshipManager);
+            }
         }
 
         // Alert Listeners
@@ -146,7 +174,7 @@ public class CampaignDataManager implements DataAccessor {
      * @return a Campaign that contains all of the data in the CampaignDataManager.
      */
     public Campaign getData() {
-        return new Campaign(m_campaignName, new HashSet<>(m_entities.values()), new HashSet<>(m_timelineData.values()), m_cal);
+        return new Campaign(m_campaignName, new HashSet<>(m_entities.values()), m_relationships, new HashSet<>(m_timelineData.values()), m_cal);
     }
 
     /**
@@ -156,26 +184,39 @@ public class CampaignDataManager implements DataAccessor {
     public void setData(Campaign campaign) {
         m_entities.clear();
         m_timelineData.clear();
+        m_relationships.clear();
         m_campaignName = campaign.getName();
         m_cal = campaign.getCalendar();
+        
+        
 
-        // Set to collect all of the previously saved relationships.
+        // Set to collect all of the previously saved relationships.  This is used later to ensure that all established
+        // Relationships are in the RelationshipOptionManager.
         Set<String> relationships = new HashSet<>();
+
+        // Add all of the Entities.
         for (Entity e : campaign.getEntities()) {
-            m_entities.put(e.getId(), e);
+            UUID entityId = e.getId();
+            m_entities.put(entityId, e);
+            
+            // Create a RelationshipManager for all Entities in the Campaign
+            m_relationships.put(entityId, new RelationshipManager());
 
             // Collect all of the previously saved relationships and add them to our Set above.
-            for (Relationship r : e.getPublicData().getRelationships()) {
-                relationships.add(r.getRelationship());
-            }
-            for (Relationship r : e.getSecretData().getRelationships()) {
-                relationships.add(r.getRelationship());
+            RelationshipManager entityRelMgr = campaign.getRelationships(entityId);
+            if (entityRelMgr != null) {
+                for (Relationship r : entityRelMgr.getAllRelationships()) {
+                    relationships.add(r.getRelationshipText());
+                }   
             }
         }
+        
+        // Add all of the Relationships.
+        m_relationships.putAll(campaign.getAllRelationships());
 
         // Ensure that all of the relationships previously saved are in the local
         // relationships file, and indeed the Relationship Data Manager as well.
-        RelationshipDataManager.addRelationships(new ArrayList<>(relationships));
+        RelationshipOptionManager.addRelationships(new ArrayList<>(relationships));
 
         // Roll through each of the timeline entries for this campaign and ensure that the months all exist in the
         // campaign.  If any are missing, add them to the Calendar and alert the user with a popup message.
@@ -224,5 +265,38 @@ public class CampaignDataManager implements DataAccessor {
     @Override
     public Set<TimelineEntry> getTimelineData() {
         return new HashSet<>(m_timelineData.values());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void addRelationship(UUID entity, Relationship rel) {
+        if (m_relationships.get(entity) == null) {
+            m_relationships.put(entity, new RelationshipManager());
+        }
+        m_relationships.get(entity).addRelationship(rel);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void removeRelationship(UUID entity, Relationship toRemove) {
+        RelationshipManager relationships = m_relationships.get(entity);
+        relationships.remove(toRemove);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public RelationshipManager getRelationshipsForEntity(UUID entity) {
+        return m_relationships.get(entity);
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public void addOrUpdateAllRelationships(UUID entity, RelationshipManager relMgr) {
+        if (entity != null && relMgr != null) {
+            m_relationships.put(entity, relMgr);
+        } else {
+            LOGGER.warning("Attempted to store a null Entity or RelationshipManager.  Entity was:  " + 
+                    entity + ", RelationshipManager was:  " + relMgr);
+        }
     }
 }

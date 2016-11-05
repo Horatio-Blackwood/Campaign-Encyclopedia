@@ -5,6 +5,7 @@ import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.EntityDataBuilder;
 import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.data.RelationshipManager;
 import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.UserDisplay;
 import java.awt.Frame;
@@ -69,11 +70,10 @@ public class DeleteEntityAction extends AbstractAction {
                     // the one being removed, for instance).
                     for (Entity entity : m_cdm.getAllEntities()) {
                         updateRequired = false;
-                        EntityData publicData = entity.getPublicData();
-                        EntityData secretData = entity.getSecretData();
+                        RelationshipManager relManager = m_cdm.getRelationshipsForEntity(entity.getId());
 
-                        Set<Relationship> pubRels = publicData.getRelationships();
-                        Set<Relationship> secRels = secretData.getRelationships();
+                        Set<Relationship> pubRels = relManager.getPublicRelationships();
+                        Set<Relationship> secRels = relManager.getSecretRelationships();
 
                         Set<Relationship> filteredPublicRels = filterRelationships(id, pubRels);
                         Set<Relationship> filteredSecretRels = filterRelationships(id, secRels);
@@ -87,17 +87,17 @@ public class DeleteEntityAction extends AbstractAction {
                         }
 
                         if (updateRequired) {
-                            EntityData newPublic = new EntityDataBuilder(publicData).relationships(filteredPublicRels).build();
-                            EntityData newSecret = new EntityDataBuilder(secretData).relationships(filteredSecretRels).build();
-                            toBeUpdated.add(new Entity(entity.getId(), entity.getName(), entity.getType(), newPublic, newSecret, entity.isSecret()));
+                            relManager.clear();
+                            relManager.addAllRelationships(secRels);
+                            relManager.addAllRelationships(pubRels);
                         }
                     }
                     // --- Update the Entities that have changed due to this Entity being removed.
                     for (Entity entity : toBeUpdated) {
                         m_cdm.addOrUpdateEntity(entity);
                     }
-                    
-                                        
+
+
                     // Finally, remove any timeline entries assoiciated with the Entity.
                     for (TimelineEntry entry : m_cdm.getTimelineData()) {
                         if (entry.getAssociatedId().equals(m_entity.getId())) {
@@ -121,7 +121,7 @@ public class DeleteEntityAction extends AbstractAction {
     private Set<Relationship> filterRelationships(UUID entity, Set<Relationship> relationships) {
         Set<Relationship> rels = new HashSet<>();
         for (Relationship r : relationships) {
-            if (!r.getIdOfRelation().equals(entity)) {
+            if (!r.getRelatedEntity().equals(entity)) {
                 rels.add(r);
             }
         }

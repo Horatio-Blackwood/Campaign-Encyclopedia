@@ -31,7 +31,7 @@ public class OrbitalEntityViewer implements CampaignDataManagerListener {
 
     /** The JFrame of this display. */
     private JFrame m_frame;
-    
+
     /** A campaign data manager. */
     private final CampaignDataManager m_cdm;
 
@@ -86,5 +86,4 @@ public class OrbitalEntityViewer implements CampaignDataManagerListener {
     public void dataAddedOrUpdated(Entity entity) {
         m_canvas.dataAddedOrUpdated(entity);
     }
-
 }

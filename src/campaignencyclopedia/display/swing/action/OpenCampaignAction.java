@@ -12,8 +12,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import toolbox.file.FileTools;
+import toolbox.file.persistence.json.JsonException;
 
 /**
  * An action for opening Campaign files.
@@ -53,33 +55,25 @@ public class OpenCampaignAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent ae) {
         final JFileChooser chooser = new JFileChooser("./campaigns");
-        chooser.addChoosableFileFilter(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                String path = file.getAbsolutePath();
-                if (path.endsWith(".campaign")){
-                    return true;
-                }
-                return false;
-            }
-
-            @Override
-            public String getDescription() {
-                return "Campaign files";
-            }
-        });
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Campaign Files", "campaign");
+        chooser.setFileFilter(filter);
+        
         if (chooser.showOpenDialog(m_window) == JFileChooser.APPROVE_OPTION) {
+            final File selectedFile = chooser.getSelectedFile();
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        File selectedFile = chooser.getSelectedFile();
                         String jsonCampaign = FileTools.readFile(selectedFile.getAbsolutePath());
                         Campaign campaign = CampaignTranslator.fromJson(jsonCampaign);
                         m_cdm.setFileName(selectedFile.getAbsolutePath());
                         DisplayCampaignHelper.displayCampaign(m_userDisplay, m_cdm, campaign);
+                    } catch (JsonException jex) {
+                        String msg = "Error openming file:  " + selectedFile.getName() + ".  Is this a valid campaign file?";
+                        JOptionPane.showMessageDialog(m_window, msg, "Unable to Open File", JOptionPane.ERROR_MESSAGE);   
+                        LOGGER.log(Level.WARNING, "Failed to open the campaign, json error.", jex);
                     } catch (IOException ex) {
-                        LOGGER.log(Level.WARNING, "Failed to save the campaign.", ex);
+                        LOGGER.log(Level.WARNING, "Failed to open the campaign, IO error.", ex);
                     }
                 }
             }).start();

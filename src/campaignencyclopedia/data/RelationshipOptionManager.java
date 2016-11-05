@@ -13,10 +13,15 @@ import toolbox.file.FileTools;
  * A configuration/manager for Relationships.
  * @author adam
  */
-public class RelationshipDataManager {
+public class RelationshipOptionManager {
 
+    /** A Logger. */
+    private static final Logger LOGGER = Logger.getLogger(RelationshipOptionManager.class.getName());
+    
+    /** The location of the relationships.dat file. */
     private static final String RELATIONSHIP_FILE = "./config/relationships.dat";
-    private static final Logger LOGGER = Logger.getLogger(RelationshipDataManager.class.getName());
+
+    /** The Relationship options. */
     private final static List<String> RELATIONSHIPS = new ArrayList<>();
 
     // Perform initial setup.

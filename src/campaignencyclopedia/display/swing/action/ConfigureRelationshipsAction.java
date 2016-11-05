@@ -1,6 +1,6 @@
 package campaignencyclopedia.display.swing.action;
 
-import campaignencyclopedia.data.RelationshipDataManager;
+import campaignencyclopedia.data.RelationshipOptionManager;
 import campaignencyclopedia.display.swing.RelationshipConfigEditorDialogContent;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -34,10 +34,10 @@ public class ConfigureRelationshipsAction extends AbstractAction {
         Runnable commitRunnable = new Runnable() {
             @Override
             public void run() {
-                RelationshipDataManager.replaceAllRelationships(dc.getRelationships());
+                RelationshipOptionManager.replaceAllRelationships(dc.getRelationships());
             }
         };
         DialogCommitManager dcm = new OkCancelCommitManager(commitRunnable);
-        DialogFactory.buildDialog(m_frame, "Configure Relationships", true, dc, dcm);
+        DialogFactory.buildDialog(m_frame, "Configure Relationships", false, dc, dcm);
     }
 }

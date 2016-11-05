@@ -1,6 +1,6 @@
 package campaignencyclopedia.display.swing;
 
-import campaignencyclopedia.data.RelationshipDataManager;
+import campaignencyclopedia.data.RelationshipOptionManager;
 import campaignencyclopedia.data.RelationshipType;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -66,7 +66,7 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
         m_content = new JPanel(new GridBagLayout());
 
         m_model = new SortableListModel<>();
-        m_model.addAllElements(RelationshipDataManager.getRelationships());
+        m_model.addAllElements(RelationshipOptionManager.getRelationships());
 
         m_list = new JList<>();
         m_list.setModel(m_model);
@@ -235,7 +235,7 @@ public class RelationshipConfigEditorDialogContent implements DialogContent {
     @Override
     public boolean isDataCommittable() {
         List<String> displayed = new ArrayList<>(m_model.getAllElements());
-        List<String> original = new ArrayList<>(RelationshipDataManager.getRelationships());
+        List<String> original = new ArrayList<>(RelationshipOptionManager.getRelationships());
         Collections.sort(displayed);
         Collections.sort(original);
         return !displayed.equals(original);

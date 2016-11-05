@@ -34,8 +34,8 @@ public class RelationshipCellRenderer implements ListCellRenderer<Relationship> 
     /** {@inheritDoc} */
     @Override
     public Component getListCellRendererComponent(JList<? extends Relationship> jlist, final Relationship e, int i, boolean isSelected, boolean hasFocus) {
-        JLabel relationshipLabel = new JLabel(e.getRelationship());
-        JLabel relatedEntityLabel = new JLabel(m_accessor.getEntity(e.getIdOfRelation()).getName());
+        JLabel relationshipLabel = new JLabel(e.getRelationshipText());
+        JLabel relatedEntityLabel = new JLabel(m_accessor.getEntity(e.getRelatedEntity()).getName());
 
         relationshipLabel.setOpaque(false);
         relatedEntityLabel.setOpaque(false);
@@ -58,7 +58,15 @@ public class RelationshipCellRenderer implements ListCellRenderer<Relationship> 
         panel.add(relationshipLabel, gbc);
         gbc.gridx = 1;
         panel.add(relatedEntityLabel, gbc);
-        gbc.gridx = 2;
+        if (e.isSecret()) {
+            JLabel secretLabel = new JLabel("(Secret)");
+            secretLabel.setForeground(Color.RED);
+            secretLabel.setFont(relatedEntityLabel.getFont().deriveFont(Font.BOLD));
+            gbc.gridx = 2;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            panel.add(secretLabel, gbc);            
+        }
+        gbc.gridx = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0f;
         panel.add(new JLabel(), gbc);

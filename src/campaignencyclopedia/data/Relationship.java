@@ -13,41 +13,80 @@ import java.util.UUID;
 public class Relationship implements Comparable<Relationship> {
 
     private final String m_relationship;
-    private final UUID m_id;
+    /** The ID of the Entity this Relationship is TO.*/
+    private final UUID m_idOfRelatedEntity;
+    /** The ID of the Entity that owns this relationship. */
+    private final UUID m_idOfEntity;
+    /** True if this relationship is secret, false otherwise. */
+    private final boolean m_isSecret;
 
 
     /**
      * Constructor.
-     * @param relation the UUID of the Entity that is the relation.
+     * @param entity the UUID of the entity that this Entity is FROM.
+     * @param relation the UUID of the Entity that this relationship is TO.
      * @param relationship the type of this Relationship.
+     * @param isSecret true if this relationship is a secret one.
      */
-    public Relationship(UUID relation, String relationship) {
+    public Relationship(UUID entity, UUID relation, String relationship, boolean isSecret) {
+        if (entity == null) {
+            throw new IllegalArgumentException("Parameter 'entity' cannot be null.");
+        }
+        if (relation == null) {
+            throw new IllegalArgumentException("Parameter 'relation' cannot be null.");
+        }
+        if (relationship == null) {
+            throw new IllegalArgumentException("Parameter 'relationship' cannot be null.");
+        }
+        if (relationship.isEmpty()) {
+            throw new IllegalArgumentException("Parameter 'relationship' cannot be empty.");
+        }
         m_relationship = relationship;
-        m_id = relation;
+        m_idOfRelatedEntity = relation;
+        m_idOfEntity = entity;
+        m_isSecret = isSecret;
     }
 
     /**
      * Returns the type of this Relationship.
      * @return the type of this Relationship.
      */
-    public String getRelationship() {
+    public String getRelationshipText() {
         return m_relationship;
     }
 
     /**
-     * Returns the UUID of the Entity that is the relation.
-     * @return the UUID of the Entity that is the relation.
+     * Returns the UUID of the Entity that is related to the owner.
+     * @return the UUID of the Entity that is related to the owner.
      */
-    public UUID getIdOfRelation() {
-        return m_id;
+    public UUID getRelatedEntity() {
+        return m_idOfRelatedEntity;
+    }
+
+    /**
+     * Returns the UUID of Entity that owns this relationship.
+     * @return the UUID of Entity that owns this relationship.
+     */
+    public UUID getEntityId() {
+        return m_idOfEntity;
+    }
+
+    /**
+     * Returns true if this relationship is secret, false otherwise.
+     * @return true if this relationship is secret, false otherwise.
+     */
+    public boolean isSecret() {
+        return m_isSecret;
     }
 
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 67 * hash + Objects.hashCode(this.m_relationship);
-        hash = 67 * hash + Objects.hashCode(this.m_id);
+        int hash = 7;
+        hash = 79 * hash + Objects.hashCode(this.m_relationship);
+        hash = 79 * hash + Objects.hashCode(this.m_idOfRelatedEntity);
+        hash = 79 * hash + Objects.hashCode(this.m_idOfEntity);
+        hash = 79 * hash + (this.m_isSecret ? 1 : 0);
         return hash;
     }
 
@@ -61,10 +100,16 @@ public class Relationship implements Comparable<Relationship> {
             return false;
         }
         final Relationship other = (Relationship) obj;
-        if (!this.m_relationship.equals(other.m_relationship)) {
+        if (!Objects.equals(this.m_relationship, other.m_relationship)) {
             return false;
         }
-        if (!Objects.equals(this.m_id, other.m_id)) {
+        if (!Objects.equals(this.m_idOfRelatedEntity, other.m_idOfRelatedEntity)) {
+            return false;
+        }
+        if (!Objects.equals(this.m_idOfEntity, other.m_idOfEntity)) {
+            return false;
+        }
+        if (this.m_isSecret != other.m_isSecret) {
             return false;
         }
         return true;
@@ -73,12 +118,12 @@ public class Relationship implements Comparable<Relationship> {
     /** {@inheritDoc} */
     @Override
     public int compareTo(Relationship t) {
-        return m_relationship.compareTo(t.getRelationship());
+        return m_relationship.compareTo(t.getRelationshipText());
     }
 
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return m_relationship + " " + m_id.toString();
+        return "rel-type:" + m_relationship + ", entity:" + m_idOfEntity + ", relation:" + m_idOfRelatedEntity.toString() + ",isSecret:" + m_isSecret;
     }
 }

@@ -47,6 +47,6 @@ public class ConfigureCampaignCalendarAction extends AbstractAction {
             }
         };
         DialogCommitManager dcm = new OkCancelCommitManager(commitRunnable);
-        DialogFactory.buildDialog(m_frame, "Campaign Calendar Editor", true, dc, dcm);
+        DialogFactory.buildDialog(m_frame, "Campaign Calendar Editor", false, dc, dcm);
     }
 }

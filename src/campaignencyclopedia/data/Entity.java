@@ -114,21 +114,9 @@ public class Entity implements Comparable<Entity> {
     /** {@inheritDoc} */
     @Override
     public int compareTo(Entity t) {
-        String first = trimForSort(this.getName());
-        String second = trimForSort(t.getName());
+        String first = ComparisonTools.trimForSort(this.getName());
+        String second = ComparisonTools.trimForSort(t.getName());
         return first.compareTo(second);
-    }
-
-    /**
-     * Trims the word 'The' from the beginning of Entity names so that it does not interfere with sorting.
-     * @param toTrim 
-     * @return
-     */
-    private String trimForSort(String toTrim) {
-        if (toTrim.toLowerCase().startsWith("the ")) {
-            toTrim = toTrim.substring(4);
-        }
-        return toTrim;
     }
 
     /** {@inheritDoc} */

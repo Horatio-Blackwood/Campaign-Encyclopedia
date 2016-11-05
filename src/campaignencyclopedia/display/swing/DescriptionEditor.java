@@ -37,7 +37,7 @@ public class DescriptionEditor {
         m_label = new JLabel(title);
         m_editListener = editListener;
 
-        m_textArea = new JTextArea(5, 30);
+        m_textArea = new JTextArea(10, 30);
         m_textArea.setWrapStyleWord(true);
         m_textArea.setLineWrap(true);
         m_textArea.getDocument().addDocumentListener(new DocumentListener(){

@@ -12,22 +12,24 @@ public class EntityData {
 
     /** Tags about this entity.  Used for searching. */
     private final Set<String> m_tags;
-    private final String m_description;
-    private final Set<Relationship> m_relationships;
 
-    public EntityData(String description, Set<String> tags, Set<Relationship> relationships) {
+    /** The description of the Entity that owns this EntityData. */
+    private final String m_description;
+
+    /**
+     * Creates a new instance of EntityData with the supplied attributes.
+     * @param description the EntityData description.
+     * @param tags the set of tags for this Entity Data.
+     */
+    public EntityData(String description, Set<String> tags) {
         if (description == null) {
             throw new IllegalArgumentException("Parameter description must not be null.");
         }
         if (tags == null) {
             throw new IllegalArgumentException("Parameter tags must not be null.");
         }
-        if (relationships == null) {
-            throw new IllegalArgumentException("Parameter relationships must not be null.");
-        }
         m_tags = new HashSet<>(tags);
         m_description = description;
-        m_relationships = relationships;
     }
 
     /**
@@ -38,23 +40,24 @@ public class EntityData {
         return m_tags;
     }
 
+    /**
+     * Returns the description for this EntityData.
+     * @return the description for this EntityData.s
+     */
     public String getDescription() {
         return m_description;
     }
 
-    public Set<Relationship> getRelationships() {
-        return m_relationships;
-    }
-
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 89 * hash + Objects.hashCode(this.m_tags);
-        hash = 89 * hash + Objects.hashCode(this.m_description);
-        hash = 89 * hash + Objects.hashCode(this.m_relationships);
+        int hash = 7;
+        hash = 13 * hash + Objects.hashCode(this.m_tags);
+        hash = 13 * hash + Objects.hashCode(this.m_description);
         return hash;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -70,11 +73,6 @@ public class EntityData {
         if (!Objects.equals(this.m_description, other.m_description)) {
             return false;
         }
-        if (!Objects.equals(this.m_relationships, other.m_relationships)) {
-            return false;
-        }
         return true;
     }
-
-
 }

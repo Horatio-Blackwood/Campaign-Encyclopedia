@@ -6,7 +6,6 @@ import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Month;
 import campaignencyclopedia.data.TimelineEntry;
-import java.awt.Color;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -50,7 +49,7 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
     public void actionPerformed(ActionEvent ae) {
         Campaign campaign = m_cdm.getData();
         final Pdf pdf = new Pdf(PdfFont.HELVETICA, NORMAL);
-        
+
         try {
             // == TITLE PAGE ==========
             pdf.insertBlankLine(TITLE);
@@ -63,17 +62,29 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
                 pdf.renderLine("includes secret data");
             }
             pdf.insertPageBreak();
-            
-            
+
+
             // == TIMELINE ============
             exportTimeline(pdf);
-           
-
-            // == ENTITY DATA =========
-            // Get and Sort the Entities of this Campaign
+            
+            // == TABLE OF CONTENTS ===
+            // Get and Sort the Entities of this Campaign - these will also be used when we process each Entity.
             List<Entity> entities = new ArrayList<>(campaign.getEntities());
             Collections.sort(entities);
+            pdf.renderLine("Table of Contents", PdfFont.HELVETICA_BOLD, SECTION);
+            pdf.insertBlankLine(SECTION);
+            for (Entity entity : entities) {
+                if (entity.isSecret()) {
+                    if (m_includeSecrets) {
+                        pdf.renderLine(entity.getName(), SECRET_COLOR);
+                    }
+                } else {
+                    pdf.renderLine(entity.getName());
+                }
+            }
 
+
+            // == ENTITY DATA =========
             // For each entity
             for (Entity entity : entities) {
                 // If the entity is secret and we don't want to export secret data, skip it.
@@ -93,10 +104,10 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
 
                 // Public & Secret Data
                 EntityData publicData = entity.getPublicData();
-                processEntityData(publicData, pdf, false);
+                processEntityData(publicData, campaign.getRelationships(entity.getId()), pdf, false);
                 if (m_includeSecrets) {
                     EntityData secretData = entity.getSecretData();
-                    processEntityData(secretData, pdf, true);
+                    processEntityData(secretData, campaign.getRelationships(entity.getId()), pdf, true);
                 }
                 pdf.insertBlankLine();
             }
@@ -139,13 +150,17 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
     /**
      * Exports the timeline of the campaign.
      * @param pdf PDF file to render the timeline data to.
-     * @throws IOException 
+     * @throws IOException
      */
     private void exportTimeline(Pdf pdf) throws IOException {
         pdf.renderLine("Campaign Timeline", PdfFont.HELVETICA_BOLD, SECTION);
         pdf.insertBlankLine(SECTION);
         Map<TimelineDate, List<TimelineEntry>> timeline = new HashMap<>();
         for (TimelineEntry tle : m_cdm.getTimelineData()) {
+            // If secret and secrets not permitted, skip it.
+            if (tle.isSecret() && !m_includeSecrets) {
+                continue;
+            }
             TimelineDate tld = new TimelineDate(tle.getMonth(), tle.getYear());
             if (timeline.get(tld) == null) {
                 timeline.put(tld, new ArrayList<TimelineEntry>());
@@ -159,10 +174,6 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
             List<TimelineEntry> entries = timeline.get(date);
             Collections.sort(entries);
             for (TimelineEntry tle : entries) {
-                // If secret and secrets not permitted, skip it.
-                if (tle.isSecret() && !m_includeSecrets) {
-                    continue;
-                }
                 String msg;
                 if (tle.getTitle() == null || tle.getTitle().isEmpty()) {
                     msg = m_cdm.getEntity(tle.getAssociatedId()).getName();
@@ -178,13 +189,14 @@ public class ExportCampaignToPdfAction extends AbstractExtractToPdfAction {
             }
             pdf.insertBlankLine(6);
         }
+        pdf.insertPageBreak();
     }
-    
+
     /** A Helper class for organizing timeline data for PDF rendering. */
     private class TimelineDate implements Comparable<TimelineDate> {
         private final Month month;
         private final int year;
-        
+
         private TimelineDate(Month m, int y) {
             month = m;
             year = y;
