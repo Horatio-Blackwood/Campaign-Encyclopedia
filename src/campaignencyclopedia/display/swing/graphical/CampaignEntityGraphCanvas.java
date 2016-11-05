@@ -472,7 +472,11 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
                     clickedParticle.makeFixed();
                     m_currentParticle = clickedParticle;
                 }
-
+                
+                //If control was down, then tell the main entity display to show it as well.
+                if (m_hoveredEntity != null && me.isControlDown()) {
+                    m_display.showEntity(m_hoveredEntity);
+                }
             }
 
             @Override

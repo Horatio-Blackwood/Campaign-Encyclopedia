@@ -2,12 +2,7 @@ package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.display.EntityDisplay;
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
 
 /**
  * A graphical, Entity viewer that shows Entities and their relationships in an graph.
