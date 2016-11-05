@@ -1,9 +1,6 @@
 package campaignencyclopedia.display.swing.graphical;
 
-
-
 import campaignencyclopedia.data.CampaignDataManager;
-
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;

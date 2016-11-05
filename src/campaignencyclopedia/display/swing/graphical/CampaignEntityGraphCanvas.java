@@ -2,6 +2,7 @@ package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.DataAccessor;
 import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.EntityData;
 import campaignencyclopedia.data.Relationship;
 import campaignencyclopedia.display.CampaignDataManagerListener;
 import campaignencyclopedia.display.EntityDisplay;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -651,18 +653,12 @@ public class CampaignEntityGraphCanvas extends JComponent implements Scrollable,
             m_particleSystem.removeSpring(s);
         }
         
-        // Collect all relationships
-        EntityData pubData = entity.getPublicData();
-        EntityData secretData = entity.getSecretData();
-        Set<Relationship> relationships = pubData.getRelationships();
-        relationships.addAll(secretData.getRelationships());        
-        
         // Create a spring between the new entity's particle and the existing one for each relationship.
-        for (Relationship relationship : relationships) {
-            RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getIdOfRelation());
+        for (Relationship relationship : m_accessor.getRelationshipsForEntity(entity.getId()).getAllRelationships()) {
+            RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getRelatedEntity());
             if (otherRenderingConfig == null) {
                 LOGGER.warning("Found a relationship pointing to a null entity on " + entity.getName() + 
-                        "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getIdOfRelation().toString() + ")");
+                        "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getRelatedEntity().toString() + ")");
                 continue; 
             }
             Particle particleForRelatedEntity = otherRenderingConfig.particle;
