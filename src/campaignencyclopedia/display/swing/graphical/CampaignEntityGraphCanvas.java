@@ -54,7 +54,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
     // RENDERING PARAMETERS
     /** How long to draw the lines between the dots. */
-    private static final int DOT_LINE_LENGTH = 200;
+    private static final int DOT_LINE_LENGTH = 75;
     /** THe radius of the circles. */
     private static final int DOT_RADIUS = 20;
     /** A pad value. */
@@ -64,8 +64,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     /** The font to render entity names in. */
     private static final Font ENTITY_NAME_FONT = new Font("Arial", Font.PLAIN, 14);
     
-    /** The max scroll increment for being scrollable. */
-    private final int MAX_UNIT_SCROLL_INCREMENT = 5;
     /** The vertical translation of coordinates in the particle system to the viewer 
      *  system since you can't scroll to or use negative coordinates in Swing/Scrollable. */
     private float m_verticalScrollTranslation = 0.0f;
@@ -84,13 +82,13 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     /** The gravity value. */
     private static final float GRAVITY = 0.0f;
     /** Amount of drag. */
-    private static final float DRAG = 10.0f;
+    private static final float DRAG = 8.0f;
     /** The amount of repulsive force between graph nodes. */
     private static final float REPULSIVE_FORCE = -1000;
     /** The minimum repulsive distance. */
     private static final float MIN_REPULSIVE_DISTANCE = 30;
     /** The strength of the springs which hold the nodes together. */
-    private static final float SPRING_STRENGTH = 0.3f;
+    private static final float SPRING_STRENGTH = 0.4f;
     /** The amount of spring dampening. */
     private static final float SPRING_DAMPENING = 0.4f;
     /** The current particle that has been clicked, used for dragging. */
@@ -728,7 +726,8 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         Set<Spring> springsToRemove = new HashSet<>();
         for (int i = 0; i < numSprings; i++) {
             Spring spring = m_particleSystem.getSpring(i);
-            if (spring.getOneEnd().equals(rc.particle) || spring.getTheOtherEnd().equals(rc.particle)) {
+            //Just check one end and not the other end so they will only be springs/relationships originating from this entity and not ones pointing to it.
+            if (spring.getOneEnd().equals(rc.particle) /*|| spring.getTheOtherEnd().equals(rc.particle)*/) {
                 springsToRemove.add(spring);
             }
         }
@@ -736,17 +735,21 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             m_particleSystem.removeSpring(s);
         }
         
-        // Create a spring between the new entity's particle and the existing one for each relationship.
-        for (Relationship relationship : m_accessor.getRelationshipsForEntity(entity.getId()).getAllRelationships()) {
-            RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getRelatedEntity());
-            if (otherRenderingConfig == null) {
-                LOGGER.warning("Found a relationship pointing to a null entity on " + entity.getName() + 
-                        "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getRelatedEntity().toString() + ")");
-                continue; 
-            }
-            Particle particleForRelatedEntity = otherRenderingConfig.particle;
+        RelationshipManager relationshipManager = m_accessor.getRelationshipsForEntity(entity.getId());
+        
+        if (relationshipManager != null) {
+            // Create a spring between the new entity's particle and the existing one for each relationship.
+            for (Relationship relationship : relationshipManager.getAllRelationships()) {
+                RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getRelatedEntity());
+                if (otherRenderingConfig == null) {
+                    LOGGER.warning("Found a relationship pointing to a null entity on " + entity.getName() + 
+                            "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getRelatedEntity().toString() + ")");
+                    continue; 
+                }
+                Particle particleForRelatedEntity = otherRenderingConfig.particle;
 
-            m_particleSystem.makeSpring(rc.particle, particleForRelatedEntity, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
+                m_particleSystem.makeSpring(rc.particle, particleForRelatedEntity, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
+            }
         }
     }
     

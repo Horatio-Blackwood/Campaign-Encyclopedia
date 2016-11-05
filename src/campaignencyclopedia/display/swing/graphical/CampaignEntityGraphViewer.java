@@ -24,24 +24,6 @@ public class CampaignEntityGraphViewer extends CanvasViewer {
         super(new CampaignEntityGraphCanvas(display, cdm), cdm, "Campaign Graph Viewer", new Dimension(900, 675), true);
     }
 
-//    private void initialize() {
-//        m_frame = new JFrame("Campaign Graph Viewer");
-//        m_frame.setLayout(new BorderLayout());
-//        m_frame.setPreferredSize(m_windowSize);
-//        m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//
-//        m_canvas.setFocusable(true);
-//        m_canvas.requestFocusInWindow();
-//        JScrollPane canvasScroller = new JScrollPane(m_canvas);
-//        m_frame.add(canvasScroller, BorderLayout.CENTER);
-//        m_frame.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosing(WindowEvent we) {
-//                m_cdm.removeListener(CampaignEntityGraphViewer.this);
-//            }
-//        });
-//    }
-
     @Override
     public void clearAllData() {
         m_frame.dispose();
