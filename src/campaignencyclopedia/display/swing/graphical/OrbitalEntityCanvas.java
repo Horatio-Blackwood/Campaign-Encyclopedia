@@ -257,7 +257,7 @@ public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
                             hoverRelTextY += orignalFontMetrics.getHeight();
                             g2.drawString(relString, (float)m_hoverPoint.x + BIG_PAD, hoverRelTextY);
                         }
-                    } else{
+                    } else {
                         m_hoveredEntity = null;
                     }
                 }

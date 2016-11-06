@@ -142,7 +142,15 @@ public class MenuManager {
                              "    Hover over an item to view relationship details\n" +
                              "    Click on any outer node to navigate to that node\n" +
                              "    or use the Back and Fwd buttons\n" +
-                             "    CTRL+Click on any item to display it in the editort";
+                             "    CTRL+Click on any item to display it in the editor\n\n" +
+                             "Graph View Controls:\n" +
+                             "    Click and drag an orb to move it\n" +
+                             "    SPACE - Freeze the display to stop orb movement\n" +
+                             "    CTRL+Click on any orb to display it in the editor\n" +
+                             "    SHIFT + ARROWS - Move around the display\n" +
+                             "    SHIFT + PLUS/MINUS - Zoom in/out\n" +
+                             "    SHIFT + MOUSE WHEEL - Zoom in/out\n" +
+                             "";
                 JOptionPane.showMessageDialog(m_frame, msg, "Help", JOptionPane.PLAIN_MESSAGE);
             }
         };

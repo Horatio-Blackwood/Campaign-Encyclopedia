@@ -8,21 +8,20 @@ import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Ellipse2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -64,20 +63,28 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     /** The font to render entity names in. */
     private static final Font ENTITY_NAME_FONT = new Font("Arial", Font.PLAIN, 14);
     
+    
+    //Graphics members
     /** The vertical translation of coordinates in the particle system to the viewer 
      *  system since you can't scroll to or use negative coordinates in Swing/Scrollable. */
-    private float m_verticalScrollTranslation = 0.0f;
+    private float m_yTranslation = 0;
     /** The horizontal translation of coordinates in the particle system to the viewer 
      *  system since you can't scroll to or use negative coordinates in Swing/Scrollable. */
-    private float m_horizontalScrollTranslation = 0.0f;
+    private float m_xTranslation = 0;
     /** The scale factor used for zooming. */
     private float m_scaleFactor = 1.0f;
+    /** The amount zoomed in or out on the zoom keystrokes. */
+    private static final float ZOOM_INCREMENT = 0.05f;
+    /** The amount panned on the pan keystrokes. */
+    private static final int PAN_INCREMENT = 50;
+    /** The point currently hovered over. */
+    private Point2D.Double m_hoverPointRenderSpace;
     
 
     // PHYSICS PARAMETERS
     /** The particle physics system. */
     private ParticleSystem m_particleSystem;
-    /** The last time the system ticked, in miliseconds. */
+    /** The last time the system ticked, in milliseconds. */
     private long m_previousUpdateTime;
     /** The gravity value. */
     private static final float GRAVITY = 0.0f;
@@ -109,13 +116,11 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     /** A map of Entity UUIDs to their rendering configurations. */
     private final Map<UUID, RenderingConfig> m_renderingConfigMap;
     /** The entity currently hovered over. */
-    private UUID m_hoveredEntity;
+    private UUID m_hoveredEntityId;
     private static final String RELATIONSHIPS = "Relationships:";
     private static final int BIG_PAD = 25;
-    /** The point currently hovered over. */
-    private Point2D.Double m_hoverPoint;
-    /** A data accessor for fetching data. */
     
+    /** A data accessor for fetching data. */
     private final DataAccessor m_accessor;
     /** An EntityDisplay to show/edit Entity data on/with. */
     private final EntityDisplay m_display;
@@ -236,15 +241,28 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        // Rendering stuff
+        //Get a G2D
         Graphics2D g2 = (Graphics2D)g;
-
-        //Translate by scroll amount
-        g2.scale(m_scaleFactor, m_scaleFactor);
-        g2.translate(m_horizontalScrollTranslation, m_verticalScrollTranslation);
+        
+        //Hints for AA
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
+        //Save original transform, is this necessary?
+        AffineTransform saveTransform = g2.getTransform();
+        
+        //Blank screen
+        g2.setColor(getBackground());
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        
+        //Scale based on scale factor, zooming around the center of the screen
+        g2.translate(getWidth()/2, getHeight()/2);
+        g2.scale(m_scaleFactor, m_scaleFactor);
+        g2.translate(-getWidth()/2, -getHeight()/2);
+        
+        //Translate by scroll amount
+        g2.translate(m_xTranslation, m_yTranslation);
+        
         //Draw Springs
         g2.setPaint(Colors.LINE);
         for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
@@ -258,54 +276,56 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             drawRenderingConfig(rc, g2);
         }
         
-        if (m_hoveredEntity != null) {
-                // RENDER RELATIONSHIP HOVER DATA (IF VALID TO DO SO)
-                if (m_hoveredEntity != null) {
-                    Entity hovered = m_accessor.getEntity(m_hoveredEntity);
-                    if (hovered != null) {
-                        String title = hovered.getName() + " - " + RELATIONSHIPS;
-                        int maxWidth = g2.getFontMetrics().stringWidth(title);
-                        List<String> hoverRelationships = new ArrayList<>();
-                        hoverRelationships.add(title);
-                        RelationshipManager relMgr = m_accessor.getRelationshipsForEntity(m_hoveredEntity);
-                        for (Relationship rel : relMgr.getPublicRelationships()) {
-                            String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
-                            hoverRelationships.add(line);
-                            int stringWidth = g2.getFontMetrics().stringWidth(line);
-                            if (maxWidth < stringWidth) {
-                                maxWidth = stringWidth;
-                            }
-                        }
-                        for (Relationship rel : relMgr.getSecretRelationships()) {
-                                String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
-                                hoverRelationships.add(line);
-                                int stringWidth = g2.getFontMetrics().stringWidth(line);
-                                if (maxWidth < stringWidth) {
-                                    maxWidth = stringWidth;
-                                }
-                        }
-
-                        // Background
-                        int hoverWidth = maxWidth + BIG_PAD * 2;
-                        int hoverHeight = hoverRelationships.size() * g2.getFontMetrics().getHeight() + BIG_PAD;
-                        g2.setPaint(Color.WHITE);
-                        g2.fill(new Rectangle2D.Double(m_hoverPoint.x, m_hoverPoint.y + BIG_PAD, hoverWidth, hoverHeight));
-
-                        // Border
-                        g2.setPaint(Color.BLACK);
-                        g2.draw(new Rectangle2D.Double(m_hoverPoint.x, m_hoverPoint.y + BIG_PAD, hoverWidth, hoverHeight));
-
-                        // Text
-                        float hoverRelTextY = (float)m_hoverPoint.y + BIG_PAD + PAD;
-                        for (String relString : hoverRelationships) {
-                            hoverRelTextY += g2.getFontMetrics().getHeight();
-                            g2.drawString(relString, (float)m_hoverPoint.x + BIG_PAD, hoverRelTextY);
-                        }
-                    } else{
-                        m_hoveredEntity = null;
+        //Render tooltip if we are hovering over an entity
+        if (m_hoveredEntityId != null) {
+            //Retrieve the actual entity and verify it exists
+            Entity hovered = m_accessor.getEntity(m_hoveredEntityId);
+            if (hovered != null) {
+                String title = hovered.getName() + " - " + RELATIONSHIPS;
+                int maxWidth = g2.getFontMetrics().stringWidth(title);
+                List<String> hoverRelationships = new ArrayList<>();
+                hoverRelationships.add(title);
+                RelationshipManager relMgr = m_accessor.getRelationshipsForEntity(m_hoveredEntityId);
+                for (Relationship rel : relMgr.getPublicRelationships()) {
+                    String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName();
+                    hoverRelationships.add(line);
+                    int stringWidth = g2.getFontMetrics().stringWidth(line);
+                    if (maxWidth < stringWidth) {
+                        maxWidth = stringWidth;
                     }
                 }
+                for (Relationship rel : relMgr.getSecretRelationships()) {
+                        String line = "\n  - " + rel.getRelationshipText() + " " + m_accessor.getEntity(rel.getRelatedEntity()).getName() + " (Secret)";
+                        hoverRelationships.add(line);
+                        int stringWidth = g2.getFontMetrics().stringWidth(line);
+                        if (maxWidth < stringWidth) {
+                            maxWidth = stringWidth;
+                        }
+                }
+
+                // Background
+                int hoverWidth = maxWidth + BIG_PAD * 2;
+                int hoverHeight = hoverRelationships.size() * g2.getFontMetrics().getHeight() + BIG_PAD;
+                g2.setPaint(Color.WHITE);
+                g2.fill(new Rectangle2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y + BIG_PAD, hoverWidth, hoverHeight));
+
+                // Border
+                g2.setPaint(Color.BLACK);
+                g2.draw(new Rectangle2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y + BIG_PAD, hoverWidth, hoverHeight));
+
+                // Text
+                float hoverRelTextY = (float)m_hoverPointRenderSpace.y + BIG_PAD + PAD;
+                for (String relString : hoverRelationships) {
+                    hoverRelTextY += g2.getFontMetrics().getHeight();
+                    g2.drawString(relString, (float)m_hoverPointRenderSpace.x + BIG_PAD, hoverRelTextY);
+                }
+            } else {
+                m_hoveredEntityId = null;
+            }
         }
+        
+        //Restore original transformation, ...necessary?
+        g2.setTransform(saveTransform);
     }
 
     /**
@@ -342,8 +362,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
         // Render Central Entity Text
         g2.setFont(ENTITY_NAME_FONT);
-        //g2.drawString(rc.text, (int)anchorX + PAD, (int)anchorY + (licensePlateHeight) - PAD);
-
         if (licensePlateUsedMinWidth) {
             anchorX += (licensePlateWidth - bigFontMetrics.stringWidth(rc.text)) / 2.0f;
         }
@@ -404,20 +422,27 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
             @Override
             public void keyPressed(KeyEvent e) {
-                //Zoom hotkeys
-                if (e.isControlDown()) {
+                if (e.isShiftDown()) {
+                    //Zoom hotkeys
                     if (e.getKeyCode() == KeyEvent.VK_PLUS ||
-                        e.getKeyCode() == KeyEvent.VK_I ||
-                        e.getKeyCode() == KeyEvent.VK_EQUALS) {
-
-                        m_scaleFactor += 0.1f;
-                        System.out.println("+ : " + m_scaleFactor);
+                            e.getKeyCode() == KeyEvent.VK_I ||
+                            e.getKeyCode() == KeyEvent.VK_EQUALS) {
+                        zoom(ZOOM_INCREMENT);
                     } else if (e.getKeyCode() == KeyEvent.VK_MINUS ||
-                               e.getKeyCode() == KeyEvent.VK_K ||
-                               e.getKeyCode() == KeyEvent.VK_UNDERSCORE) {
-
-                        m_scaleFactor -= 0.1f;
-                        System.out.println("- : " + m_scaleFactor);
+                            e.getKeyCode() == KeyEvent.VK_K ||
+                            e.getKeyCode() == KeyEvent.VK_UNDERSCORE) {
+                        zoom(-ZOOM_INCREMENT);
+                    }
+                    
+                    //Pan hotkeys
+                    if (e.getKeyCode() == KeyEvent.VK_UP) {
+                        m_yTranslation -= (PAN_INCREMENT / m_scaleFactor);
+                    } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                        m_yTranslation += (PAN_INCREMENT / m_scaleFactor);
+                    } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+                        m_xTranslation -= (PAN_INCREMENT / m_scaleFactor);
+                    } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                        m_xTranslation += (PAN_INCREMENT / m_scaleFactor);
                     }
                 }
                 
@@ -445,197 +470,37 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
      * Initializes the mouse listeners for grabbing and dragging nodes.
      */
     private void initializeMouseListener() {
-        addMouseListener(new MouseAdapter(){
-            @Override
-            public void mousePressed(MouseEvent me) {
-                //Get point coordinates
-                Point click = me.getPoint();
-                Vector3D clickVector = new Vector3D((click.x / m_scaleFactor - m_horizontalScrollTranslation),
-                                                    (click.y / m_scaleFactor - m_verticalScrollTranslation),
-                                                    0);
-                int r = getDotRadius();
-                int r2 = r * r;
-                Particle clickedParticle = null;
-                
-                //Find if a particle was clicked on
-                for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-                    Particle p = m_particleSystem.getParticle(i);    
-
-                    if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
-                        clickedParticle = p;
-                        break;
-                    }
-                }
-
-                //Fix clicked particle for dragging
-                if (clickedParticle != null) {
-                    clickedParticle.makeFixed();
-                    m_currentParticle = clickedParticle;
-                }
-                
-                //If control was down, then tell the main entity display to show it as well.
-                if (m_hoveredEntity != null && me.isControlDown()) {
-                    m_display.showEntity(m_hoveredEntity);
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent me) {
-                //Unset the current particle being dragged when the mouse is released
-                if (m_currentParticle != null) {
-                    //Free the particle, unless the system is on lockdown
-                    if (!m_onLockdown) {
-                        m_currentParticle.makeFree();
-                    }
-                    m_currentParticle = null;
-                }
-            }
-        });
-
-        // Mouse Wheel Listener
-        addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent me) {
-                
-                //Get point coordinates
-                Point click = me.getPoint();
-                Vector3D hoverVector = new Vector3D((click.x / m_scaleFactor - m_horizontalScrollTranslation),
-                                                    (click.y / m_scaleFactor - m_verticalScrollTranslation),
-                                                    0);
-                int r = getDotRadius();
-                int r2 = r * r;
-                boolean found = false;
-                
-                //Find if a particle was hovered on
-                for (UUID id : m_renderingConfigMap.keySet()) {
-                    RenderingConfig rc = m_renderingConfigMap.get(id);
-                    Particle p = rc.particle;
-
-                    if (p.position().distanceSquaredTo(hoverVector) <= (r2)) {
-                        found = true;
-                        m_hoveredEntity = id;
-                        if (m_hoverPoint == null) {
-                            m_hoverPoint = new Point2D.Double(hoverVector.x(), hoverVector.y());
-                        } else {
-                            m_hoverPoint.setLocation(hoverVector.x(), hoverVector.y());
-                        }
-                        repaint();
-                        break;
-                    }
-                }
-                
-                // Clear out the hovered entity if none exists
-                if (found == false) {
-                    m_hoveredEntity = null;
-                    m_hoverPoint = null;
-                    repaint();
-                }
-            }
-
-            @Override
-            public void mouseDragged(MouseEvent me) {
-                if (m_currentParticle != null) {
-                    m_currentParticle.position().set((me.getX() / m_scaleFactor) - m_horizontalScrollTranslation,
-                                                     (me.getY() / m_scaleFactor) - m_verticalScrollTranslation,
-                                                     0);
-                }
-            }
-        });
+        //Translation/Panning Handling
+        TranslationHandler translator = new TranslationHandler();
+        addMouseListener(translator);
+        addMouseMotionListener(translator);
+        
+        //Particle-Mouse interaction for toolips and dragging
+        ParticleInteractionMouseHandler particleInteractionMouseHandler = new ParticleInteractionMouseHandler();
+        addMouseListener(particleInteractionMouseHandler);
+        addMouseMotionListener(particleInteractionMouseHandler);
 
         // Mouse Wheel Listener
         addMouseWheelListener(new MouseAdapter() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent mwe) {
                 if ((mwe.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK)) == InputEvent.SHIFT_DOWN_MASK) {
-                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 25.0f;
+                    zoom((float)mwe.getPreciseWheelRotation() / -25.0f);
+//                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 25.0f;
                 }
             }
         });
 
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-        int furthestLeft = Integer.MAX_VALUE;
-        int furthestRight = Integer.MIN_VALUE;
-        int furthestTop = Integer.MAX_VALUE;
-        int furthestBottom = Integer.MIN_VALUE;
-        
-        //Find the furthest extents of the drawn graph
-        for (RenderingConfig rc : m_renderingConfigMap.values()) {
-            if (rc.particle.position().x() < furthestLeft) {
-                furthestLeft = (int)rc.particle.position().x();
-            }
-            if (rc.particle.position().x() > furthestRight) {
-                furthestRight = (int)rc.particle.position().x();
-            }
-            if (rc.particle.position().y() < furthestTop) {
-                furthestTop = (int)rc.particle.position().y();
-            }
-            if (rc.particle.position().y() > furthestBottom) {
-                furthestBottom = (int)rc.particle.position().y();
-            }
-        }
-        
-        //Set the translation adjustment factors, including edge padding
-        if (m_currentParticle == null) {
-            m_verticalScrollTranslation = (-furthestTop + SCROLL_PAD);
-            m_horizontalScrollTranslation = (-furthestLeft + SCROLL_PAD);
-        } else {
-            //TODO figure out a way to not jerk the screen around
-        }
-        
-        float horizontalGraphSpan = (furthestRight - furthestLeft);
-        float verticalGraphSpan = (furthestBottom - furthestTop);
-
-        int xDim = (int)((horizontalGraphSpan + 2 * SCROLL_PAD) * m_scaleFactor);
-        int yDim = (int)((verticalGraphSpan + 2 * SCROLL_PAD) * m_scaleFactor);
-        return new Dimension(xDim, yDim);
+    /**
+     * Adds the given value to the scale factor.  Pass a negative value to zoom out.
+     * @param scaleFactor The value to add.
+     */
+    private void zoom(float scaleFactor) {
+        //Add in the scale factor, but don't drop below the increment.  That's as close to 0 as you can go.
+        m_scaleFactor = Math.max(ZOOM_INCREMENT, m_scaleFactor + scaleFactor);
     }
-
-//    @Override
-//    public Dimension getPreferredScrollableViewportSize() {
-//        return getPreferredSize();
-//    }
-//
-//    @Override
-//    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-//        //Get the current position.
-//        int currentPosition = 0;
-//        if (orientation == SwingConstants.HORIZONTAL) {
-//            currentPosition = visibleRect.x;
-//        } else {
-//            currentPosition = visibleRect.y;
-//        }
-//
-//        //Return the number of pixels between currentPosition
-//        //and the nearest tick mark in the indicated direction.
-//        if (direction < 0) {
-//            int newPosition = currentPosition - (currentPosition / m_maxUnitIncrement) * m_maxUnitIncrement;
-//            return (newPosition == 0) ? m_maxUnitIncrement : newPosition;
-//        } else {
-//            return ((currentPosition / m_maxUnitIncrement) + 1) * m_maxUnitIncrement - currentPosition;
-//        }
-//    }
-//
-//    @Override
-//    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-//        if (orientation == SwingConstants.HORIZONTAL) {
-//            return visibleRect.width - m_maxUnitIncrement;
-//        } else {
-//            return visibleRect.height - m_maxUnitIncrement;
-//        }
-//    }
-//
-//    @Override
-//    public boolean getScrollableTracksViewportWidth() {
-//        return false;
-//    }
-//
-//    @Override
-//    public boolean getScrollableTracksViewportHeight() {
-//        return false;
-//    }
 
     @Override
     public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
@@ -646,7 +511,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     public void timelineEntryRemoved(UUID id) {
         // ignored
     }
-
     
     @Override
     public JComponent getComponent() {
@@ -655,8 +519,12 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
     @Override
     public void clearAllData() {
-        // Ignored
+        for (UUID id : m_renderingConfigMap.keySet()) {
+            dataRemoved(id);
+        }
     }
+    
+    @Override
     public void dataRemoved(UUID id) {
         LOGGER.log(Level.INFO, "Data removed from graph display: " + id);
         
@@ -710,7 +578,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             int r = getDotRadius();
             RenderingConfig rc = new RenderingConfig();
             rc.particle = newParticle;
-            rc.dot = new Ellipse2D.Double(-r, -r, 2 * r, 2 * r);
             m_renderingConfigMap.put(entity.getId(), rc);
         }
         
@@ -731,7 +598,8 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         for (int i = 0; i < numSprings; i++) {
             Spring spring = m_particleSystem.getSpring(i);
             //Just check one end and not the other end so they will only be springs/relationships originating from this entity and not ones pointing to it.
-            if (spring.getOneEnd().equals(rc.particle) /*|| spring.getTheOtherEnd().equals(rc.particle)*/) {
+            //Does not need an "|| spring.getTheOtherEnd().equals(rc.particle)" clause
+            if (spring.getOneEnd().equals(rc.particle)) {  
                 springsToRemove.add(spring);
             }
         }
@@ -757,12 +625,175 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         }
     }
     
+    /**
+     * Takes the given coordinates on the screen and tells you what the render 
+     * coordinate at that location on the screen is.
+     * @param point The screen space point.
+     * @return The point in render space that is at that screen space coordinate.
+     */
+    private Point getRenderSpaceAtScreenSpace(Point point) {
+        AffineTransform transform = new AffineTransform();
+        //Scale based on scale factor, zooming around the center of the screen
+        transform.translate(getWidth()/2, getHeight()/2);
+        transform.scale(m_scaleFactor, m_scaleFactor);
+        transform.translate(-getWidth()/2, -getHeight()/2);
+        
+        //Translate by scroll amount
+        transform.translate(m_xTranslation, m_yTranslation);
+        
+        
+        Point output = new Point();
+        try {
+            transform.inverseTransform(point, output);
+        } catch (NoninvertibleTransformException ex) {
+            System.err.println(ex);
+        }
+        
+        return output;
+    }
+    
 
     /** A data bag for holding the locations calculated for rendering data. */
     private class RenderingConfig {
         private String text;
-        private Shape dot;
         private Color color;
         private Particle particle;
+    }
+    
+    /**
+     * Handler for translations from the mouse
+     */
+    private class TranslationHandler extends MouseAdapter {
+        private float lastOffsetX;
+        private float lastOffsetY;
+        
+        @Override
+        public void mousePressed(MouseEvent e) {
+            //Store click point for drag processing
+            lastOffsetX = e.getX();
+            lastOffsetY = e.getY();
+        }
+        
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            if (e.isShiftDown()) {
+                //Compute how far we dragged the mouse
+                float dragX = (float)e.getX() - lastOffsetX;
+                float dragY = (float)e.getY() - lastOffsetY;
+
+                //Update the position to compute the next drag delta
+                lastOffsetX += dragX;
+                lastOffsetY += dragY;
+
+                //Translate the canvas, accounting for scale factor
+                m_xTranslation += (dragX / m_scaleFactor);
+                m_yTranslation += (dragY / m_scaleFactor);
+
+                repaint();
+            }
+        }
+    }
+    
+    
+    private class ParticleInteractionMouseHandler extends MouseAdapter {
+        private Point lastClickPoint;
+            
+        @Override
+        public void mousePressed(MouseEvent me) {
+            //Get point coordinates
+            Point click = me.getPoint();
+            Point renderSpaceClick = getRenderSpaceAtScreenSpace(click);
+            Vector3D clickVector = new Vector3D(renderSpaceClick.x, renderSpaceClick.y, 0);
+
+            int r = getDotRadius();
+            int r2 = r * r;
+            Particle clickedParticle = null;
+
+            //Find if a particle was clicked on
+            for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+                Particle p = m_particleSystem.getParticle(i);    
+
+                if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
+                    clickedParticle = p;
+                    break;
+                }
+            }
+
+            //Fix clicked particle for dragging
+            if (clickedParticle != null) {
+                clickedParticle.makeFixed();
+                m_currentParticle = clickedParticle;
+            }
+
+            //If control was down, then tell the main entity display to show it as well.
+            if (m_hoveredEntityId != null && me.isControlDown()) {
+                m_display.showEntity(m_hoveredEntityId);
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent me) {
+            //Unset the current particle being dragged when the mouse is released
+            if (m_currentParticle != null) {
+                //Free the particle, unless the system is on lockdown
+                if (!m_onLockdown) {
+                    m_currentParticle.makeFree();
+                }
+                m_currentParticle = null;
+            }
+        }
+        
+        @Override
+        public void mouseMoved(MouseEvent me) {
+
+            //Get point coordinates
+            Point mouseOnScreen = me.getPoint();
+
+            //Convert to find what render space we clicked on and convert to vector
+            Point hoveredRenderCoords = getRenderSpaceAtScreenSpace(mouseOnScreen);
+            Vector3D hoverVectorRender = new Vector3D(hoveredRenderCoords.x, hoveredRenderCoords.y, 0);
+
+            int r = getDotRadius();
+            int r2 = r * r;
+            boolean found = false;
+
+            //Find if a particle was hovered on
+            for (UUID id : m_renderingConfigMap.keySet()) {
+                RenderingConfig rc = m_renderingConfigMap.get(id);
+                Particle p = rc.particle;
+
+                //If the cursor's location in render space is close enough to a particle...
+                if (p.position().distanceSquaredTo(hoverVectorRender) <= (r2)) {
+                    found = true;
+                    m_hoveredEntityId = id;
+                    //Record where we were hovering in render space
+                    if (m_hoverPointRenderSpace == null) {
+                        m_hoverPointRenderSpace = new Point2D.Double(hoveredRenderCoords.getX(), hoveredRenderCoords.getY());
+                    } else {
+                        m_hoverPointRenderSpace.setLocation(hoveredRenderCoords.getX(), hoveredRenderCoords.getY());
+                    }
+                    repaint();
+                    break;
+                }
+            }
+
+            // Clear out the hovered entity if none exists
+            if (found == false) {
+                m_hoveredEntityId = null;
+                m_hoverPointRenderSpace = null;
+                repaint();
+            }
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent me) {
+            if (m_currentParticle != null) {
+                Point dragLocation = getRenderSpaceAtScreenSpace(me.getPoint());
+
+                m_currentParticle.position().set(dragLocation.x,
+                                                 dragLocation.y,
+                                                 0);
+            }
+        }
     }
 }

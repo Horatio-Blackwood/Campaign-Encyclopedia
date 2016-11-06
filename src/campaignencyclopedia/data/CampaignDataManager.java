@@ -315,6 +315,7 @@ public class CampaignDataManager implements DataAccessor {
     @Override
     public void addOrUpdateAllRelationships(UUID entity, RelationshipManager relMgr) {
         if (entity != null && relMgr != null) {
+            new Exception().printStackTrace();
             m_relationships.put(entity, relMgr);
             
             // Alert Listeners, data updated because relationship added

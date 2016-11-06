@@ -91,20 +91,6 @@ public class CanvasViewer implements CampaignDataManagerListener {
 
     /** Initializes the components. */
     private void initialize() {
-
-//
-//        JScrollPane canvasScroller = new JScrollPane(m_canvas);
-//        m_frame.add(canvasScroller, BorderLayout.CENTER);
-//        m_frame.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosing(WindowEvent we) {
-//                m_cdm.removeListener(CampaignEntityGraphViewer.this);
-//            }
-//        });
-        
-        
-        /////
-        
         m_frame = new JFrame(m_title);
         m_frame.setLayout(new BorderLayout());
         m_frame.setPreferredSize(m_size);
