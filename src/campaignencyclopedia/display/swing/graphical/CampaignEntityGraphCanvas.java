@@ -15,6 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -168,8 +169,8 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
 
-        initializeKeyListener();
-        initializeMouseListener();
+        initializeKeyListeners();
+        initializeMouseListeners();
     }
 
     /** Load up all of the existing entity data for rendering. */
@@ -205,6 +206,37 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
                 m_particleSystem.makeSpring(a, b, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
             }
         }
+    }
+    
+    
+    /**
+     * Initializes a key listener for the Canvas.  Sets up zoom and lockdown hotkeys.
+     */
+    private void initializeKeyListeners() {
+        addKeyListener(new KeyHandler());
+    }
+    
+    /**
+     * Initializes the mouse listeners for grabbing and dragging nodes.
+     */
+    private void initializeMouseListeners() {
+        //Translation/Panning handling via mouse
+        TranslationMouseHandler translator = new TranslationMouseHandler();
+        addMouseListener(translator);
+        addMouseMotionListener(translator);
+        
+        //Zoom handling via mouse wheel
+        addMouseWheelListener(new ScalingMouseHandler());
+        
+        //Particle-Mouse interaction for toolips and dragging
+        ParticleInteractionMouseHandler particleInteractionMouseHandler = new ParticleInteractionMouseHandler();
+        addMouseListener(particleInteractionMouseHandler);
+        addMouseMotionListener(particleInteractionMouseHandler);
+    }
+        
+    @Override
+    public JComponent getComponent() {
+        return this;
     }
     
     /**
@@ -250,18 +282,22 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
         //Save original transform, is this necessary?
         AffineTransform saveTransform = g2.getTransform();
+        AffineTransform transform = g2.getTransform();
         
         //Blank screen
         g2.setColor(getBackground());
         g2.fillRect(0, 0, getWidth(), getHeight());
         
         //Scale based on scale factor, zooming around the center of the screen
-        g2.translate(getWidth()/2, getHeight()/2);
-        g2.scale(m_scaleFactor, m_scaleFactor);
-        g2.translate(-getWidth()/2, -getHeight()/2);
+        transform.translate(getWidth()/2, getHeight()/2);
+        transform.scale(m_scaleFactor, m_scaleFactor);
+        transform.translate(-getWidth()/2, -getHeight()/2);
         
         //Translate by scroll amount
-        g2.translate(m_xTranslation, m_yTranslation);
+        transform.translate(m_xTranslation, m_yTranslation);
+        
+        //Set on graphics
+        g2.setTransform(transform);
         
         //Draw Springs
         g2.setPaint(Colors.LINE);
@@ -302,22 +338,27 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
                             maxWidth = stringWidth;
                         }
                 }
-
+                
+                //Reset to render tooltip, applying transform to the location point but not actually scaling the tooltip
+                g2.setTransform(saveTransform);
+                Point2D tooltipLocation = new Point2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y);
+                transform.transform(tooltipLocation, tooltipLocation);  //Apply transform to the location
+                
                 // Background
                 int hoverWidth = maxWidth + BIG_PAD * 2;
                 int hoverHeight = hoverRelationships.size() * g2.getFontMetrics().getHeight() + BIG_PAD;
                 g2.setPaint(Color.WHITE);
-                g2.fill(new Rectangle2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y + BIG_PAD, hoverWidth, hoverHeight));
+                g2.fill(new Rectangle2D.Double(tooltipLocation.getX(), tooltipLocation.getY() + BIG_PAD, hoverWidth, hoverHeight));
 
                 // Border
                 g2.setPaint(Color.BLACK);
-                g2.draw(new Rectangle2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y + BIG_PAD, hoverWidth, hoverHeight));
+                g2.draw(new Rectangle2D.Double(tooltipLocation.getX(), tooltipLocation.getY() + BIG_PAD, hoverWidth, hoverHeight));
 
                 // Text
-                float hoverRelTextY = (float)m_hoverPointRenderSpace.y + BIG_PAD + PAD;
+                float hoverRelTextY = (float)tooltipLocation.getY() + BIG_PAD + PAD;
                 for (String relString : hoverRelationships) {
                     hoverRelTextY += g2.getFontMetrics().getHeight();
-                    g2.drawString(relString, (float)m_hoverPointRenderSpace.x + BIG_PAD, hoverRelTextY);
+                    g2.drawString(relString, (float)tooltipLocation.getX() + BIG_PAD, hoverRelTextY);
                 }
             } else {
                 m_hoveredEntityId = null;
@@ -408,91 +449,7 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     private int getDotRadius() {
         return DOT_RADIUS;
     }
-
-
-    /**
-     * Initializes a key listener for the Canvas.  Sets up zoom and lockdown hotkeys.
-     */
-    private void initializeKeyListener() {
-        addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.isShiftDown()) {
-                    //Zoom hotkeys
-                    if (e.getKeyCode() == KeyEvent.VK_PLUS ||
-                            e.getKeyCode() == KeyEvent.VK_I ||
-                            e.getKeyCode() == KeyEvent.VK_EQUALS) {
-                        zoom(ZOOM_INCREMENT);
-                    } else if (e.getKeyCode() == KeyEvent.VK_MINUS ||
-                            e.getKeyCode() == KeyEvent.VK_K ||
-                            e.getKeyCode() == KeyEvent.VK_UNDERSCORE) {
-                        zoom(-ZOOM_INCREMENT);
-                    }
-                    
-                    //Pan hotkeys
-                    if (e.getKeyCode() == KeyEvent.VK_UP) {
-                        m_yTranslation -= (PAN_INCREMENT / m_scaleFactor);
-                    } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-                        m_yTranslation += (PAN_INCREMENT / m_scaleFactor);
-                    } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                        m_xTranslation -= (PAN_INCREMENT / m_scaleFactor);
-                    } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        m_xTranslation += (PAN_INCREMENT / m_scaleFactor);
-                    }
-                }
-                
-                //Toggle lockdown
-                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    m_onLockdown = !m_onLockdown;
-                    for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-                        if (m_onLockdown) {
-                            m_particleSystem.getParticle(i).makeFixed();
-                        } else {
-                            m_particleSystem.getParticle(i).makeFree();
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-            }
-        });
-    }
-
     
-    /**
-     * Initializes the mouse listeners for grabbing and dragging nodes.
-     */
-    private void initializeMouseListener() {
-        //Translation/Panning Handling
-        TranslationHandler translator = new TranslationHandler();
-        addMouseListener(translator);
-        addMouseMotionListener(translator);
-        
-        //Particle-Mouse interaction for toolips and dragging
-        ParticleInteractionMouseHandler particleInteractionMouseHandler = new ParticleInteractionMouseHandler();
-        addMouseListener(particleInteractionMouseHandler);
-        addMouseMotionListener(particleInteractionMouseHandler);
-
-        // Mouse Wheel Listener
-        addMouseWheelListener(new MouseAdapter() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent mwe) {
-                if ((mwe.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK)) == InputEvent.SHIFT_DOWN_MASK) {
-                    zoom((float)mwe.getPreciseWheelRotation() / -25.0f);
-//                    m_scaleFactor -= mwe.getPreciseWheelRotation() / 25.0f;
-                }
-            }
-        });
-
-    }
-
     /**
      * Adds the given value to the scale factor.  Pass a negative value to zoom out.
      * @param scaleFactor The value to add.
@@ -502,27 +459,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         m_scaleFactor = Math.max(ZOOM_INCREMENT, m_scaleFactor + scaleFactor);
     }
 
-    @Override
-    public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
-        // ignored
-    }
-
-    @Override
-    public void timelineEntryRemoved(UUID id) {
-        // ignored
-    }
-    
-    @Override
-    public JComponent getComponent() {
-        return this;
-    }
-
-    @Override
-    public void clearAllData() {
-        for (UUID id : m_renderingConfigMap.keySet()) {
-            dataRemoved(id);
-        }
-    }
     
     @Override
     public void dataRemoved(UUID id) {
@@ -625,6 +561,23 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         }
     }
     
+    @Override
+    public void timelineEntryAddedOrUpdated(TimelineEntry tle) {
+        // ignored
+    }
+
+    @Override
+    public void timelineEntryRemoved(UUID id) {
+        // ignored
+    }
+    
+    @Override
+    public void clearAllData() {
+        for (UUID id : m_renderingConfigMap.keySet()) {
+            dataRemoved(id);
+        }
+    }
+    
     /**
      * Takes the given coordinates on the screen and tells you what the render 
      * coordinate at that location on the screen is.
@@ -661,9 +614,53 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     }
     
     /**
+     * Handler for all key actions.
+     */
+    private class KeyHandler extends KeyAdapter {
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (e.isShiftDown()) {
+                //Zoom hotkeys
+                if (e.getKeyCode() == KeyEvent.VK_PLUS ||
+                        e.getKeyCode() == KeyEvent.VK_I ||
+                        e.getKeyCode() == KeyEvent.VK_EQUALS) {
+                    zoom(ZOOM_INCREMENT);
+                } else if (e.getKeyCode() == KeyEvent.VK_MINUS ||
+                        e.getKeyCode() == KeyEvent.VK_K ||
+                        e.getKeyCode() == KeyEvent.VK_UNDERSCORE) {
+                    zoom(-ZOOM_INCREMENT);
+                }
+
+                //Pan hotkeys
+                if (e.getKeyCode() == KeyEvent.VK_UP) {
+                    m_yTranslation -= (PAN_INCREMENT / m_scaleFactor);
+                } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                    m_yTranslation += (PAN_INCREMENT / m_scaleFactor);
+                } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+                    m_xTranslation -= (PAN_INCREMENT / m_scaleFactor);
+                } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                    m_xTranslation += (PAN_INCREMENT / m_scaleFactor);
+                }
+            }
+
+            //Toggle lockdown
+            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                m_onLockdown = !m_onLockdown;
+                for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+                    if (m_onLockdown) {
+                        m_particleSystem.getParticle(i).makeFixed();
+                    } else {
+                        m_particleSystem.getParticle(i).makeFree();
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
      * Handler for translations from the mouse
      */
-    private class TranslationHandler extends MouseAdapter {
+    private class TranslationMouseHandler extends MouseAdapter {
         private float lastOffsetX;
         private float lastOffsetY;
         
@@ -694,7 +691,21 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         }
     }
     
+    /**
+     * Handles all scaling done with the mouse, via the mouse wheel when shift is held.
+     */
+    private class ScalingMouseHandler extends MouseAdapter {
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent mwe) {
+            if ((mwe.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK)) == InputEvent.SHIFT_DOWN_MASK) {
+                zoom((float)mwe.getPreciseWheelRotation() / -25.0f);
+            }
+        }
+    }
     
+    /**
+     * Handles all interactions between the mouse and particles.
+     */
     private class ParticleInteractionMouseHandler extends MouseAdapter {
         private Point lastClickPoint;
             
