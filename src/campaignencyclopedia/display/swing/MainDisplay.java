@@ -53,6 +53,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -393,12 +394,15 @@ public class MainDisplay implements EditListener, UserDisplay {
         // Add Title/Search bar
         panel.add(createTitleBar(), BorderLayout.NORTH);
 
-        // Add entity editor
-        panel.add(createEntityDisplay(), BorderLayout.CENTER);
-
-        // Add entity list.
-        panel.add(createEntityList(), BorderLayout.WEST);
-
+        // Create entity list.
+        Component entityList = createEntityList();
+        // Create entity editor
+        Component entityDisplay = createEntityDisplay();
+        
+        // Add entity components in a split pane
+        JSplitPane entitySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, entityList, entityDisplay);
+        panel.add(entitySplitPane, BorderLayout.CENTER);
+        
         // Create and set main menu
         m_menuManager = new MenuManager(m_frame, this, m_cdm);
         JMenuBar menuBar = new JMenuBar();
@@ -761,7 +765,7 @@ public class MainDisplay implements EditListener, UserDisplay {
             }
         });
         
-        m_entityTypeFilterComboBox = new JComboBox();
+        m_entityTypeFilterComboBox = new JComboBox<ColoredDisplayable>();
         m_entityTypeFilterComboBox.addItem(new ColoredDisplayable() {
             @Override
             public Color getColor() {
