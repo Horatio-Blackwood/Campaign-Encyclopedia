@@ -1,5 +1,5 @@
 # Campaign-Encyclopedia
-Campaign Encyclopedia is a tool designed to help game masters, world builders, storytellers and gamers create and manage the incredible places, people, and things that they dream up.  It was designed with pen and paper table top games like Dungeons and Dragons, Pathfinder, FATE, Gamma World or even your own home-brew system in mind.
+Campaign Encyclopedia is a tool designed to help game masters, world builders, storytellers and gamers create and manage the incredible places, people, and things that they dream up.  It was designed with pen and paper table top games like Dungeons and Dragons, Savage Worlds, Pathfinder, FATE, Gamma World or even your own home-brew system in mind.
 
 ## Relationshps
 Campaign Encyclopedia does not keep track of hit points, crunch, character sheets or anything of the sort, (there are already tons of great tools available to meet those needs).  The focus here is placed on people, places and things and how these elements relate to one another.
