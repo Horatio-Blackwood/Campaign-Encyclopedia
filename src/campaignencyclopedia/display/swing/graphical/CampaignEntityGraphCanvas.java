@@ -8,6 +8,7 @@ import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -17,7 +18,6 @@ import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -161,11 +161,15 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         m_ses.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                long currentTime = System.currentTimeMillis();
-                update(currentTime - m_previousUpdateTime);
-                m_previousUpdateTime = currentTime;
-                revalidate();
-                repaint();
+                try {
+                    long currentTime = System.currentTimeMillis();
+                    update(currentTime - m_previousUpdateTime);
+                    m_previousUpdateTime = currentTime;
+                    revalidate();
+                    repaint();
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
 
@@ -190,20 +194,23 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             m_renderingConfigMap.put(e.getId(), rc);
         }
         
-        //Relationship Springs: create a spring between entities for every relationship
-        for (Entity e : allEntities) {    
-            // Create a spring between the entity and what it is related to for each relationship.
-            for (Relationship r : m_accessor.getRelationshipsForEntity(e.getId()).getAllRelationships()) {
+        //Synchronize access to particle system to avoid conflicts with computation
+        synchronized(m_particleSystem) {
+            //Relationship Springs: create a spring between entities for every relationship
+            for (Entity e : allEntities) {    
+                // Create a spring between the entity and what it is related to for each relationship.
+                for (Relationship r : m_accessor.getRelationshipsForEntity(e.getId()).getAllRelationships()) {
 
-                Particle a = m_renderingConfigMap.get(e.getId()).particle;
-                RenderingConfig otherRc = m_renderingConfigMap.get(r.getRelatedEntity());
-                if (otherRc == null) {
-                    LOGGER.warning("Found a relationship pointing to a null entity on " + e.getName() +
-                            "(" + e.getId() + ") pointing to:  " + "(" + r.getRelatedEntity().toString() + ")");
-                    continue;
+                    Particle a = m_renderingConfigMap.get(e.getId()).particle;
+                    RenderingConfig otherRc = m_renderingConfigMap.get(r.getRelatedEntity());
+                    if (otherRc == null) {
+                        LOGGER.warning("Found a relationship pointing to a null entity on " + e.getName() +
+                                "(" + e.getId() + ") pointing to:  " + "(" + r.getRelatedEntity().toString() + ")");
+                        continue;
+                    }
+                    Particle b = m_renderingConfigMap.get(r.getRelatedEntity()).particle;
+                    m_particleSystem.makeSpring(a, b, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
                 }
-                Particle b = m_renderingConfigMap.get(r.getRelatedEntity()).particle;
-                m_particleSystem.makeSpring(a, b, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
             }
         }
     }
@@ -246,20 +253,23 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
      * @return the created particle.
      */
     private Particle createParticle(int x, int y) {
-        // Z axis is always zero, as this is a 2D graph.
-        Particle newParticle = m_particleSystem.makeParticle(PARTICLE_MASS, x, y, 0);
-        
-        //Add repulsion against all other particles
-        for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-            Particle p = m_particleSystem.getParticle(i);
-            // Ignore "making attraction" on this particle against itself.
-            if (p.equals(newParticle)) {
-                continue;
+        //Synchronize access to particle system to avoid conflicts with computation
+        synchronized(m_particleSystem) {
+            // Z axis is always zero, as this is a 2D graph.
+            Particle newParticle = m_particleSystem.makeParticle(PARTICLE_MASS, x, y, 0);
+
+            //Add repulsion against all other particles
+            for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+                Particle p = m_particleSystem.getParticle(i);
+                // Ignore "making attraction" on this particle against itself.
+                if (p.equals(newParticle)) {
+                    continue;
+                }
+                m_particleSystem.makeAttraction(p, newParticle, REPULSIVE_FORCE, MIN_REPULSIVE_DISTANCE);
             }
-            m_particleSystem.makeAttraction(p, newParticle, REPULSIVE_FORCE, MIN_REPULSIVE_DISTANCE);
+
+            return newParticle;
         }
-        
-        return newParticle;
     }
 
     /**
@@ -267,7 +277,10 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
      * @param dt the delta time since the last call to update.
      */
     private void update(long dt) {
-        m_particleSystem.tick();
+        //Synchronize access to particle system to avoid conflicts with computation
+        synchronized(m_particleSystem) {
+            m_particleSystem.tick();
+        }
     }
 
     @Override
@@ -300,10 +313,13 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
         g2.setTransform(transform);
         
         //Draw Springs
-        g2.setPaint(Colors.LINE);
-        for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
-            Spring s = m_particleSystem.getSpring(i);
-            drawSpring(s, g2);
+        //Synchronize access to particle system to avoid conflicts with computation
+        synchronized(m_particleSystem) {
+            g2.setPaint(Colors.LINE);
+            for (int i = 0; i < m_particleSystem.numberOfSprings(); i++) {
+                Spring s = m_particleSystem.getSpring(i);
+                drawSpring(s, g2);
+            }
         }
 
         //Draw entities
@@ -317,6 +333,11 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             //Retrieve the actual entity and verify it exists
             Entity hovered = m_accessor.getEntity(m_hoveredEntityId);
             if (hovered != null) {
+                //Reset to render tooltip, applying transform to the location point but not actually scaling the tooltip
+                g2.setTransform(saveTransform);
+                Point2D tooltipLocation = new Point2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y);
+                transform.transform(tooltipLocation, tooltipLocation);  //Apply transform to the location
+                
                 String title = hovered.getName() + " - " + RELATIONSHIPS;
                 int maxWidth = g2.getFontMetrics().stringWidth(title);
                 List<String> hoverRelationships = new ArrayList<>();
@@ -338,11 +359,6 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
                             maxWidth = stringWidth;
                         }
                 }
-                
-                //Reset to render tooltip, applying transform to the location point but not actually scaling the tooltip
-                g2.setTransform(saveTransform);
-                Point2D tooltipLocation = new Point2D.Double(m_hoverPointRenderSpace.x, m_hoverPointRenderSpace.y);
-                transform.transform(tooltipLocation, tooltipLocation);  //Apply transform to the location
                 
                 // Background
                 int hoverWidth = maxWidth + BIG_PAD * 2;
@@ -462,101 +478,107 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
     
     @Override
     public void dataRemoved(UUID id) {
-        LOGGER.log(Level.INFO, "Data removed from graph display: " + id);
-        
-        RenderingConfig r = m_renderingConfigMap.get(id);
-        
-        //Remove any linked springs first
-        int numSprings = m_particleSystem.numberOfSprings();
-        Set<Spring> springsToRemove = new HashSet<>();
-        for (int i = 0; i < numSprings; i++) {
-            Spring spring = m_particleSystem.getSpring(i);
-            if (spring.getOneEnd().equals(r.particle) || spring.getTheOtherEnd().equals(r.particle)) {
-                springsToRemove.add(spring);
+        //Synchronize access to particle system to avoid conflicts with computation
+        synchronized(m_particleSystem) {
+            LOGGER.log(Level.INFO, "Data removed from graph display: " + id);
+
+            RenderingConfig r = m_renderingConfigMap.get(id);
+
+            //Remove any linked springs first
+            int numSprings = m_particleSystem.numberOfSprings();
+            Set<Spring> springsToRemove = new HashSet<>();
+            for (int i = 0; i < numSprings; i++) {
+                Spring spring = m_particleSystem.getSpring(i);
+                if (spring.getOneEnd().equals(r.particle) || spring.getTheOtherEnd().equals(r.particle)) {
+                    springsToRemove.add(spring);
+                }
             }
-        }
-        for (Spring s : springsToRemove) {
-            m_particleSystem.removeSpring(s);
-        }
-        
-        //Remove any linked attractions
-        int numAttractions = m_particleSystem.numberOfAttractions();
-        Set<Attraction> attractionsToRemove = new HashSet<>();
-        for (int i = 0; i < numAttractions; i++) {
-            Attraction attraction = m_particleSystem.getAttraction(i);
-            if (attraction.getOneEnd().equals(r.particle) || attraction.getTheOtherEnd().equals(r.particle)) {
-                attractionsToRemove.add(attraction);
+            for (Spring s : springsToRemove) {
+                m_particleSystem.removeSpring(s);
             }
+
+            //Remove any linked attractions
+            int numAttractions = m_particleSystem.numberOfAttractions();
+            Set<Attraction> attractionsToRemove = new HashSet<>();
+            for (int i = 0; i < numAttractions; i++) {
+                Attraction attraction = m_particleSystem.getAttraction(i);
+                if (attraction.getOneEnd().equals(r.particle) || attraction.getTheOtherEnd().equals(r.particle)) {
+                    attractionsToRemove.add(attraction);
+                }
+            }
+            for (Attraction a : attractionsToRemove) {
+                m_particleSystem.removeAttraction(a);
+            }
+
+            //Remove particle
+            m_particleSystem.removeParticle(r.particle);
+
+            //Remove the rendering configuration
+            m_renderingConfigMap.remove(id);
         }
-        for (Attraction a : attractionsToRemove) {
-            m_particleSystem.removeAttraction(a);
-        }
-        
-        //Remove particle
-        m_particleSystem.removeParticle(r.particle);
-        
-        //Remove the rendering configuration
-        m_renderingConfigMap.remove(id);
     }
 
     @Override
     public void dataAddedOrUpdated(Entity entity) {
-        if (!m_renderingConfigMap.containsKey(entity.getId())) {
-            //New entity for the display, initialize it
-            LOGGER.info("Data added to graph display: " + entity.getId());
-            //Initialize entity particle and rendering config
-            Particle newParticle = createParticle(m_rand.nextInt(X_RANGE), m_rand.nextInt(Y_RANGE));
-            if (m_onLockdown) {
-                newParticle.makeFixed();
-            }
-            
-            //Create an initial rendering config for the new entity
-            int r = getDotRadius();
-            RenderingConfig rc = new RenderingConfig();
-            rc.particle = newParticle;
-            m_renderingConfigMap.put(entity.getId(), rc);
-        }
-        
-        //Update the entity's relationships.
-        LOGGER.info("Updating data in display in graph display: " + entity.getId());
-        
-        //Get RenderingConfig of the added or updated entity to update it
-        RenderingConfig rc = m_renderingConfigMap.get(entity.getId());
-        
-        //Update general entity data
-        rc.text = entity.getName();
-        rc.color = Colors.getColor(entity.getType());
-        
-        //Update Relationship Springs
-        //Remove any linked springs first to catch removed relationships TODO: store relationships and springs somehow to prevent having to do this
-        int numSprings = m_particleSystem.numberOfSprings();
-        Set<Spring> springsToRemove = new HashSet<>();
-        for (int i = 0; i < numSprings; i++) {
-            Spring spring = m_particleSystem.getSpring(i);
-            //Just check one end and not the other end so they will only be springs/relationships originating from this entity and not ones pointing to it.
-            //Does not need an "|| spring.getTheOtherEnd().equals(rc.particle)" clause
-            if (spring.getOneEnd().equals(rc.particle)) {  
-                springsToRemove.add(spring);
-            }
-        }
-        for (Spring s : springsToRemove) {
-            m_particleSystem.removeSpring(s);
-        }
-        
-        RelationshipManager relationshipManager = m_accessor.getRelationshipsForEntity(entity.getId());
-        
-        if (relationshipManager != null) {
-            // Create a spring between the new entity's particle and the existing one for each relationship.
-            for (Relationship relationship : relationshipManager.getAllRelationships()) {
-                RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getRelatedEntity());
-                if (otherRenderingConfig == null) {
-                    LOGGER.warning("Found a relationship pointing to a null entity on " + entity.getName() + 
-                            "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getRelatedEntity().toString() + ")");
-                    continue; 
+        //Synchronize access to particle system to avoid conflicts with computation
+        synchronized(m_particleSystem) {
+            if (!m_renderingConfigMap.containsKey(entity.getId())) {
+                //New entity for the display, initialize it
+                LOGGER.info("Data added to graph display: " + entity.getId());
+                //Initialize entity particle and rendering config
+                Particle newParticle = createParticle(m_rand.nextInt(X_RANGE), m_rand.nextInt(Y_RANGE));
+                if (m_onLockdown) {
+                    newParticle.makeFixed();
                 }
-                Particle particleForRelatedEntity = otherRenderingConfig.particle;
 
-                m_particleSystem.makeSpring(rc.particle, particleForRelatedEntity, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
+                //Create an initial rendering config for the new entity
+                int r = getDotRadius();
+                RenderingConfig rc = new RenderingConfig();
+                rc.particle = newParticle;
+                m_renderingConfigMap.put(entity.getId(), rc);
+            }
+
+            //Update the entity's relationships.
+            LOGGER.info("Updating data in display in graph display: " + entity.getId());
+
+            //Get RenderingConfig of the added or updated entity to update it
+            RenderingConfig rc = m_renderingConfigMap.get(entity.getId());
+
+            //Update general entity data
+            rc.text = entity.getName();
+            rc.color = Colors.getColor(entity.getType());
+
+            //Update Relationship Springs
+            //Remove any linked springs first to catch removed relationships TODO: store relationships and springs somehow to prevent having to do this
+            int numSprings = m_particleSystem.numberOfSprings();
+            Set<Spring> springsToRemove = new HashSet<>();
+            for (int i = 0; i < numSprings; i++) {
+                Spring spring = m_particleSystem.getSpring(i);
+                //Just check one end and not the other end so they will only be springs/relationships originating from this entity and not ones pointing to it.
+                //Does not need an "|| spring.getTheOtherEnd().equals(rc.particle)" clause
+                if (spring.getOneEnd().equals(rc.particle)) {  
+                    springsToRemove.add(spring);
+                }
+            }
+            for (Spring s : springsToRemove) {
+                m_particleSystem.removeSpring(s);
+            }
+
+            RelationshipManager relationshipManager = m_accessor.getRelationshipsForEntity(entity.getId());
+
+            if (relationshipManager != null) {
+                // Create a spring between the new entity's particle and the existing one for each relationship.
+                for (Relationship relationship : relationshipManager.getAllRelationships()) {
+                    RenderingConfig otherRenderingConfig = m_renderingConfigMap.get(relationship.getRelatedEntity());
+                    if (otherRenderingConfig == null) {
+                        LOGGER.warning("Found a relationship pointing to a null entity on " + entity.getName() + 
+                                "(" + entity.getId() + ") pointing to:  " + "(" + relationship.getRelatedEntity().toString() + ")");
+                        continue; 
+                    }
+                    Particle particleForRelatedEntity = otherRenderingConfig.particle;
+
+                    m_particleSystem.makeSpring(rc.particle, particleForRelatedEntity, SPRING_STRENGTH, SPRING_DAMPENING, getDotLineLength());
+                }
             }
         }
     }
@@ -645,14 +667,38 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
 
             //Toggle lockdown
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                m_onLockdown = !m_onLockdown;
-                for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-                    if (m_onLockdown) {
-                        m_particleSystem.getParticle(i).makeFixed();
-                    } else {
-                        m_particleSystem.getParticle(i).makeFree();
+                //Synchronize access to particle system to avoid conflicts with computation
+                synchronized(m_particleSystem) {
+                    m_onLockdown = !m_onLockdown;
+                    for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+                        if (m_onLockdown) {
+                            m_particleSystem.getParticle(i).makeFixed();
+                        } else {
+                            m_particleSystem.getParticle(i).makeFree();
+                        }
                     }
                 }
+            }
+            
+            //Manage cursors
+            if (!e.isShiftDown() && !e.isControlDown()) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            } else if (e.isShiftDown()) {
+                setCursor(new Cursor(Cursor.MOVE_CURSOR));
+            } else if (e.isControlDown()) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+        }
+        
+        @Override
+        public void keyReleased(KeyEvent e) {
+            //Reset cursors
+            if (!e.isShiftDown() && !e.isControlDown()) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            } else if (e.isShiftDown()) {
+                setCursor(new Cursor(Cursor.MOVE_CURSOR));
+            } else if (e.isControlDown()) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
             }
         }
     }
@@ -720,13 +766,16 @@ public class CampaignEntityGraphCanvas extends JComponent implements CanvasDispl
             int r2 = r * r;
             Particle clickedParticle = null;
 
-            //Find if a particle was clicked on
-            for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
-                Particle p = m_particleSystem.getParticle(i);    
+            //Synchronize access to particle system to avoid conflicts with computation
+            synchronized(m_particleSystem) {
+                //Find if a particle was clicked on
+                for (int i = 0; i < m_particleSystem.numberOfParticles(); i++) {
+                    Particle p = m_particleSystem.getParticle(i);    
 
-                if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
-                    clickedParticle = p;
-                    break;
+                    if (p.position().distanceSquaredTo(clickVector) <= (r2)) {
+                        clickedParticle = p;
+                        break;
+                    }
                 }
             }
 
