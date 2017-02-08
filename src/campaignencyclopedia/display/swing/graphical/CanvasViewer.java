@@ -5,6 +5,7 @@ import campaignencyclopedia.data.CampaignDataManagerListener;
 import campaignencyclopedia.data.Entity;
 import campaignencyclopedia.data.TimelineEntry;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -94,11 +95,14 @@ public class CanvasViewer implements CampaignDataManagerListener {
         m_frame.setLayout(new BorderLayout());
         m_frame.setPreferredSize(m_size);
         m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        Component canvasComponent = m_canvas.getComponent();
+        canvasComponent.setFocusable(true);
+        canvasComponent.requestFocusInWindow();
         
         if (m_putCanvasInScrollPane) {
-            m_frame.add(new JScrollPane(m_canvas.getComponent()), BorderLayout.CENTER);
+            m_frame.add(new JScrollPane(canvasComponent), BorderLayout.CENTER);
         } else {
-            m_frame.add(m_canvas.getComponent(), BorderLayout.CENTER);
+            m_frame.add(canvasComponent, BorderLayout.CENTER);
         }
         
         

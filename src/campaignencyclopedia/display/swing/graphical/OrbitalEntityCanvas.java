@@ -10,7 +10,6 @@ import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.EntityDisplay;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -258,7 +257,7 @@ public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
                             hoverRelTextY += orignalFontMetrics.getHeight();
                             g2.drawString(relString, (float)m_hoverPoint.x + BIG_PAD, hoverRelTextY);
                         }
-                    } else{
+                    } else {
                         m_hoveredEntity = null;
                     }
                 }
@@ -427,7 +426,7 @@ public class OrbitalEntityCanvas extends JComponent implements CanvasDisplay  {
     }
 
     @Override
-    public Component getComponent() {
+    public JComponent getComponent() {
         return this;
     }
 

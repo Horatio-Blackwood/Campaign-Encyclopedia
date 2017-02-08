@@ -297,6 +297,12 @@ public class CampaignDataManager implements DataAccessor {
     public void removeRelationship(UUID entity, Relationship toRemove) {
         RelationshipManager relationships = m_relationships.get(entity);
         relationships.remove(toRemove);
+        
+        // Alert Listeners, data updated because relationship removed
+        Entity actualEntity = getEntity(entity);
+        for (CampaignDataManagerListener cdml : m_listeners) {
+            cdml.dataAddedOrUpdated(actualEntity);
+        }
     }
 
     /** {@inheritDoc} */
@@ -310,6 +316,12 @@ public class CampaignDataManager implements DataAccessor {
     public void addOrUpdateAllRelationships(UUID entity, RelationshipManager relMgr) {
         if (entity != null && relMgr != null) {
             m_relationships.put(entity, relMgr);
+            
+            // Alert Listeners, data updated because relationship added
+            Entity actualEntity = getEntity(entity);
+            for (CampaignDataManagerListener cdml : m_listeners) {
+                cdml.dataAddedOrUpdated(actualEntity);
+            }
         } else {
             LOGGER.warning("Attempted to store a null Entity or RelationshipManager.  Entity was:  " +
                     entity + ", RelationshipManager was:  " + relMgr);

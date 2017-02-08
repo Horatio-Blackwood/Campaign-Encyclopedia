@@ -11,15 +11,14 @@ import java.awt.Dimension;
  */
 public class CampaignEntityGraphViewer extends CanvasViewer {
     /**
-     * Creates a new OrbitalEntityViewer.
+     * Creates a new CampaignEntityGraphViewer.
      * @param display an EntityDisplay to show Entity data on.
      * @param cdm the data accessor to fetch data to view.
      */
     public CampaignEntityGraphViewer(EntityDisplay display, CampaignDataManager cdm) {
         super(new CampaignEntityGraphCanvas(display, cdm), cdm, "Campaign Graph Viewer", new Dimension(900, 675), true);
     }
-    
-    /** Closes this viewer frame. */
+
     @Override
     public void clearAllData() {
         m_frame.dispose();

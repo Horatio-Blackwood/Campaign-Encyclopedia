@@ -27,6 +27,7 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -188,7 +189,7 @@ public class IntegratedTimelineCanvas implements CanvasDisplay {
     }
     
     @Override
-    public Component getComponent() {
+    public JComponent getComponent() {
         return m_content;
     }
 

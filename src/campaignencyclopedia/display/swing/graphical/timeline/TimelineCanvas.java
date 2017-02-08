@@ -9,7 +9,6 @@ import campaignencyclopedia.display.swing.graphical.CanvasDisplay;
 import campaignencyclopedia.display.swing.graphical.Colors;
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -484,7 +483,7 @@ public class TimelineCanvas extends JComponent implements CanvasDisplay {
     }
 
     @Override
-    public Component getComponent() {
+    public JComponent getComponent() {
         return m_scrollPane;
     }
 

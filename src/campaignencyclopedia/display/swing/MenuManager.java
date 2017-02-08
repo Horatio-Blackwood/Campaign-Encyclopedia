@@ -1,7 +1,14 @@
 package campaignencyclopedia.display.swing;
 
+import campaignencyclopedia.data.Campaign;
+import campaignencyclopedia.data.CampaignCalendar;
 import campaignencyclopedia.data.CampaignDataManager;
 import campaignencyclopedia.data.Entity;
+import campaignencyclopedia.data.EntityData;
+import campaignencyclopedia.data.EntityType;
+import campaignencyclopedia.data.Relationship;
+import campaignencyclopedia.data.RelationshipManager;
+import campaignencyclopedia.data.TimelineEntry;
 import campaignencyclopedia.display.UserDisplay;
 import campaignencyclopedia.display.swing.action.ConfigureCampaignCalendarAction;
 import campaignencyclopedia.display.swing.action.ConfigureRelationshipsAction;
@@ -22,6 +29,13 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -142,7 +156,15 @@ public class MenuManager {
                              "    Hover over an item to view relationship details\n" +
                              "    Click on any outer node to navigate to that node\n" +
                              "    or use the Back and Fwd buttons\n" +
-                             "    CTRL+Click on any item to display it in the editort";
+                             "    CTRL+Click on any item to display it in the editor\n\n" +
+                             "Graph View Controls:\n" +
+                             "    Click and drag an orb to move it\n" +
+                             "    SPACE - Freeze the display to stop orb movement\n" +
+                             "    CTRL+Click on any orb to display it in the editor\n" +
+                             "    SHIFT + ARROWS - Move around the display\n" +
+                             "    SHIFT + PLUS/MINUS - Zoom in/out\n" +
+                             "    SHIFT + MOUSE WHEEL - Zoom in/out\n" +
+                             "";
                 JOptionPane.showMessageDialog(m_frame, msg, "Help", JOptionPane.PLAIN_MESSAGE);
             }
         };
@@ -239,11 +261,12 @@ public class MenuManager {
         configureCalendar.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.ALT_DOWN_MASK));
         
         JMenuItem showStats = new JMenuItem(m_showStats);
-        
+
         JMenuItem viewGraph = new JMenuItem(new AbstractAction("View Graph...") {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 CampaignEntityGraphViewer viewer = new CampaignEntityGraphViewer(m_display, m_cdm);
+                m_cdm.addListener(viewer);
                 viewer.launch();
             }
         });

@@ -1,7 +1,7 @@
 package campaignencyclopedia.display.swing.graphical;
 
 import campaignencyclopedia.data.CampaignDataManagerListener;
-import java.awt.Component;
+import javax.swing.JComponent;
 
 /**
  *
@@ -9,5 +9,5 @@ import java.awt.Component;
  */
 public interface CanvasDisplay extends CampaignDataManagerListener {
 
-    public Component getComponent();
+    public JComponent getComponent();
 }

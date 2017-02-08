@@ -14,7 +14,7 @@ import javax.swing.AbstractListModel;
  * @author adam
  * @param <E>
  */
-public class SortableListModel<E extends Comparable> extends AbstractListModel<E> {
+public class SortableListModel<E extends Comparable<E>> extends AbstractListModel<E> {
 
     /** The filter, if any, on this model. */
     private DataFilter<E> m_filter;
